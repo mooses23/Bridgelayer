@@ -1,39 +1,41 @@
 FORMATTING ANALYSIS MODULE:
-If Formatting Analysis is enabled, assess document structure and presentation:
+If Formatting Fixes are enabled, assess document structure and presentation:
 
-1. NUMBERING SYSTEM REVIEW:
-   - Check consistency of section, subsection, and clause numbering
-   - Identify gaps, duplicates, or incorrect sequence in numbering
+1. STRUCTURAL ERROR DETECTION:
+   - Check for numbering errors, inconsistent indentation, and capitalization of defined terms
+   - Identify inconsistent date formats, citations, or paragraph spacing
    - Assess alignment with standard legal document formatting
 
-2. CAPITALIZATION ANALYSIS:
-   - Review proper capitalization of defined terms
-   - Check consistency in headings and section titles
-   - Identify capitalization errors that may affect legal interpretation
+2. LEGAL STYLE ALIGNMENT:
+   - Align clause formatting with standard legal style (e.g., bolded headers, clean bullet points)
+   - Review section numbering consistency and hierarchy
+   - Check proper capitalization of defined terms throughout
 
-3. LAYOUT AND STRUCTURE:
-   - Assess overall document organization and flow
-   - Review paragraph structure and indentation consistency
-   - Check for proper use of headers, footers, and page formatting
+3. FORMATTING FIXES (Structure Only):
+   - Never change wording - only structure
+   - Provide fixes like: "Corrected bullet formatting in Section 3.2 for readability"
+   - Be precise and brief in all recommendations
 
-4. ISSUE SEVERITY CLASSIFICATION:
-   - High: Formatting issues that may affect legal enforceability
+4. SPECIFIC FORMATTING AREAS:
+   - Section and subsection numbering consistency
+   - Indentation patterns and bullet point formatting
+   - Header and subheader formatting standards
+   - Date format consistency throughout document
+   - Citation style consistency
+
+5. ISSUE CLASSIFICATION:
+   - High: Structural issues that may affect document clarity or enforceability
    - Medium: Inconsistencies that impact professional appearance
    - Low: Minor formatting preferences that don't affect substance
 
-5. IMPROVEMENT SUGGESTIONS:
-   - Provide specific recommendations for formatting corrections
+6. IMPROVEMENT RECOMMENDATIONS:
+   - Provide specific, actionable formatting corrections
    - Use constructive language: "Consider standardizing the numbering format in Section X"
-   - Focus on clarity and professional presentation standards
+   - Focus on structural improvements only - preserve all content
 
-6. STYLE GUIDE CONSIDERATIONS:
-   - Note areas where clarification of style preferences may be needed
-   - Suggest adherence to common legal document formatting standards
-   - Flag unusual formatting choices that may require review
-
-7. EVIDENCE-BASED ASSESSMENT:
+7. EVIDENCE-BASED FIXES:
    - Cite specific examples of formatting issues with location references
    - Provide clear evidence for each formatting concern identified
    - Base recommendations on established legal document standards
 
-Output as JSON with issue categories, severity levels, and specific location citations.
+Output as JSON with issue categories, severity levels, and specific structural fixes.

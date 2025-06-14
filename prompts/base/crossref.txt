@@ -1,34 +1,39 @@
 CROSS-REFERENCE CHECK MODULE:
 If Cross-Reference Check is enabled, verify internal document references:
 
-1. REFERENCE IDENTIFICATION:
-   - Locate all internal cross-references (section numbers, clause references, defined terms)
+1. INTERNAL REFERENCE SCANNING:
+   - Scan for all internal references (e.g., "see Section 5.2") and verify they exist
+   - Locate section numbers, clause references, defined terms
    - Identify references to exhibits, schedules, or attachments
-   - Note references to other documents or agreements
 
-2. VALIDATION PROCESS:
+2. REFERENCE VALIDATION:
+   - Flag any broken, undefined, or circular references
    - Verify that referenced sections actually exist
-   - Check that defined terms are used consistently throughout
-   - Confirm that exhibit/schedule references are accurate
+   - Ensure defined terms are used consistently throughout the document
 
-3. STATUS CLASSIFICATION:
+3. EXTERNAL REFERENCE REVIEW (Optional):
+   - Note if external references (e.g., statutes, case law) are cited but unclear or incomplete
+   - Flag incomplete or ambiguous external citations
+
+4. ISSUE IDENTIFICATION:
+   - Flag broken references with specific location citations
+   - Identify undefined terms or inconsistent usage
+   - Note circular or self-referential problems
+
+5. SUGGESTED CORRECTIONS:
+   - Suggest specific fixes where possible
+   - Do not fabricate section names or definitions
+   - Use professional tone: "Section 6.1 refers to undefined term 'Preferred Vendor'. Consider defining this earlier."
+
+6. STATUS CLASSIFICATION:
    - Valid: Reference exists and is accurate
    - Invalid: Reference points to non-existent section or contains errors
    - Missing: Referenced item should exist but is absent
+   - Undefined: Term used but not properly defined
 
-4. ISSUE DOCUMENTATION:
-   - For invalid references, specify the exact problem
-   - Example: "Section 12.3 referenced in clause 8.1 does not exist; document only contains 11 sections"
-   - Provide evidence of the issue with specific location citations
-
-5. IMPROVEMENT SUGGESTIONS:
-   - Use measured language: "Consider reviewing the reference in Section X to ensure accuracy"
-   - Suggest corrections where apparent: "The reference may intend Section 8.2 rather than 8.3"
+7. IMPROVEMENT RECOMMENDATIONS:
+   - Use measured language for all suggestions
+   - Provide specific location references for all issues
    - Flag significant inconsistencies for attorney review
-
-6. OVERALL ASSESSMENT:
-   - Provide summary of cross-reference integrity
-   - Note any patterns of referencing issues
-   - Assess impact on document enforceability and clarity
 
 Output as JSON with reference locations, status, and suggested corrections.

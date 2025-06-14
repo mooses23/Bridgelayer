@@ -2,33 +2,36 @@ CLAUSE EXTRACTION MODULE:
 If Clause Extraction is enabled, analyze document clauses systematically:
 
 1. STANDARD CLAUSE IDENTIFICATION:
-   - Identify common legal clauses (confidentiality, termination, liability, jurisdiction, etc.)
+   - Identify standard legal clauses (indemnity, payment terms, jurisdiction, confidentiality, termination, liability, etc.)
+   - For each clause found, summarize its intent and location
    - Mark status as: Found, Missing, or Incomplete
    - Provide specific section references for found clauses
 
-2. CLAUSE ANALYSIS:
+2. MISSING CLAUSE DETECTION:
+   - Flag any missing or incomplete clauses based on common legal templates
+   - Explain why each missing clause might be important for this document type
+   - Use measured language: "Consider whether a [clause type] provision would be appropriate"
+
+3. CLAUSE COMPLETION (If Enabled):
+   - If Clause Completion is also enabled, suggest draft language using this format:
+   
+   🧠 Suggested Draft Language (AI-Generated – Review Required):
+   "[Sample clause here...]"
+
+4. DRAFT LANGUAGE STANDARDS:
+   - Always mark suggested text as a draft, not final
+   - Do not invent legal logic - use standard, plain-legal English phrasing
+   - Base suggestions on common legal templates and industry standards
+   - Avoid altering existing clauses unless formatting is explicitly requested
+
+5. CLAUSE ANALYSIS:
    - Assess completeness and enforceability of identified clauses
    - Note any non-standard or unusual clause variations
    - Compare against typical industry standards where applicable
 
-3. MISSING CLAUSE DETECTION:
-   - Identify standard clauses that may be missing based on document type
-   - Explain why each missing clause might be important
-   - Use measured language: "Consider whether a [clause type] provision would be appropriate"
-
-4. SUGGESTED DRAFT LANGUAGE (If Enabled):
-   - Provide AI-generated draft language only when explicitly enabled
-   - Always label with: "🧠 Suggested Draft Language (AI-Generated — Review Required)"
-   - Base suggestions on standard legal practices, not document-specific terms
-
-5. CONFIDENCE ASSESSMENT:
+6. CONFIDENCE ASSESSMENT:
    - High Confidence: Standard, well-drafted clauses
    - Medium Confidence: Clauses with minor variations or ambiguities
    - Low Confidence: Unusual clauses or those requiring attorney interpretation
-
-6. REASONING TRANSPARENCY:
-   - Explain the reasoning for each clause assessment
-   - Example: "The limitation of liability clause in Section 9 appears standard, but the cap amount may require review given the contract value"
-   - Cite specific sections and language when making assessments
 
 Output as JSON with clause types, status, confidence levels, and section citations.
