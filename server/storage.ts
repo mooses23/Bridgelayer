@@ -1,17 +1,19 @@
-import { 
-  users, 
-  documents, 
-  documentAnalyses, 
-  analysisFeatures,
-  type User, 
+import {
+  type User,
   type InsertUser,
   type Document,
   type InsertDocument,
   type DocumentAnalysis,
   type InsertAnalysis,
   type AnalysisFeatures,
-  type InsertAnalysisFeatures
+  type InsertAnalysisFeatures,
+  users,
+  documents,
+  documentAnalyses,
+  analysisFeatures,
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -32,135 +34,95 @@ export interface IStorage {
   createUserFeatures(features: InsertAnalysisFeatures): Promise<AnalysisFeatures>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private documents: Map<number, Document>;
-  private analyses: Map<number, DocumentAnalysis>;
-  private features: Map<number, AnalysisFeatures>;
-  private currentUserId: number;
-  private currentDocumentId: number;
-  private currentAnalysisId: number;
-  private currentFeaturesId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.documents = new Map();
-    this.analyses = new Map();
-    this.features = new Map();
-    this.currentUserId = 1;
-    this.currentDocumentId = 1;
-    this.currentAnalysisId = 1;
-    this.currentFeaturesId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async createDocument(insertDocument: InsertDocument): Promise<Document> {
-    const id = this.currentDocumentId++;
-    const document: Document = { 
-      ...insertDocument,
-      userId: insertDocument.userId || null,
-      documentType: insertDocument.documentType || null,
-      content: insertDocument.content || null,
-      id,
-      uploadedAt: new Date(),
-      analyzedAt: null
-    };
-    this.documents.set(id, document);
+    const [document] = await db
+      .insert(documents)
+      .values(insertDocument)
+      .returning();
     return document;
   }
 
   async getDocument(id: number): Promise<Document | undefined> {
-    return this.documents.get(id);
+    const [document] = await db.select().from(documents).where(eq(documents.id, id));
+    return document || undefined;
   }
 
   async getUserDocuments(userId: number): Promise<Document[]> {
-    return Array.from(this.documents.values()).filter(
-      (doc) => doc.userId === userId
-    );
+    return await db.select().from(documents).where(eq(documents.userId, userId));
   }
 
   async updateDocument(id: number, updates: Partial<Document>): Promise<Document | undefined> {
-    const document = this.documents.get(id);
-    if (!document) return undefined;
-    
-    const updated = { ...document, ...updates };
-    this.documents.set(id, updated);
-    return updated;
+    const [document] = await db
+      .update(documents)
+      .set(updates)
+      .where(eq(documents.id, id))
+      .returning();
+    return document || undefined;
   }
 
   async createAnalysis(insertAnalysis: InsertAnalysis): Promise<DocumentAnalysis> {
-    const id = this.currentAnalysisId++;
-    const analysis: DocumentAnalysis = {
-      ...insertAnalysis,
-      confidence: insertAnalysis.confidence || null,
-      id,
-      createdAt: new Date()
-    };
-    this.analyses.set(id, analysis);
+    const [analysis] = await db
+      .insert(documentAnalyses)
+      .values(insertAnalysis)
+      .returning();
     return analysis;
   }
 
   async getDocumentAnalyses(documentId: number): Promise<DocumentAnalysis[]> {
-    return Array.from(this.analyses.values()).filter(
-      (analysis) => analysis.documentId === documentId
-    );
+    return await db.select().from(documentAnalyses).where(eq(documentAnalyses.documentId, documentId));
   }
 
   async getAnalysisByType(documentId: number, type: string): Promise<DocumentAnalysis | undefined> {
-    return Array.from(this.analyses.values()).find(
-      (analysis) => analysis.documentId === documentId && analysis.analysisType === type
-    );
+    const [analysis] = await db
+      .select()
+      .from(documentAnalyses)
+      .where(and(
+        eq(documentAnalyses.documentId, documentId),
+        eq(documentAnalyses.analysisType, type)
+      ));
+    return analysis || undefined;
   }
 
   async getUserFeatures(userId: number): Promise<AnalysisFeatures | undefined> {
-    return Array.from(this.features.values()).find(
-      (feature) => feature.userId === userId
-    );
+    const [features] = await db.select().from(analysisFeatures).where(eq(analysisFeatures.userId, userId));
+    return features || undefined;
   }
 
   async updateUserFeatures(userId: number, updates: Partial<AnalysisFeatures>): Promise<AnalysisFeatures> {
-    const existing = await this.getUserFeatures(userId);
-    if (existing) {
-      const updated = { ...existing, ...updates, updatedAt: new Date() };
-      this.features.set(existing.id, updated);
-      return updated;
-    } else {
-      return this.createUserFeatures({ userId, ...updates });
-    }
+    const [features] = await db
+      .update(analysisFeatures)
+      .set(updates)
+      .where(eq(analysisFeatures.userId, userId))
+      .returning();
+    return features;
   }
 
   async createUserFeatures(insertFeatures: InsertAnalysisFeatures): Promise<AnalysisFeatures> {
-    const id = this.currentFeaturesId++;
-    const features: AnalysisFeatures = {
-      ...insertFeatures,
-      userId: insertFeatures.userId || null,
-      id,
-      summarization: insertFeatures.summarization ?? true,
-      riskAnalysis: insertFeatures.riskAnalysis ?? true,
-      clauseExtraction: insertFeatures.clauseExtraction ?? true,
-      crossReference: insertFeatures.crossReference ?? false,
-      formatting: insertFeatures.formatting ?? true,
-      updatedAt: new Date()
-    };
-    this.features.set(id, features);
+    const [features] = await db
+      .insert(analysisFeatures)
+      .values(insertFeatures)
+      .returning();
     return features;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
