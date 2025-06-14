@@ -106,8 +106,8 @@ export default function Onboarding() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <Building2 className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900">BridgeLayer Onboarding</h1>
-          <p className="text-gray-600 mt-2">Configure your FIRMSYNC environment in minutes</p>
+          <h1 className="text-3xl font-bold text-gray-900">FIRMSYNC Setup</h1>
+          <p className="text-gray-600 mt-2">Configure your firm's document review workflow in minutes</p>
         </div>
 
         {/* Progress indicator */}
@@ -178,7 +178,7 @@ export default function Onboarding() {
                 Document Types
               </CardTitle>
               <CardDescription>
-                Which document types do you use regularly?
+                Which types of documents does your firm handle regularly?
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,10 +226,10 @@ export default function Onboarding() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="w-5 h-5" />
-                  AI Analysis Configuration
+                  Document Review Settings
                 </CardTitle>
                 <CardDescription>
-                  Configure AI behavior for each document type
+                  Configure how each document type should be reviewed
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -250,7 +250,7 @@ export default function Onboarding() {
                           onCheckedChange={(checked) => updateDocConfig(docType, 'summarize', checked)}
                         />
                         <Label htmlFor={`${docType}-summarize`}>
-                          AI Document Summary
+                          Create document summary
                         </Label>
                       </div>
                       
@@ -261,30 +261,30 @@ export default function Onboarding() {
                           onCheckedChange={(checked) => updateDocConfig(docType, 'riskAnalysis', checked)}
                         />
                         <Label htmlFor={`${docType}-risk`}>
-                          Legal Risk Analysis
+                          Check for potential risks
                         </Label>
                       </div>
                     </div>
                     
                     <div>
-                      <Label>Clause Analysis Mode</Label>
+                      <Label>Standard Clause Review</Label>
                       <Select onValueChange={(value) => updateDocConfig(docType, 'clauseMode', value)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select clause mode" />
+                          <SelectValue placeholder="How should clauses be reviewed?" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="check_only">Check Only</SelectItem>
-                          <SelectItem value="full_completion">Full Completion</SelectItem>
-                          <SelectItem value="disabled">Disabled</SelectItem>
+                          <SelectItem value="check_only">Check for missing clauses</SelectItem>
+                          <SelectItem value="full_completion">Suggest complete language</SelectItem>
+                          <SelectItem value="disabled">Skip clause review</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div>
-                      <Label>Review Assignment</Label>
+                      <Label>Who should review this work?</Label>
                       <Select onValueChange={(value) => updateDocConfig(docType, 'reviewer', value)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Who reviews output?" />
+                          <SelectValue placeholder="Assign reviewer" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="paralegal">Paralegal</SelectItem>

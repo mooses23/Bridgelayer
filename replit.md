@@ -99,7 +99,7 @@ FIRMSYNC is a comprehensive AI-powered legal document analysis platform built as
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+Preferred communication style: Simple, everyday language - present as configuration assistant helping legal admins set up document workflows. Use human-centered language focused on clarity and professionalism. Avoid mentioning AI, agents, automation, or technology directly. Frame features as document review help, risk checking, and workflow assistance.
 
 ## Recent Changes
 

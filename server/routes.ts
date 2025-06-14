@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { DEFAULT_DOCUMENT_PRESETS } = await import('./services/onboardingConfig.js');
     
     res.json({
-      message: `Welcome to FIRMSYNC, ${firmName}! Let's configure your document analysis preferences.`,
+      message: `Welcome to FIRMSYNC, ${firmName}! Let's set up your document review workflow.`,
       availableDocTypes: Object.keys(DEFAULT_DOCUMENT_PRESETS).map(key => ({
         id: key,
         name: DEFAULT_DOCUMENT_PRESETS[key].displayName
@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         firmProfile,
         configSummary,
-        message: 'Your FIRMSYNC environment has been configured successfully!'
+        message: 'Your FIRMSYNC document workflow has been configured successfully!'
       });
     } catch (error) {
       console.error('Onboarding configuration error:', error);
