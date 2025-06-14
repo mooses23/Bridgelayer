@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { assemblePrompt, getDocumentTypeFromContent } from "./promptAssembler";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -77,19 +78,16 @@ export interface FormattingAnalysis {
 }
 
 export async function analyzeDocumentSummary(content: string): Promise<DocumentSummary> {
+  const docType = getDocumentTypeFromContent(content);
+  const systemPrompt = await assemblePrompt(docType);
+  
   const prompt = `
-You are FIRMSYNC's AI Legal Assistant for paralegals, powered by BridgeLayer. Your role is to silently enhance legal workflows by analyzing documents with precision, trustworthiness, and explainable logic.
+${systemPrompt}
 
-TRUST LAYER PRINCIPLES:
-- Only make statements directly supported by document text
-- Include specific clause numbers and sections as evidence
-- Flag any uncertainty clearly
-- Use professional, measured language ("Consider revising..." not "This is wrong")
-- Never provide legal advice - you are a paralegal-level assistant
-
+DOCUMENT SUMMARIZATION TASK:
 Analyze this legal document and provide a structured summary. Return your response in JSON format with the following structure:
 {
-  "documentType": "type of document (e.g., lease, contract, brief)",
+  "documentType": "type of document with reasoning",
   "purpose": "brief description of document's purpose with supporting evidence",
   "parties": [{"name": "party name", "role": "their role"}],
   "keyTerms": [{"term": "key obligation/term", "description": "description with clause reference", "section": "specific section reference"}],
@@ -120,25 +118,14 @@ ${content}
 }
 
 export async function analyzeDocumentRisks(content: string): Promise<RiskAnalysis> {
+  const docType = getDocumentTypeFromContent(content);
+  const systemPrompt = await assemblePrompt(docType);
+  
   const prompt = `
-You are FIRMSYNC's AI Legal Assistant with the Risk Profile Balancer module engaged. Apply trust layer principles and risk-appropriate analysis.
+${systemPrompt}
 
-RISK ASSESSMENT FRAMEWORK:
-1. First determine document risk category:
-   - Low-Risk: NDAs, internal memos, basic engagement letters
-   - Medium-Risk: Employment agreements, vendor contracts, lease terms  
-   - High-Risk: Litigation documents, discovery responses, settlement agreements
-
-2. Adjust analysis tone based on risk level:
-   - Low-Risk: Light review, focus on clarity and standard clauses
-   - Medium-Risk: Balanced analysis, prioritize enforceability and key terms
-   - High-Risk: Heightened scrutiny, conservative suggestions only
-
-TRUST LAYER REQUIREMENTS:
-- Cite specific clause numbers and sections as evidence
-- Use measured language: "It may be advisable to..." not "You must..."
-- Flag uncertainties clearly
-- Never provide legal advice - support paralegal work only
+RISK ANALYSIS TASK:
+Perform comprehensive risk assessment following the protocols above.
 
 Return JSON format:
 {
@@ -181,17 +168,16 @@ ${content}
 }
 
 export async function extractClauses(content: string): Promise<ClauseExtraction> {
+  const docType = getDocumentTypeFromContent(content);
+  const systemPrompt = await assemblePrompt(docType);
+  
   const prompt = `
-You are FIRMSYNC's AI Legal Assistant performing clause extraction with trust layer verification.
+${systemPrompt}
 
-TRUST LAYER REQUIREMENTS:
-- Only generate draft language when Clause Completion is enabled
-- Label all AI-generated content as: "🧠 Suggested Draft Language (AI-Generated — Review Required)"
-- Cite specific section numbers and evidence
-- Use measured language: "Consider including..." not "You must add..."
-- Flag uncertainties that may require attorney review
+CLAUSE EXTRACTION TASK:
+Extract major clauses from this legal document following the protocols above.
 
-Extract major clauses from this legal document. Return JSON format:
+Return JSON format:
 {
   "clauses": [
     {
@@ -207,8 +193,6 @@ Extract major clauses from this legal document. Return JSON format:
   "confidence": number between 0-100,
   "uncertainties": ["list any ambiguous clause identifications requiring review"]
 }
-
-Focus on standard clauses: termination, confidentiality, payment, indemnification, jurisdiction, force majeure, amendment.
 
 Document content:
 ${content}

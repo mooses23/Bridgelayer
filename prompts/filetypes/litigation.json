@@ -1,0 +1,12 @@
+{
+  "document_type": "Litigation Document",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "⚠️ HIGH-RISK DOCUMENT: Use heightened scrutiny and conservative approach. Flag any exposure or legal ambiguity for immediate attorney review. Focus on factual accuracy, statute of limitations, jurisdiction, and procedural requirements."
+}
