@@ -123,9 +123,14 @@ export default function FormattingAnalysis({ analysis, enabled }: FormattingAnal
                 </div>
               ) : (
                 result.issues.numbering.map((issue, index) => (
-                  <div key={index} className={`flex items-center justify-between p-3 border rounded-lg ${getSeverityClasses(issue.severity)}`}>
-                    <span className="text-sm text-gray-700">{issue.issue}</span>
-                    {getSeverityIcon(issue.severity)}
+                  <div key={index} className={`p-3 border rounded-lg ${getSeverityClasses(issue.severity)}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-700">{issue.issue}</span>
+                      {getSeverityIcon(issue.severity)}
+                    </div>
+                    {issue.evidence && (
+                      <p className="text-xs text-blue-600 mt-1">Evidence: {issue.evidence}</p>
+                    )}
                   </div>
                 ))
               )}
@@ -142,9 +147,14 @@ export default function FormattingAnalysis({ analysis, enabled }: FormattingAnal
                 </div>
               ) : (
                 result.issues.capitalization.map((issue, index) => (
-                  <div key={index} className={`flex items-center justify-between p-3 border rounded-lg ${getSeverityClasses(issue.severity)}`}>
-                    <span className="text-sm text-gray-700">{issue.issue}</span>
-                    {getSeverityIcon(issue.severity)}
+                  <div key={index} className={`p-3 border rounded-lg ${getSeverityClasses(issue.severity)}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-700">{issue.issue}</span>
+                      {getSeverityIcon(issue.severity)}
+                    </div>
+                    {issue.evidence && (
+                      <p className="text-xs text-blue-600 mt-1">Evidence: {issue.evidence}</p>
+                    )}
                   </div>
                 ))
               )}
@@ -161,15 +171,51 @@ export default function FormattingAnalysis({ analysis, enabled }: FormattingAnal
                 </div>
               ) : (
                 result.issues.layout.map((issue, index) => (
-                  <div key={index} className={`flex items-center justify-between p-3 border rounded-lg ${getSeverityClasses(issue.severity)}`}>
-                    <span className="text-sm text-gray-700">{issue.issue}</span>
-                    {getSeverityIcon(issue.severity)}
+                  <div key={index} className={`p-3 border rounded-lg ${getSeverityClasses(issue.severity)}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-700">{issue.issue}</span>
+                      {getSeverityIcon(issue.severity)}
+                    </div>
+                    {issue.evidence && (
+                      <p className="text-xs text-blue-600 mt-1">Evidence: {issue.evidence}</p>
+                    )}
                   </div>
                 ))
               )}
             </div>
           </div>
         </div>
+        
+        {(result.improvementSuggestions && result.improvementSuggestions.length > 0) && (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+              <Lightbulb className="mr-2" size={16} />
+              Improvement Suggestions
+            </h4>
+            <ul className="space-y-1">
+              {result.improvementSuggestions.map((suggestion, index) => (
+                <li key={index} className="text-sm text-blue-800">• {suggestion}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {(result.uncertainties && result.uncertainties.length > 0) && (
+          <div className="mt-4 p-3 bg-legal-amber/10 border border-legal-amber/20 rounded-lg">
+            <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+              <AlertCircle className="legal-amber mr-2" size={16} />
+              Style Guide Clarification Needed
+            </h4>
+            <ul className="space-y-1">
+              {result.uncertainties.map((uncertainty, index) => (
+                <li key={index} className="text-xs legal-slate">• {uncertainty}</li>
+              ))}
+            </ul>
+            <p className="text-xs legal-amber font-medium mt-2">
+              These formatting elements may require firm style guide review.
+            </p>
+          </div>
+        )}
         
         <div className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex items-center justify-between">

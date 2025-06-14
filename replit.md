@@ -93,7 +93,39 @@ FIRMSYNC is a comprehensive AI-powered legal document analysis platform built as
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- **June 14, 2025**: Enhanced AI analysis system with Trust Layer and Risk Profile Balancer
+  - Implemented evidence-based analysis with specific section citations
+  - Added risk-appropriate analysis tone (low/medium/high-risk documents)
+  - Enhanced all AI prompts with professional, measured language requirements
+  - Added uncertainty tracking and attorney review flagging
+  - Updated analysis interfaces with confidence levels and escalation flags
+  - Enhanced frontend components to display trust layer features
+
+## Trust Layer & Risk Assessment Features
+
+### Trust Layer Principles
+- Evidence-based analysis with specific clause citations
+- Measured professional language ("Consider revising..." vs "This is wrong")
+- Clear uncertainty flagging for attorney review
+- AI-generated content clearly marked with review requirements
+- No legal advice - paralegal-level assistance only
+
+### Risk Profile Balancer
+- **Low-Risk Documents**: Light review focusing on clarity and standard clauses
+- **Medium-Risk Documents**: Balanced analysis prioritizing enforceability
+- **High-Risk Documents**: Heightened scrutiny with conservative suggestions
+- Automatic escalation flags for high-risk items requiring immediate attorney review
+
+### Enhanced Analysis Components
+- Document summarization with uncertainty tracking
+- Risk analysis with document categorization and escalation flags
+- Clause extraction with confidence levels and AI-generated draft marking
+- Cross-reference verification with evidence-based issue identification
+- Formatting analysis with improvement suggestions and style guide clarification needs
+
 ## Changelog
 
-Changelog:
-- June 14, 2025. Initial setup
+- June 14, 2025: Initial setup
+- June 14, 2025: Trust Layer Enhancer and Risk Profile Balancer implementation
