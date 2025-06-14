@@ -201,6 +201,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // BridgeLayer Onboarding API endpoints
+  app.post('/api/onboarding/start', async (req, res) => {
+    const { firmName, adminEmail } = req.body;
+    
+    if (!firmName || !adminEmail) {
+      return res.status(400).json({ error: 'Firm name and admin email are required' });
+    }
+
+    const { DEFAULT_DOCUMENT_PRESETS } = await import('./services/onboardingConfig.js');
+    
+    res.json({
+      message: `Welcome to FIRMSYNC, ${firmName}! Let's configure your document analysis preferences.`,
+      availableDocTypes: Object.keys(DEFAULT_DOCUMENT_PRESETS).map(key => ({
+        id: key,
+        name: DEFAULT_DOCUMENT_PRESETS[key].displayName
+      })),
+      firmName,
+      adminEmail
+    });
+  });
+
+  app.post('/api/onboarding/configure', async (req, res) => {
+    const { firmName, adminEmail, selectedDocTypes, customConfigs } = req.body;
+    
+    try {
+      const { createDefaultFirmProfile, generateFirmConfigSummary } = await import('./services/onboardingConfig.js');
+      
+      let firmProfile = createDefaultFirmProfile(firmName, adminEmail, selectedDocTypes);
+      
+      // Apply any custom configurations
+      if (customConfigs) {
+        firmProfile.documentConfigs = firmProfile.documentConfigs.map(config => {
+          const custom = customConfigs[config.docType];
+          if (custom) {
+            return { ...config, ...custom };
+          }
+          return config;
+        });
+      }
+      
+      const configSummary = generateFirmConfigSummary(firmProfile);
+      
+      res.json({
+        success: true,
+        firmProfile,
+        configSummary,
+        message: 'Your FIRMSYNC environment has been configured successfully!'
+      });
+    } catch (error) {
+      console.error('Onboarding configuration error:', error);
+      res.status(500).json({ error: 'Failed to configure firm profile' });
+    }
+  });
+
+  app.get('/api/onboarding/presets', async (req, res) => {
+    const { DEFAULT_DOCUMENT_PRESETS } = await import('./services/onboardingConfig.js');
+    res.json(DEFAULT_DOCUMENT_PRESETS);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
