@@ -176,6 +176,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct AI analysis endpoint
+  app.post('/api/analyze', async (req, res) => {
+    const { docType, fileText } = req.body;
+
+    if (!docType || !fileText) {
+      return res.status(400).json({ success: false, error: 'docType and fileText are required' });
+    }
+
+    try {
+      const { runAiAgent } = await import('./services/aiAgent.js');
+      const aiOutput = await runAiAgent(docType, fileText);
+      res.json({ success: true, result: aiOutput });
+    } catch (err) {
+      console.error('AI analysis error:', err);
+      res.status(500).json({ success: false, error: 'AI processing failed' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
