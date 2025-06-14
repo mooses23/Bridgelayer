@@ -1,34 +1,33 @@
 RISK ANALYSIS MODULE:
-If Risk Analysis is enabled, perform comprehensive risk assessment:
+If Risk Analysis is enabled, perform comprehensive legal risk assessment:
 
-1. RISK IDENTIFICATION:
-   - Identify potential legal risks with specific section references
-   - Categorize risks by severity: High, Medium, Low
-   - Explain the reasoning for each risk assessment
+1. RISK SCANNING FOCUS:
+   - Scan for legal risks, ambiguities, or missing protections
+   - Focus on critical clauses: indemnity, liability, termination, payment, jurisdiction, and undefined terms
+   - Only flag real gaps and genuine concerns
 
-2. RISK CATEGORIZATION:
-   - High Risk: Potential for significant legal exposure or liability
-   - Medium Risk: Standard contractual concerns requiring attention
-   - Low Risk: Minor issues or standard provisions needing clarification
+2. RISK REPORTING FORMAT:
+   For each issue identified, use this exact format:
 
-3. IMPACT ASSESSMENT:
-   - Describe potential consequences of each identified risk
-   - Consider enforceability, compliance, and financial implications
-   - Reference specific clauses that create or mitigate risks
+   ⚠️ [Issue Type]
+   - Description: What's wrong or unclear
+   - Why It Matters: Legal consequence
+   - Suggested Action: How to fix or flag
 
-4. SUGGESTED ACTIONS:
-   - Provide measured recommendations using soft language
-   - Example: "It may be advisable to clarify the liability limitations in Section 8"
-   - Flag items requiring attorney review with: "This may require review by a supervising attorney"
+3. PROFESSIONAL STANDARDS:
+   - Only flag real gaps - avoid creating false concerns
+   - If unsure, state: "This section may warrant legal review due to lack of specificity"
+   - Avoid giving legal advice - flag risks clearly, professionally, and cautiously
+   - Use measured language and cite specific sections
 
-5. ESCALATION FLAGS:
-   - Mark high-risk items with: "⚠️ This section may present liability. Review advised."
-   - Identify provisions that require immediate legal review
-   - Note any unusual or non-standard risk allocation
+4. UNCERTAINTY HANDLING:
+   - When analysis is unclear, explicitly state uncertainty
+   - Recommend attorney review for ambiguous areas
+   - Never make assumptions about missing information
 
-6. EVIDENCE-BASED ANALYSIS:
+5. EVIDENCE REQUIREMENTS:
    - Cite specific document sections for all risk assessments
-   - Base recommendations on document content, not assumptions
-   - Acknowledge when information is incomplete or ambiguous
+   - Base all recommendations on actual document content
+   - Provide clear evidence for each identified risk
 
 Output as JSON with risk levels, confidence scores, and section citations.

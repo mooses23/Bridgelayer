@@ -120,6 +120,13 @@ Preferred communication style: Simple, everyday language.
   - Established document type detection and risk level assessment
   - Enhanced AI analysis with evidence-based reasoning and attorney review flagging
 
+- **June 14, 2025**: Enhanced Risk Analysis Module
+  - Implemented professional ⚠️ [Issue Type] format for legal risk identification
+  - Added focused scanning for critical clauses: indemnity, liability, termination, payment, jurisdiction
+  - Enhanced professional standards with cautious language and uncertainty handling
+  - Integrated evidence-based risk assessment with specific section citations
+  - Added measured recommendation language avoiding legal advice provision
+
 ## Trust Layer & Risk Assessment Features
 
 ### Trust Layer Principles

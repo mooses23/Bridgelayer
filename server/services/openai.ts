@@ -127,16 +127,16 @@ ${systemPrompt}
 RISK ANALYSIS TASK:
 Perform comprehensive risk assessment following the protocols above.
 
-Return JSON format:
+Return JSON format following the ⚠️ [Issue Type] format:
 {
   "documentRiskCategory": "low|medium|high",
   "risks": [
     {
       "level": "high|medium|low",
-      "title": "brief title with supporting evidence",
-      "description": "description citing specific sections",
-      "impact": "why this matters - be specific",
-      "suggestedAction": "recommended action using measured language",
+      "title": "⚠️ [Issue Type]",
+      "description": "What's wrong or unclear",
+      "impact": "Legal consequence - why it matters",
+      "suggestedAction": "How to fix or flag",
       "evidenceSection": "specific clause/section reference",
       "requiresAttorneyReview": boolean
     }
