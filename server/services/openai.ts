@@ -217,17 +217,16 @@ ${content}
 }
 
 export async function checkCrossReferences(content: string): Promise<CrossReferenceCheck> {
+  const docType = getDocumentTypeFromContent(content);
+  const systemPrompt = await assemblePrompt(docType);
+  
   const prompt = `
-You are FIRMSYNC's AI Legal Assistant performing cross-reference verification with trust layer principles.
+${systemPrompt}
 
-VERIFICATION REQUIREMENTS:
-- Only flag references with clear evidence of errors
-- Cite specific line numbers or sections where issues appear
-- Use measured language: "May require clarification" not "This is wrong"
-- Flag ambiguous references that need attorney review
-- Verify existence of referenced sections, exhibits, schedules
+CROSS-REFERENCE CHECK TASK:
+Verify all internal references in this legal document following the protocols above.
 
-Verify all internal references in this legal document. Return JSON format:
+Return JSON format:
 {
   "references": [
     {
@@ -243,8 +242,6 @@ Verify all internal references in this legal document. Return JSON format:
   "uncertainties": ["list any ambiguous references requiring attorney review"],
   "confidence": number between 0-100
 }
-
-Focus on: section references, defined terms, exhibits, schedules, appendices, inconsistent numbering.
 
 Document content:
 ${content}
@@ -269,17 +266,16 @@ ${content}
 }
 
 export async function analyzeFormatting(content: string): Promise<FormattingAnalysis> {
+  const docType = getDocumentTypeFromContent(content);
+  const systemPrompt = await assemblePrompt(docType);
+  
   const prompt = `
-You are FIRMSYNC's AI Legal Assistant performing formatting analysis with trust layer verification.
+${systemPrompt}
 
-FORMATTING REVIEW PRINCIPLES:
-- Only flag clear formatting inconsistencies with specific evidence
-- Cite exact line numbers or sections where issues appear
-- Use professional language: "Consider standardizing..." not "This is wrong"
-- Distinguish between style preferences and actual formatting errors
-- Focus on issues that could affect document enforceability or clarity
+FORMATTING ANALYSIS TASK:
+Analyze the formatting of this legal document following the protocols above.
 
-Analyze the formatting of this legal document. Return JSON format:
+Return JSON format:
 {
   "issues": {
     "numbering": [{"issue": "specific description with location", "severity": "high|medium|low", "evidence": "exact text showing the issue"}],
@@ -291,8 +287,6 @@ Analyze the formatting of this legal document. Return JSON format:
   "uncertainties": ["formatting elements that may require style guide clarification"],
   "confidence": number between 0-100
 }
-
-Focus on: section numbering consistency, defined term capitalization, indentation patterns, bullet/list formatting, legal citation consistency, paragraph structure.
 
 Document content:
 ${content}

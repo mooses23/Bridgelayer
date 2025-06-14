@@ -33,8 +33,9 @@ FIRMSYNC is a comprehensive AI-powered legal document analysis platform built as
 ### Document Processing Pipeline
 1. **Upload Service**: Handles file uploads with MIME type validation and size limits (10MB)
 2. **Content Extraction**: Extracts text content from various document formats
-3. **AI Analysis Engine**: Processes documents through multiple analysis types
-4. **Result Storage**: Stores analysis results in structured JSON format
+3. **Dynamic Prompt Assembly**: Assembles document-specific AI prompts based on type and risk level
+4. **AI Analysis Engine**: Processes documents through configurable analysis modules
+5. **Result Storage**: Stores analysis results in structured JSON format with database persistence
 
 ### Analysis Modules
 - **Document Summarization**: Extracts key terms, parties, and document purpose
@@ -110,6 +111,14 @@ Preferred communication style: Simple, everyday language.
   - Created database schema with users, documents, analyses, and features tables
   - Successfully tested document upload and AI analysis with database persistence
   - All data now stored persistently in PostgreSQL for production reliability
+
+- **June 14, 2025**: Dynamic Prompt Assembly System Implementation
+  - Created modular prompt management system with document-type specific configurations
+  - Implemented Trust Layer protocols with transparent reasoning requirements
+  - Added Risk Profile Balancer with automatic tone adjustment based on document risk
+  - Created configurable analysis modules (summarize, risk, clauses, crossref, formatting)
+  - Established document type detection and risk level assessment
+  - Enhanced AI analysis with evidence-based reasoning and attorney review flagging
 
 ## Trust Layer & Risk Assessment Features
 
