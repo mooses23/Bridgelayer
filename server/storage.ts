@@ -73,7 +73,10 @@ export class MemStorage implements IStorage {
   async createDocument(insertDocument: InsertDocument): Promise<Document> {
     const id = this.currentDocumentId++;
     const document: Document = { 
-      ...insertDocument, 
+      ...insertDocument,
+      userId: insertDocument.userId || null,
+      documentType: insertDocument.documentType || null,
+      content: insertDocument.content || null,
       id,
       uploadedAt: new Date(),
       analyzedAt: null
@@ -105,6 +108,7 @@ export class MemStorage implements IStorage {
     const id = this.currentAnalysisId++;
     const analysis: DocumentAnalysis = {
       ...insertAnalysis,
+      confidence: insertAnalysis.confidence || null,
       id,
       createdAt: new Date()
     };
@@ -145,6 +149,7 @@ export class MemStorage implements IStorage {
     const id = this.currentFeaturesId++;
     const features: AnalysisFeatures = {
       ...insertFeatures,
+      userId: insertFeatures.userId || null,
       id,
       summarization: insertFeatures.summarization ?? true,
       riskAnalysis: insertFeatures.riskAnalysis ?? true,

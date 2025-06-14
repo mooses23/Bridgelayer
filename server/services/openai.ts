@@ -18,6 +18,7 @@ export interface DocumentSummary {
     section?: string;
   }>;
   confidence: number;
+  uncertainties?: string[];
 }
 
 export interface RiskAnalysis {
@@ -27,8 +28,12 @@ export interface RiskAnalysis {
     description: string;
     impact: string;
     suggestedAction: string;
+    evidenceSection?: string;
+    requiresAttorneyReview?: boolean;
   }>;
   confidence: number;
+  documentRiskCategory: 'low' | 'medium' | 'high';
+  escalationFlags?: string[];
 }
 
 export interface ClauseExtraction {
@@ -38,8 +43,11 @@ export interface ClauseExtraction {
     content?: string;
     section?: string;
     aiGeneratedDraft?: string;
+    reasoning?: string;
+    confidenceLevel?: 'high' | 'medium' | 'low';
   }>;
   confidence: number;
+  uncertainties?: string[];
 }
 
 export interface CrossReferenceCheck {
@@ -64,13 +72,23 @@ export interface FormattingAnalysis {
 
 export async function analyzeDocumentSummary(content: string): Promise<DocumentSummary> {
   const prompt = `
+You are FIRMSYNC's AI Legal Assistant for paralegals, powered by BridgeLayer. Your role is to silently enhance legal workflows by analyzing documents with precision, trustworthiness, and explainable logic.
+
+TRUST LAYER PRINCIPLES:
+- Only make statements directly supported by document text
+- Include specific clause numbers and sections as evidence
+- Flag any uncertainty clearly
+- Use professional, measured language ("Consider revising..." not "This is wrong")
+- Never provide legal advice - you are a paralegal-level assistant
+
 Analyze this legal document and provide a structured summary. Return your response in JSON format with the following structure:
 {
   "documentType": "type of document (e.g., lease, contract, brief)",
-  "purpose": "brief description of document's purpose",
+  "purpose": "brief description of document's purpose with supporting evidence",
   "parties": [{"name": "party name", "role": "their role"}],
-  "keyTerms": [{"term": "key obligation/term", "description": "description", "section": "section reference if available"}],
-  "confidence": number between 0-100
+  "keyTerms": [{"term": "key obligation/term", "description": "description with clause reference", "section": "specific section reference"}],
+  "confidence": number between 0-100,
+  "uncertainties": ["list any ambiguous elements that may require attorney review"]
 }
 
 Document content:
@@ -82,7 +100,7 @@ ${content}
     messages: [
       {
         role: "system",
-        content: "You are FIRMSYNC's AI Legal Assistant. Analyze documents with precision and provide structured, formal summaries. Use clause numbers where possible and avoid casual language."
+        content: "You are FIRMSYNC's AI Legal Assistant. Analyze documents with precision, cite specific sections, and flag uncertainties. Use formal, measured language. Never provide legal advice - you support paralegals with document analysis."
       },
       {
         role: "user",
@@ -97,21 +115,42 @@ ${content}
 
 export async function analyzeDocumentRisks(content: string): Promise<RiskAnalysis> {
   const prompt = `
-Analyze this legal document for risks and missing provisions. Return your response in JSON format:
+You are FIRMSYNC's AI Legal Assistant with the Risk Profile Balancer module engaged. Apply trust layer principles and risk-appropriate analysis.
+
+RISK ASSESSMENT FRAMEWORK:
+1. First determine document risk category:
+   - Low-Risk: NDAs, internal memos, basic engagement letters
+   - Medium-Risk: Employment agreements, vendor contracts, lease terms  
+   - High-Risk: Litigation documents, discovery responses, settlement agreements
+
+2. Adjust analysis tone based on risk level:
+   - Low-Risk: Light review, focus on clarity and standard clauses
+   - Medium-Risk: Balanced analysis, prioritize enforceability and key terms
+   - High-Risk: Heightened scrutiny, conservative suggestions only
+
+TRUST LAYER REQUIREMENTS:
+- Cite specific clause numbers and sections as evidence
+- Use measured language: "It may be advisable to..." not "You must..."
+- Flag uncertainties clearly
+- Never provide legal advice - support paralegal work only
+
+Return JSON format:
 {
+  "documentRiskCategory": "low|medium|high",
   "risks": [
     {
       "level": "high|medium|low",
-      "title": "brief title of risk",
-      "description": "description of the risk",
-      "impact": "why this matters",
-      "suggestedAction": "recommended action"
+      "title": "brief title with supporting evidence",
+      "description": "description citing specific sections",
+      "impact": "why this matters - be specific",
+      "suggestedAction": "recommended action using measured language",
+      "evidenceSection": "specific clause/section reference",
+      "requiresAttorneyReview": boolean
     }
   ],
+  "escalationFlags": ["list any high-risk items requiring immediate attorney review"],
   "confidence": number between 0-100
 }
-
-Look for: ambiguous language, missing clauses (indemnification, jurisdiction, payment terms), dates without context, undefined terms.
 
 Document content:
 ${content}
@@ -122,7 +161,7 @@ ${content}
     messages: [
       {
         role: "system",
-        content: "You are a legal risk analysis expert. Identify potential legal risks and missing standard provisions. Be thorough but not overly cautious."
+        content: "You are FIRMSYNC's AI Legal Assistant. Apply risk-appropriate analysis with trust layer principles. Cite evidence, use measured language, flag uncertainties. Support paralegals - never provide legal advice."
       },
       {
         role: "user",
@@ -137,21 +176,33 @@ ${content}
 
 export async function extractClauses(content: string): Promise<ClauseExtraction> {
   const prompt = `
-Extract major clauses from this legal document. Return your response in JSON format:
+You are FIRMSYNC's AI Legal Assistant performing clause extraction with trust layer verification.
+
+TRUST LAYER REQUIREMENTS:
+- Only generate draft language when Clause Completion is enabled
+- Label all AI-generated content as: "🧠 Suggested Draft Language (AI-Generated — Review Required)"
+- Cite specific section numbers and evidence
+- Use measured language: "Consider including..." not "You must add..."
+- Flag uncertainties that may require attorney review
+
+Extract major clauses from this legal document. Return JSON format:
 {
   "clauses": [
     {
       "type": "clause type (e.g., termination, confidentiality, payment)",
       "status": "found|missing|incomplete",
-      "content": "clause content if found",
-      "section": "section reference if available",
-      "aiGeneratedDraft": "sample clause if missing (clearly marked as AI-generated)"
+      "content": "exact clause content if found",
+      "section": "specific section reference with evidence",
+      "aiGeneratedDraft": "🧠 Suggested Draft Language (AI-Generated — Review Required): [draft text]",
+      "reasoning": "explanation of why this clause is important for this document type",
+      "confidenceLevel": "high|medium|low based on clarity of evidence"
     }
   ],
-  "confidence": number between 0-100
+  "confidence": number between 0-100,
+  "uncertainties": ["list any ambiguous clause identifications requiring review"]
 }
 
-Focus on: termination, confidentiality, payment, indemnification, jurisdiction, force majeure, amendment clauses.
+Focus on standard clauses: termination, confidentiality, payment, indemnification, jurisdiction, force majeure, amendment.
 
 Document content:
 ${content}
@@ -162,7 +213,7 @@ ${content}
     messages: [
       {
         role: "system",
-        content: "You are a legal clause extraction specialist. Extract key clauses and suggest professional drafts for missing ones. Mark AI-generated content clearly."
+        content: "You are FIRMSYNC's AI Legal Assistant. Extract clauses with evidence-based analysis. Mark AI-generated drafts clearly. Use measured language and cite specific sections. Support paralegals - never provide legal advice."
       },
       {
         role: "user",
