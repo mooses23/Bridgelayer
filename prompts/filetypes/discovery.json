@@ -1,0 +1,12 @@
+{
+  "document_type": "Discovery Response",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": false,
+    "risk": true,
+    "clauses": false,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on consistency in objections, missing Bates numbers, undefined scope limitations, and possible exposure in admissions. Use strict, conservative tone. Review privilege assertions, completeness of responses, and compliance with discovery rules. Flag any inadvertent admissions or overly broad disclosures."
+}

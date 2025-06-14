@@ -5,8 +5,8 @@
     "summarize": true,
     "risk": true,
     "clauses": true,
-    "crossref": false,
+    "crossref": true,
     "formatting": true
   },
-  "custom_instructions": "Focus on confidentiality provisions, definition of confidential information, and term duration. Pay special attention to return of materials clauses and jurisdiction provisions."
+  "custom_instructions": "Pay close attention to vague confidentiality language, missing duration clauses, and undefined terms. Do not alter tone unless clause appears overly broad. Focus on confidentiality provisions, definition of confidential information, and term duration. Pay special attention to return of materials clauses and jurisdiction provisions."
 }

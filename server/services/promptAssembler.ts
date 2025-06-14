@@ -71,8 +71,17 @@ export function getDocumentTypeFromContent(content: string): string {
   if (lowerContent.includes('non-disclosure') || lowerContent.includes('confidentiality')) {
     return 'nda';
   }
+  if (lowerContent.includes('lease') || lowerContent.includes('rental') || lowerContent.includes('tenant') || lowerContent.includes('landlord')) {
+    return 'lease';
+  }
   if (lowerContent.includes('employment') || lowerContent.includes('employee')) {
     return 'employment';
+  }
+  if (lowerContent.includes('settlement') || lowerContent.includes('release') || lowerContent.includes('dismiss')) {
+    return 'settlement';
+  }
+  if (lowerContent.includes('discovery') || lowerContent.includes('interrogatories') || lowerContent.includes('requests for production') || lowerContent.includes('bates')) {
+    return 'discovery';
   }
   if (lowerContent.includes('litigation') || lowerContent.includes('complaint') || lowerContent.includes('plaintiff')) {
     return 'litigation';

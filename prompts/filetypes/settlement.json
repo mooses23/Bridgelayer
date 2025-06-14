@@ -1,0 +1,12 @@
+{
+  "document_type": "Settlement Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Check for missing release clauses, vague language around damages or payments, and improper jurisdiction references. Use HIGH-RISK tone. Focus on mutual releases, payment terms, confidentiality provisions, and dismissal procedures. Flag any ambiguous settlement amounts or missing enforcement mechanisms."
+}
