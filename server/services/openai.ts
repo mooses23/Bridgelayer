@@ -56,17 +56,23 @@ export interface CrossReferenceCheck {
     location: string;
     status: 'valid' | 'invalid' | 'missing';
     suggestion?: string;
+    evidenceOfIssue?: string;
+    requiresReview?: boolean;
   }>;
+  overallAssessment?: string;
+  uncertainties?: string[];
   confidence: number;
 }
 
 export interface FormattingAnalysis {
   issues: {
-    numbering: Array<{ issue: string; severity: 'high' | 'medium' | 'low' }>;
-    capitalization: Array<{ issue: string; severity: 'high' | 'medium' | 'low' }>;
-    layout: Array<{ issue: string; severity: 'high' | 'medium' | 'low' }>;
+    numbering: Array<{ issue: string; severity: 'high' | 'medium' | 'low'; evidence?: string; }>;
+    capitalization: Array<{ issue: string; severity: 'high' | 'medium' | 'low'; evidence?: string; }>;
+    layout: Array<{ issue: string; severity: 'high' | 'medium' | 'low'; evidence?: string; }>;
   };
   score: number;
+  improvementSuggestions?: string[];
+  uncertainties?: string[];
   confidence: number;
 }
 
@@ -228,20 +234,33 @@ ${content}
 
 export async function checkCrossReferences(content: string): Promise<CrossReferenceCheck> {
   const prompt = `
-Verify all internal references in this legal document. Return your response in JSON format:
+You are FIRMSYNC's AI Legal Assistant performing cross-reference verification with trust layer principles.
+
+VERIFICATION REQUIREMENTS:
+- Only flag references with clear evidence of errors
+- Cite specific line numbers or sections where issues appear
+- Use measured language: "May require clarification" not "This is wrong"
+- Flag ambiguous references that need attorney review
+- Verify existence of referenced sections, exhibits, schedules
+
+Verify all internal references in this legal document. Return JSON format:
 {
   "references": [
     {
-      "reference": "the reference text (e.g., 'see Section 5.2')",
-      "location": "where the reference appears",
+      "reference": "exact reference text found (e.g., 'see Section 5.2')",
+      "location": "specific location where reference appears",
       "status": "valid|invalid|missing",
-      "suggestion": "correction if needed"
+      "suggestion": "measured suggestion if correction needed",
+      "evidenceOfIssue": "specific evidence of the problem",
+      "requiresReview": boolean
     }
   ],
+  "overallAssessment": "summary of cross-reference quality",
+  "uncertainties": ["list any ambiguous references requiring attorney review"],
   "confidence": number between 0-100
 }
 
-Check for: section references, defined terms, exhibits, schedules, inconsistent numbering.
+Focus on: section references, defined terms, exhibits, schedules, appendices, inconsistent numbering.
 
 Document content:
 ${content}
@@ -252,7 +271,7 @@ ${content}
     messages: [
       {
         role: "system",
-        content: "You are a document cross-reference verification specialist. Check all internal references for accuracy and consistency."
+        content: "You are FIRMSYNC's AI Legal Assistant. Verify cross-references with evidence-based analysis. Use measured language and cite specific evidence. Flag uncertainties for review."
       },
       {
         role: "user",
@@ -267,18 +286,29 @@ ${content}
 
 export async function analyzeFormatting(content: string): Promise<FormattingAnalysis> {
   const prompt = `
-Analyze the formatting of this legal document. Return your response in JSON format:
+You are FIRMSYNC's AI Legal Assistant performing formatting analysis with trust layer verification.
+
+FORMATTING REVIEW PRINCIPLES:
+- Only flag clear formatting inconsistencies with specific evidence
+- Cite exact line numbers or sections where issues appear
+- Use professional language: "Consider standardizing..." not "This is wrong"
+- Distinguish between style preferences and actual formatting errors
+- Focus on issues that could affect document enforceability or clarity
+
+Analyze the formatting of this legal document. Return JSON format:
 {
   "issues": {
-    "numbering": [{"issue": "description", "severity": "high|medium|low"}],
-    "capitalization": [{"issue": "description", "severity": "high|medium|low"}],
-    "layout": [{"issue": "description", "severity": "high|medium|low"}]
+    "numbering": [{"issue": "specific description with location", "severity": "high|medium|low", "evidence": "exact text showing the issue"}],
+    "capitalization": [{"issue": "specific description with location", "severity": "high|medium|low", "evidence": "exact text showing the issue"}],
+    "layout": [{"issue": "specific description with location", "severity": "high|medium|low", "evidence": "exact text showing the issue"}]
   },
   "score": number between 0-100,
+  "improvementSuggestions": ["actionable formatting improvements"],
+  "uncertainties": ["formatting elements that may require style guide clarification"],
   "confidence": number between 0-100
 }
 
-Check for: section numbering consistency, defined term capitalization, indentation, bullet formatting, legal citation format.
+Focus on: section numbering consistency, defined term capitalization, indentation patterns, bullet/list formatting, legal citation consistency, paragraph structure.
 
 Document content:
 ${content}
@@ -289,7 +319,7 @@ ${content}
     messages: [
       {
         role: "system",
-        content: "You are a legal document formatting specialist. Analyze layout, numbering, and formatting issues with professional standards."
+        content: "You are FIRMSYNC's AI Legal Assistant. Analyze formatting with evidence-based assessment. Use professional language and cite specific examples. Support document quality without imposing style preferences."
       },
       {
         role: "user",

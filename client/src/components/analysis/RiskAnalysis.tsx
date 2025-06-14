@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, AlertCircle, Info } from "lucide-react";
-import type { RiskAnalysis as RiskAnalysisType } from "../../../../../../server/services/openai";
+import type { RiskAnalysis as RiskAnalysisType } from "../../../../shared/types";
 
 interface RiskAnalysisProps {
   analysis?: {
@@ -62,6 +62,19 @@ export default function RiskAnalysis({ analysis, enabled }: RiskAnalysisProps) {
   }
 
   const { result } = analysis;
+  
+  const getRiskCategoryBadge = (category: string) => {
+    switch (category) {
+      case 'high':
+        return <Badge className="bg-legal-red text-white">High-Risk Document</Badge>;
+      case 'medium':
+        return <Badge className="bg-legal-amber text-white">Medium-Risk Document</Badge>;
+      case 'low':
+        return <Badge className="bg-blue-600 text-white">Low-Risk Document</Badge>;
+      default:
+        return <Badge variant="secondary">Risk Assessment</Badge>;
+    }
+  };
 
   const getRiskIcon = (level: string) => {
     switch (level) {
@@ -124,6 +137,27 @@ export default function RiskAnalysis({ analysis, enabled }: RiskAnalysisProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {result.documentRiskCategory && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+              <span className="text-sm font-medium text-gray-900">Document Risk Category:</span>
+              {getRiskCategoryBadge(result.documentRiskCategory)}
+            </div>
+          )}
+          
+          {result.escalationFlags && result.escalationFlags.length > 0 && (
+            <div className="p-4 bg-legal-red/10 border border-legal-red/20 rounded-lg">
+              <h4 className="font-medium legal-red mb-2">⚠️ Escalation Required</h4>
+              <ul className="space-y-1">
+                {result.escalationFlags.map((flag, index) => (
+                  <li key={index} className="text-sm text-gray-700">• {flag}</li>
+                ))}
+              </ul>
+              <p className="text-xs legal-red font-medium mt-2">
+                These items require immediate attorney review.
+              </p>
+            </div>
+          )}
+          
           {result.risks.map((risk, index) => {
             const classes = getRiskClasses(risk.level);
             return (
@@ -131,9 +165,22 @@ export default function RiskAnalysis({ analysis, enabled }: RiskAnalysisProps) {
                 <div className="flex items-start space-x-3">
                   {getRiskIcon(risk.level)}
                   <div className="flex-1">
-                    <h4 className={`font-medium mb-1 ${classes.title}`}>{classes.titleText}</h4>
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className={`font-medium ${classes.title}`}>{classes.titleText}</h4>
+                      {risk.requiresAttorneyReview && (
+                        <Badge variant="outline" className="text-xs legal-red border-legal-red">
+                          Attorney Review
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-700 mb-2">{risk.title}</p>
-                    <p className="text-xs legal-slate mb-2">{risk.impact}</p>
+                    <p className="text-xs legal-slate mb-2">{risk.description}</p>
+                    {risk.evidenceSection && (
+                      <p className="text-xs font-medium text-blue-600 mb-2">
+                        Evidence: {risk.evidenceSection}
+                      </p>
+                    )}
+                    <p className="text-xs legal-slate mb-2">Impact: {risk.impact}</p>
                     <p className={`text-xs font-medium ${classes.action}`}>
                       Suggested Action: {risk.suggestedAction}
                     </p>
