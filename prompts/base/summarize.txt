@@ -1,0 +1,26 @@
+DOCUMENT SUMMARIZATION MODULE:
+Analyze and summarize the document with the following structured approach:
+
+1. DOCUMENT TYPE IDENTIFICATION:
+   - Identify the specific type of legal document
+   - Note any variations from standard forms
+
+2. PARTY ANALYSIS:
+   - List all parties with their roles and legal status
+   - Note any missing party information requiring clarification
+
+3. PURPOSE AND SCOPE:
+   - Describe the document's primary purpose
+   - Identify the scope of obligations and rights
+
+4. KEY TERMS EXTRACTION:
+   - Extract critical terms, definitions, and provisions
+   - Include section references for each key term
+   - Note any unusual or non-standard terms
+
+5. UNCERTAINTIES AND REVIEW FLAGS:
+   - Flag any ambiguous language requiring clarification
+   - Identify sections needing attorney review
+   - Note incomplete information (dates, names, amounts)
+
+Output as JSON with confidence scores and section citations.

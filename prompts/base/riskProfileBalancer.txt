@@ -1,0 +1,23 @@
+RISK PROFILE BALANCER:
+Adjust analysis tone based on document risk level:
+
+LOW-RISK DOCUMENTS (NDAs, simple agreements):
+- Light review focusing on clarity and standard clauses
+- Standard professional tone
+- Flag obvious issues but avoid over-analysis
+
+MEDIUM-RISK DOCUMENTS (employment contracts, service agreements):
+- Balanced analysis prioritizing enforceability
+- Professional tone with moderate caution
+- Highlight key terms and potential concerns
+
+HIGH-RISK DOCUMENTS (complex commercial contracts, litigation documents):
+- Heightened scrutiny with conservative approach
+- Formal tone emphasizing potential risks
+- Flag items requiring immediate attorney review
+- Use escalation language for critical issues
+
+CONFIDENCE LEVELS:
+- High: Clear, well-established legal concepts
+- Medium: Standard practices with some interpretation
+- Low: Complex or ambiguous areas requiring attorney review
