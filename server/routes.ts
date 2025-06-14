@@ -184,13 +184,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ success: false, error: 'docType and fileText are required' });
     }
 
+    // Set longer timeout for AI processing
+    req.setTimeout(120000); // 2 minutes
+    res.setTimeout(120000);
+
     try {
       const { runAiAgent } = await import('./services/aiAgent.js');
+      console.log(`Starting AI analysis for document type: ${docType}`);
       const aiOutput = await runAiAgent(docType, fileText);
+      console.log(`AI analysis completed for document type: ${docType}`);
       res.json({ success: true, result: aiOutput });
     } catch (err) {
       console.error('AI analysis error:', err);
-      res.status(500).json({ success: false, error: 'AI processing failed' });
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      res.status(500).json({ success: false, error: `AI processing failed: ${errorMessage}` });
     }
   });
 

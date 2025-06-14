@@ -19,14 +19,20 @@ FIRMSYNC is a comprehensive AI-powered legal document analysis platform built as
 - **Language**: TypeScript with ES modules
 - **API Pattern**: RESTful API with JSON responses
 - **File Handling**: Multer middleware for document uploads (PDF, DOC, DOCX, TXT)
-- **AI Integration**: OpenAI API for document analysis using GPT-4o model
+- **AI Integration**: OpenAI GPT-4o with high-trust mega-prompt system
 
 ### Database & ORM
 - **Database**: PostgreSQL (fully integrated and active)
 - **ORM**: Drizzle ORM with Neon Database serverless driver
 - **Schema**: Complete tables for users, documents, analyses, and feature toggles
 - **Database Provider**: Neon Database (serverless PostgreSQL)
-- **Storage**: DatabaseStorage class replaces MemStorage for production persistence
+- **Storage**: DatabaseStorage class for production persistence
+
+### AI Analysis Architecture
+- **Mega-Prompt System**: Document-specific comprehensive analysis protocols
+- **Trust Layer**: Evidence-based analysis with professional language standards
+- **Risk Profile Balancer**: Automatic tone adjustment (low/medium/high-risk)
+- **Document Detection**: Keyword-based classification with 7 supported types
 
 ## Key Components
 

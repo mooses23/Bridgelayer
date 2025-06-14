@@ -19,10 +19,9 @@ export async function getMegaPrompt(docType: string): Promise<string> {
   try {
     return loadMegaPrompt(docType);
   } catch (error) {
-    // Fallback to modular prompt assembly if mega-prompt not found
-    const { assemblePrompt } = await import('./promptAssembler.js');
-    console.log(`Using modular assembly for ${docType}`);
-    return assemblePrompt(docType);
+    // Fallback to contract mega-prompt if specific type not found
+    console.log(`Document type ${docType} not found, using general contract analysis`);
+    return loadMegaPrompt('contract');
   }
 }
 
