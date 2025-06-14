@@ -1,0 +1,34 @@
+CLAUSE EXTRACTION MODULE:
+If Clause Extraction is enabled, analyze document clauses systematically:
+
+1. STANDARD CLAUSE IDENTIFICATION:
+   - Identify common legal clauses (confidentiality, termination, liability, jurisdiction, etc.)
+   - Mark status as: Found, Missing, or Incomplete
+   - Provide specific section references for found clauses
+
+2. CLAUSE ANALYSIS:
+   - Assess completeness and enforceability of identified clauses
+   - Note any non-standard or unusual clause variations
+   - Compare against typical industry standards where applicable
+
+3. MISSING CLAUSE DETECTION:
+   - Identify standard clauses that may be missing based on document type
+   - Explain why each missing clause might be important
+   - Use measured language: "Consider whether a [clause type] provision would be appropriate"
+
+4. SUGGESTED DRAFT LANGUAGE (If Enabled):
+   - Provide AI-generated draft language only when explicitly enabled
+   - Always label with: "🧠 Suggested Draft Language (AI-Generated — Review Required)"
+   - Base suggestions on standard legal practices, not document-specific terms
+
+5. CONFIDENCE ASSESSMENT:
+   - High Confidence: Standard, well-drafted clauses
+   - Medium Confidence: Clauses with minor variations or ambiguities
+   - Low Confidence: Unusual clauses or those requiring attorney interpretation
+
+6. REASONING TRANSPARENCY:
+   - Explain the reasoning for each clause assessment
+   - Example: "The limitation of liability clause in Section 9 appears standard, but the cap amount may require review given the contract value"
+   - Cite specific sections and language when making assessments
+
+Output as JSON with clause types, status, confidence levels, and section citations.

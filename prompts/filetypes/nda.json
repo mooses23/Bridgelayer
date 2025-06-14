@@ -1,0 +1,12 @@
+{
+  "document_type": "Non-Disclosure Agreement",
+  "risk_level": "low",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": false,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on confidentiality provisions, definition of confidential information, and term duration. Pay special attention to return of materials clauses and jurisdiction provisions."
+}

@@ -1,0 +1,34 @@
+CROSS-REFERENCE CHECK MODULE:
+If Cross-Reference Check is enabled, verify internal document references:
+
+1. REFERENCE IDENTIFICATION:
+   - Locate all internal cross-references (section numbers, clause references, defined terms)
+   - Identify references to exhibits, schedules, or attachments
+   - Note references to other documents or agreements
+
+2. VALIDATION PROCESS:
+   - Verify that referenced sections actually exist
+   - Check that defined terms are used consistently throughout
+   - Confirm that exhibit/schedule references are accurate
+
+3. STATUS CLASSIFICATION:
+   - Valid: Reference exists and is accurate
+   - Invalid: Reference points to non-existent section or contains errors
+   - Missing: Referenced item should exist but is absent
+
+4. ISSUE DOCUMENTATION:
+   - For invalid references, specify the exact problem
+   - Example: "Section 12.3 referenced in clause 8.1 does not exist; document only contains 11 sections"
+   - Provide evidence of the issue with specific location citations
+
+5. IMPROVEMENT SUGGESTIONS:
+   - Use measured language: "Consider reviewing the reference in Section X to ensure accuracy"
+   - Suggest corrections where apparent: "The reference may intend Section 8.2 rather than 8.3"
+   - Flag significant inconsistencies for attorney review
+
+6. OVERALL ASSESSMENT:
+   - Provide summary of cross-reference integrity
+   - Note any patterns of referencing issues
+   - Assess impact on document enforceability and clarity
+
+Output as JSON with reference locations, status, and suggested corrections.

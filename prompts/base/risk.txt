@@ -1,0 +1,34 @@
+RISK ANALYSIS MODULE:
+If Risk Analysis is enabled, perform comprehensive risk assessment:
+
+1. RISK IDENTIFICATION:
+   - Identify potential legal risks with specific section references
+   - Categorize risks by severity: High, Medium, Low
+   - Explain the reasoning for each risk assessment
+
+2. RISK CATEGORIZATION:
+   - High Risk: Potential for significant legal exposure or liability
+   - Medium Risk: Standard contractual concerns requiring attention
+   - Low Risk: Minor issues or standard provisions needing clarification
+
+3. IMPACT ASSESSMENT:
+   - Describe potential consequences of each identified risk
+   - Consider enforceability, compliance, and financial implications
+   - Reference specific clauses that create or mitigate risks
+
+4. SUGGESTED ACTIONS:
+   - Provide measured recommendations using soft language
+   - Example: "It may be advisable to clarify the liability limitations in Section 8"
+   - Flag items requiring attorney review with: "This may require review by a supervising attorney"
+
+5. ESCALATION FLAGS:
+   - Mark high-risk items with: "⚠️ This section may present liability. Review advised."
+   - Identify provisions that require immediate legal review
+   - Note any unusual or non-standard risk allocation
+
+6. EVIDENCE-BASED ANALYSIS:
+   - Cite specific document sections for all risk assessments
+   - Base recommendations on document content, not assumptions
+   - Acknowledge when information is incomplete or ambiguous
+
+Output as JSON with risk levels, confidence scores, and section citations.

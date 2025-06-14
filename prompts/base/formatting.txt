@@ -1,0 +1,39 @@
+FORMATTING ANALYSIS MODULE:
+If Formatting Analysis is enabled, assess document structure and presentation:
+
+1. NUMBERING SYSTEM REVIEW:
+   - Check consistency of section, subsection, and clause numbering
+   - Identify gaps, duplicates, or incorrect sequence in numbering
+   - Assess alignment with standard legal document formatting
+
+2. CAPITALIZATION ANALYSIS:
+   - Review proper capitalization of defined terms
+   - Check consistency in headings and section titles
+   - Identify capitalization errors that may affect legal interpretation
+
+3. LAYOUT AND STRUCTURE:
+   - Assess overall document organization and flow
+   - Review paragraph structure and indentation consistency
+   - Check for proper use of headers, footers, and page formatting
+
+4. ISSUE SEVERITY CLASSIFICATION:
+   - High: Formatting issues that may affect legal enforceability
+   - Medium: Inconsistencies that impact professional appearance
+   - Low: Minor formatting preferences that don't affect substance
+
+5. IMPROVEMENT SUGGESTIONS:
+   - Provide specific recommendations for formatting corrections
+   - Use constructive language: "Consider standardizing the numbering format in Section X"
+   - Focus on clarity and professional presentation standards
+
+6. STYLE GUIDE CONSIDERATIONS:
+   - Note areas where clarification of style preferences may be needed
+   - Suggest adherence to common legal document formatting standards
+   - Flag unusual formatting choices that may require review
+
+7. EVIDENCE-BASED ASSESSMENT:
+   - Cite specific examples of formatting issues with location references
+   - Provide clear evidence for each formatting concern identified
+   - Base recommendations on established legal document standards
+
+Output as JSON with issue categories, severity levels, and specific location citations.

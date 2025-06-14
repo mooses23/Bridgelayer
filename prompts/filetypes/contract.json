@@ -1,0 +1,12 @@
+{
+  "document_type": "Commercial Contract",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on payment terms, delivery obligations, liability limitations, and termination provisions. Review force majeure clauses, indemnification terms, and dispute resolution mechanisms."
+}

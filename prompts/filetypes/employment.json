@@ -1,0 +1,12 @@
+{
+  "document_type": "Employment Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Emphasize compensation terms, termination clauses, non-compete provisions, and benefit entitlements. Review compliance with employment law requirements and pay special attention to at-will employment language."
+}
