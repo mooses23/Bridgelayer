@@ -7,6 +7,8 @@ import {
   analyzeFormatting,
   identifyDocumentType
 } from "./openai";
+import { getDocumentTypeFromContent } from "./promptAssembler";
+import { runAiAgent } from "./aiAgent";
 import type { Document, AnalysisFeatures } from "@shared/schema";
 
 export async function processDocument(documentId: number, userId: number): Promise<void> {
@@ -20,12 +22,12 @@ export async function processDocument(documentId: number, userId: number): Promi
     throw new Error("User features not configured");
   }
 
-  // Identify document type
-  const documentType = await identifyDocumentType(document.content);
+  // Identify document type using enhanced detection
+  const documentType = getDocumentTypeFromContent(document.content);
   await storage.updateDocument(documentId, { documentType });
 
   // Run enabled analyses
-  const analysisPromises: Promise<void>[] = [];
+  const analysisPromises: Promise<any>[] = [];
 
   if (features.summarization) {
     analysisPromises.push(
