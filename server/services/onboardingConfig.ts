@@ -69,23 +69,22 @@ export const DEFAULT_DOCUMENT_PRESETS: Record<string, Partial<DocumentTypeConfig
 };
 
 export function generateFirmConfigSummary(profile: FirmProfile): string {
-  let summary = `FIRMSYNC Configuration Summary for ${profile.firmName}\n`;
+  let summary = `Document Workflow Summary for ${profile.firmName}\n`;
   summary += `Admin Contact: ${profile.adminEmail}\n`;
-  summary += `Configured: ${profile.createdAt.toLocaleDateString()}\n\n`;
+  summary += `Setup Date: ${profile.createdAt.toLocaleDateString()}\n\n`;
   
   profile.documentConfigs.forEach(config => {
     if (config.enabled) {
-      summary += `---\n`;
-      summary += `Doc Type: ${config.displayName}\n`;
-      summary += `• Summarize: ${config.summarize ? '✅' : '❌'}\n`;
-      summary += `• Risk Check: ${config.riskAnalysis ? '✅' : '❌'}\n`;
-      summary += `• Clauses: ${config.clauseMode === 'full_completion' ? 'Full Completion' : 
-                                 config.clauseMode === 'check_only' ? 'Check Only' : 'Disabled'}\n`;
-      summary += `• Reviewer: ${config.reviewer.charAt(0).toUpperCase() + config.reviewer.slice(1)}\n`;
+      summary += `${config.displayName}:\n`;
+      summary += `• Document summaries: ${config.summarize ? 'Create summaries' : 'Skip summaries'}\n`;
+      summary += `• Risk checking: ${config.riskAnalysis ? 'Check for potential risks' : 'Skip risk review'}\n`;
+      summary += `• Clause review: ${config.clauseMode === 'full_completion' ? 'Suggest complete language' : 
+                                 config.clauseMode === 'check_only' ? 'Check for missing clauses' : 'Skip clause review'}\n`;
+      summary += `• Assigned to: ${config.reviewer.charAt(0).toUpperCase() + config.reviewer.slice(1)}\n\n`;
     }
   });
   
-  summary += `\n> You can edit these settings later in the BridgeLayer Admin Portal.`;
+  summary += `Ready to start processing documents with these settings.\nYou can adjust these preferences anytime in your firm settings.`;
   
   return summary;
 }
