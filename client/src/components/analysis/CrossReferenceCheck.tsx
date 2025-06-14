@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link, ToggleLeft } from "lucide-react";
-import type { CrossReferenceCheck as CrossReferenceCheckType } from "../../../../../../server/services/openai";
+import { Link, ToggleLeft, AlertCircle } from "lucide-react";
+import type { CrossReferenceCheck as CrossReferenceCheckType } from "../../../../shared/types";
 
 interface CrossReferenceCheckProps {
   analysis?: {
@@ -101,22 +101,58 @@ export default function CrossReferenceCheck({ analysis, enabled }: CrossReferenc
           </div>
         ) : (
           <div className="space-y-3">
+            {result.overallAssessment && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                <h4 className="font-medium text-blue-900 mb-1">Overall Assessment</h4>
+                <p className="text-sm text-blue-800">{result.overallAssessment}</p>
+              </div>
+            )}
+            
             {result.references.map((ref, index) => (
               <div key={index} className={`p-3 border rounded-lg ${getStatusClasses(ref.status)}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <p className="font-medium text-sm mb-1">"{ref.reference}"</p>
                     <p className="text-xs opacity-80 mb-1">Location: {ref.location}</p>
+                    {ref.evidenceOfIssue && (
+                      <p className="text-xs font-medium text-red-600 mb-1">
+                        Evidence: {ref.evidenceOfIssue}
+                      </p>
+                    )}
                     {ref.suggestion && (
                       <p className="text-xs font-medium">Suggestion: {ref.suggestion}</p>
                     )}
                   </div>
-                  <Badge variant="outline" className="ml-2 capitalize">
-                    {ref.status}
-                  </Badge>
+                  <div className="flex flex-col items-end space-y-1">
+                    <Badge variant="outline" className="capitalize">
+                      {ref.status}
+                    </Badge>
+                    {ref.requiresReview && (
+                      <Badge variant="outline" className="text-xs legal-amber border-legal-amber">
+                        Review Required
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
+            
+            {result.uncertainties && result.uncertainties.length > 0 && (
+              <div className="mt-4 p-3 bg-legal-amber/10 border border-legal-amber/20 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                  <AlertCircle className="legal-amber mr-2" size={16} />
+                  Uncertain References
+                </h4>
+                <ul className="space-y-1">
+                  {result.uncertainties.map((uncertainty, index) => (
+                    <li key={index} className="text-xs legal-slate">• {uncertainty}</li>
+                  ))}
+                </ul>
+                <p className="text-xs legal-amber font-medium mt-2">
+                  These references may require attorney review for accuracy.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

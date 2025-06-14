@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, CheckCircle } from "lucide-react";
-import type { DocumentSummary as DocumentSummaryType } from "../../../../../../server/services/openai";
+import { FileText, CheckCircle, AlertCircle } from "lucide-react";
+import type { DocumentSummary as DocumentSummaryType } from "../../../../shared/types";
 
 interface DocumentSummaryProps {
   analysis?: {
@@ -115,6 +115,23 @@ export default function DocumentSummary({ analysis, enabled }: DocumentSummaryPr
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+          
+          {result.uncertainties && result.uncertainties.length > 0 && (
+            <div className="mt-4 p-3 bg-legal-amber/10 border border-legal-amber/20 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                <AlertCircle className="legal-amber mr-2" size={16} />
+                Requires Review
+              </h4>
+              <ul className="space-y-1">
+                {result.uncertainties.map((uncertainty, index) => (
+                  <li key={index} className="text-xs legal-slate">• {uncertainty}</li>
+                ))}
+              </ul>
+              <p className="text-xs legal-amber font-medium mt-2">
+                These elements may require attorney clarification.
+              </p>
             </div>
           )}
         </div>

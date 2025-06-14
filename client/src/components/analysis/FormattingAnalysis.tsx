@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlignLeft, AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
-import type { FormattingAnalysis as FormattingAnalysisType } from "../../../../../../server/services/openai";
+import { AlignLeft, AlertTriangle, AlertCircle, CheckCircle, Lightbulb } from "lucide-react";
+import type { FormattingAnalysis as FormattingAnalysisType } from "../../../../shared/types";
 
 interface FormattingAnalysisProps {
   analysis?: {

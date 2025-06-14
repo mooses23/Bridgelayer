@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { List, CheckCircle, X } from "lucide-react";
-import type { ClauseExtraction as ClauseExtractionType } from "../../../../../../server/services/openai";
+import { List, CheckCircle, X, AlertCircle, Brain } from "lucide-react";
+import type { ClauseExtraction as ClauseExtractionType } from "../../../../shared/types";
 
 interface ClauseExtractionProps {
   analysis?: {
@@ -96,7 +96,18 @@ export default function ClauseExtraction({ analysis, enabled }: ClauseExtraction
             <div key={index} className="border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-gray-900 capitalize">{clause.type} Clause</h4>
-                {getStatusBadge(clause.status)}
+                <div className="flex items-center space-x-2">
+                  {clause.confidenceLevel && (
+                    <Badge variant="outline" className={`text-xs ${
+                      clause.confidenceLevel === 'high' ? 'text-legal-emerald border-legal-emerald' :
+                      clause.confidenceLevel === 'medium' ? 'text-legal-amber border-legal-amber' :
+                      'text-legal-red border-legal-red'
+                    }`}>
+                      {clause.confidenceLevel} confidence
+                    </Badge>
+                  )}
+                  {getStatusBadge(clause.status)}
+                </div>
               </div>
               
               {clause.status === 'found' && clause.content && (
@@ -121,11 +132,19 @@ export default function ClauseExtraction({ analysis, enabled }: ClauseExtraction
                   <p className="text-sm legal-slate mb-3">
                     No {clause.type.toLowerCase()} provisions found. Consider adding if applicable to your document type.
                   </p>
+                  {clause.reasoning && (
+                    <p className="text-xs text-blue-600 mb-2">
+                      Reasoning: {clause.reasoning}
+                    </p>
+                  )}
                   {clause.aiGeneratedDraft && (
                     <>
-                      <div className="bg-gray-50 p-3 rounded-lg mb-2">
-                        <p className="text-xs font-medium text-gray-900 mb-1">AI-Generated Draft Clause:</p>
-                        <p className="text-xs text-gray-700">
+                      <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg mb-2">
+                        <p className="text-xs font-medium text-blue-900 mb-1 flex items-center">
+                          <Brain className="mr-1" size={12} />
+                          🧠 Suggested Draft Language (AI-Generated — Review Required)
+                        </p>
+                        <p className="text-xs text-blue-800">
                           {clause.aiGeneratedDraft.length > 120 
                             ? `${clause.aiGeneratedDraft.substring(0, 120)}...`
                             : clause.aiGeneratedDraft
@@ -147,6 +166,23 @@ export default function ClauseExtraction({ analysis, enabled }: ClauseExtraction
               )}
             </div>
           ))}
+          
+          {result.uncertainties && result.uncertainties.length > 0 && (
+            <div className="mt-4 p-3 bg-legal-amber/10 border border-legal-amber/20 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                <AlertCircle className="legal-amber mr-2" size={16} />
+                Uncertain Identifications
+              </h4>
+              <ul className="space-y-1">
+                {result.uncertainties.map((uncertainty, index) => (
+                  <li key={index} className="text-xs legal-slate">• {uncertainty}</li>
+                ))}
+              </ul>
+              <p className="text-xs legal-amber font-medium mt-2">
+                These clause identifications may require attorney verification.
+              </p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
