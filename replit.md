@@ -97,6 +97,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **June 14, 2025**: Document-Specific Configuration System Complete
+  - Created comprehensive document type configurations (NDA, Lease, Employment, Settlement, Discovery)
+  - Implemented customizable analysis feature toggles per document type
+  - Added document-specific custom instructions and risk level assignments
+  - Enhanced document type detection with keyword-based classification
+  - Configured professional analysis standards for each document category
+  - Settlement and Discovery responses use high-risk conservative tone
+  - Employment agreements focus on compensation and non-compete analysis
+  - Lease agreements emphasize payment terms and maintenance responsibilities
+  - NDA configurations target confidentiality language and duration clauses
+
 - **June 14, 2025**: Enhanced AI analysis system with Trust Layer and Risk Profile Balancer
   - Implemented evidence-based analysis with specific section citations
   - Added risk-appropriate analysis tone (low/medium/high-risk documents)
