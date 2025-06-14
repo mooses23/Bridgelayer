@@ -1,0 +1,99 @@
+# FIRMSYNC - AI Legal Document Analysis Platform
+
+## Overview
+
+FIRMSYNC is a comprehensive AI-powered legal document analysis platform built as a full-stack web application. The system enables paralegals and legal professionals to upload, analyze, and extract insights from legal documents using OpenAI's GPT-4o model. The platform features modular analysis capabilities including document summarization, risk analysis, clause extraction, cross-reference checking, and formatting analysis.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Routing**: Wouter for client-side routing
+- **State Management**: TanStack Query (React Query) for server state management
+- **UI Framework**: Tailwind CSS with shadcn/ui component library
+- **Build Tool**: Vite for development and production builds
+- **Styling**: Custom legal-themed color palette with responsive design
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js framework
+- **Language**: TypeScript with ES modules
+- **API Pattern**: RESTful API with JSON responses
+- **File Handling**: Multer middleware for document uploads (PDF, DOC, DOCX, TXT)
+- **AI Integration**: OpenAI API for document analysis using GPT-4o model
+
+### Database & ORM
+- **Database**: PostgreSQL (configured via Drizzle)
+- **ORM**: Drizzle ORM with Zod validation
+- **Schema**: Well-structured tables for users, documents, analyses, and feature toggles
+- **Database Provider**: Neon Database (serverless PostgreSQL)
+
+## Key Components
+
+### Document Processing Pipeline
+1. **Upload Service**: Handles file uploads with MIME type validation and size limits (10MB)
+2. **Content Extraction**: Extracts text content from various document formats
+3. **AI Analysis Engine**: Processes documents through multiple analysis types
+4. **Result Storage**: Stores analysis results in structured JSON format
+
+### Analysis Modules
+- **Document Summarization**: Extracts key terms, parties, and document purpose
+- **Risk Analysis**: Identifies potential legal risks with severity levels
+- **Clause Extraction**: Detects standard legal clauses and identifies missing ones
+- **Cross-Reference Validation**: Verifies internal document references
+- **Formatting Analysis**: Checks document structure and compliance
+
+### Feature Management System
+- User-configurable analysis features via toggles
+- Granular control over which analyses run per user
+- Real-time feature updates without document re-upload
+
+## Data Flow
+
+1. **Document Upload**: User uploads document via drag-and-drop or file picker
+2. **Content Processing**: Server extracts text content and stores document metadata
+3. **AI Analysis**: Multiple analysis modules process document based on enabled features
+4. **Result Aggregation**: Analysis results stored with confidence scores and timestamps
+5. **Frontend Display**: React components render analysis results with interactive UI
+
+## External Dependencies
+
+### AI Services
+- **OpenAI API**: GPT-4o model for document analysis
+- **API Key Management**: Environment variable configuration
+
+### UI Libraries
+- **Radix UI**: Accessible component primitives
+- **Lucide React**: Icon library
+- **Class Variance Authority**: Component variant management
+
+### Development Tools
+- **TypeScript**: Type safety across frontend and backend
+- **ESBuild**: Production bundling for server code
+- **PostCSS**: CSS processing with Tailwind
+
+## Deployment Strategy
+
+### Development Environment
+- **Replit Integration**: Configured for Replit development workflow
+- **Hot Reload**: Vite HMR for frontend, tsx for backend development
+- **Database**: PostgreSQL module in Replit environment
+
+### Production Build
+- **Frontend**: Vite build outputs to `dist/public`
+- **Backend**: ESBuild bundles server code to `dist/index.js`
+- **Static Serving**: Express serves built frontend assets
+- **Process Management**: Single Node.js process serves both API and static files
+
+### Environment Configuration
+- Database URL via `DATABASE_URL` environment variable
+- OpenAI API key via `OPENAI_API_KEY` environment variable
+- Production/development mode switching via `NODE_ENV`
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## Changelog
+
+Changelog:
+- June 14, 2025. Initial setup

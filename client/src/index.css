@@ -1,0 +1,209 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(224, 76%, 48%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+  
+  /* Legal colors */
+  --legal-blue: hsl(224, 76%, 48%);
+  --legal-slate: hsl(215, 16%, 47%);
+  --legal-amber: hsl(43, 96%, 49%);
+  --legal-emerald: hsl(158, 84%, 40%);
+  --legal-red: hsl(0, 73%, 41%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(224, 76%, 48%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .legal-blue {
+    color: var(--legal-blue);
+  }
+  
+  .bg-legal-blue {
+    background-color: var(--legal-blue);
+  }
+  
+  .legal-slate {
+    color: var(--legal-slate);
+  }
+  
+  .legal-amber {
+    color: var(--legal-amber);
+  }
+  
+  .legal-emerald {
+    color: var(--legal-emerald);
+  }
+  
+  .legal-red {
+    color: var(--legal-red);
+  }
+  
+  .border-legal-blue {
+    border-color: var(--legal-blue);
+  }
+  
+  .border-legal-red {
+    border-color: var(--legal-red);
+  }
+  
+  .border-legal-amber {
+    border-color: var(--legal-amber);
+  }
+  
+  .border-legal-emerald {
+    border-color: var(--legal-emerald);
+  }
+  
+  .bg-legal-red\/5 {
+    background-color: hsl(0, 73%, 41%, 0.05);
+  }
+  
+  .bg-legal-red\/10 {
+    background-color: hsl(0, 73%, 41%, 0.1);
+  }
+  
+  .bg-legal-amber\/5 {
+    background-color: hsl(43, 96%, 49%, 0.05);
+  }
+  
+  .bg-legal-amber\/10 {
+    background-color: hsl(43, 96%, 49%, 0.1);
+  }
+  
+  .bg-legal-emerald\/5 {
+    background-color: hsl(158, 84%, 40%, 0.05);
+  }
+  
+  .bg-legal-emerald\/10 {
+    background-color: hsl(158, 84%, 40%, 0.1);
+  }
+  
+  .border-legal-red\/20 {
+    border-color: hsl(0, 73%, 41%, 0.2);
+  }
+  
+  .border-legal-amber\/20 {
+    border-color: hsl(43, 96%, 49%, 0.2);
+  }
+  
+  .border-legal-emerald\/20 {
+    border-color: hsl(158, 84%, 40%, 0.2);
+  }
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--legal-blue);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.document-dropzone {
+  border: 2px dashed #cbd5e1;
+  transition: all 0.3s ease;
+}
+
+.document-dropzone:hover {
+  border-color: var(--legal-blue);
+  background-color: #f8fafc;
+}
+
+.analysis-card {
+  transition: all 0.2s ease;
+}
+
+.analysis-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
