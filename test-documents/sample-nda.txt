@@ -1,0 +1,35 @@
+NON-DISCLOSURE AGREEMENT
+
+This Non-Disclosure Agreement ("Agreement") is entered into on [DATE] by and between TechCorp Inc., a Delaware corporation ("Disclosing Party") and Software Solutions LLC, a California limited liability company ("Receiving Party").
+
+WHEREAS, the parties wish to engage in discussions regarding a potential business relationship;
+
+WHEREAS, during such discussions, Disclosing Party may share certain confidential information;
+
+NOW, THEREFORE, the parties agree as follows:
+
+1. Definition of Confidential Information
+"Confidential Information" means any and all non-public, proprietary information disclosed by Disclosing Party to Receiving Party, including but not limited to technical data, trade secrets, know-how, research, product plans, products, services, customers, customer lists, markets, software, developments, inventions, processes, formulas, technology, designs, drawings, engineering, hardware configuration information, marketing, finances, or other business information.
+
+2. Obligations of Receiving Party
+Receiving Party agrees to:
+a) Hold and maintain the Confidential Information in strict confidence;
+b) Not disclose any Confidential Information to third parties without prior written consent;
+c) Use the Confidential Information solely for the purpose of evaluating potential business opportunities.
+
+3. Term
+This Agreement shall remain in effect for a period of three (3) years from the date first written above.
+
+4. Return of Materials
+Upon termination of this Agreement, Receiving Party shall promptly return all materials containing Confidential Information.
+
+5. Governing Law
+This Agreement shall be governed by the laws of the State of Delaware.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+
+TECHCORP INC.                    SOFTWARE SOLUTIONS LLC
+
+By: _____________________       By: _____________________
+Name: John Smith                Name: [TO BE FILLED]
+Title: CEO                      Title: [TO BE FILLED]
