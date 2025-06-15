@@ -29,10 +29,31 @@ import {
   type InsertAuditLog,
   type Notification,
   type InsertNotification,
+  type Client,
+  type InsertClient,
+  type Case,
+  type InsertCase,
+  type TimeLog,
+  type InsertTimeLog,
+  type Invoice,
+  type InsertInvoice,
+  type InvoiceLineItem,
+  type InsertInvoiceLineItem,
+  type FirmBillingSettings,
+  type InsertFirmBillingSettings,
+  type BillingPermission,
+  type InsertBillingPermission,
   users,
   firms,
   documents,
   documentAnalyses,
+  clients,
+  cases,
+  timeLogs,
+  invoices,
+  invoiceLineItems,
+  firmBillingSettings,
+  billingPermissions,
   firmAnalysisSettings,
   messageThreads,
   folders,
@@ -141,6 +162,50 @@ export interface IStorage {
   getUnreadNotificationCount(userId: number, firmId: number): Promise<number>;
   getFirmNotifications(firmId: number): Promise<Notification[]>;
   deleteNotification(notificationId: number, userId: number): Promise<boolean>;
+  
+  // Billing operations
+  createClient(client: InsertClient): Promise<Client>;
+  getFirmClients(firmId: number): Promise<Client[]>;
+  getClient(id: number, firmId: number): Promise<Client | undefined>;
+  updateClient(id: number, updates: Partial<Client>): Promise<Client | undefined>;
+  deleteClient(id: number, firmId: number): Promise<boolean>;
+  
+  createCase(caseData: InsertCase): Promise<Case>;
+  getFirmCases(firmId: number): Promise<Case[]>;
+  getClientCases(clientId: number, firmId: number): Promise<Case[]>;
+  getCase(id: number, firmId: number): Promise<Case | undefined>;
+  updateCase(id: number, updates: Partial<Case>): Promise<Case | undefined>;
+  deleteCase(id: number, firmId: number): Promise<boolean>;
+  
+  createTimeLog(timeLog: InsertTimeLog): Promise<TimeLog>;
+  getFirmTimeLogs(firmId: number): Promise<TimeLog[]>;
+  getUserTimeLogs(userId: number, firmId: number): Promise<TimeLog[]>;
+  getTimeLog(id: number, firmId: number): Promise<TimeLog | undefined>;
+  updateTimeLog(id: number, updates: Partial<TimeLog>): Promise<TimeLog | undefined>;
+  deleteTimeLog(id: number, firmId: number): Promise<boolean>;
+  lockTimeLog(id: number, firmId: number): Promise<boolean>;
+  getUnbilledTimeLogs(firmId: number): Promise<TimeLog[]>;
+  
+  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
+  getFirmInvoices(firmId: number): Promise<Invoice[]>;
+  getClientInvoices(clientId: number, firmId: number): Promise<Invoice[]>;
+  getInvoice(id: number, firmId: number): Promise<Invoice | undefined>;
+  updateInvoice(id: number, updates: Partial<Invoice>): Promise<Invoice | undefined>;
+  deleteInvoice(id: number, firmId: number): Promise<boolean>;
+  
+  createInvoiceLineItem(lineItem: InsertInvoiceLineItem): Promise<InvoiceLineItem>;
+  getInvoiceLineItems(invoiceId: number): Promise<InvoiceLineItem[]>;
+  updateInvoiceLineItem(id: number, updates: Partial<InvoiceLineItem>): Promise<InvoiceLineItem | undefined>;
+  deleteInvoiceLineItem(id: number): Promise<boolean>;
+  reorderInvoiceLineItems(invoiceId: number, itemIds: number[]): Promise<boolean>;
+  
+  getFirmBillingSettings(firmId: number): Promise<FirmBillingSettings | undefined>;
+  updateFirmBillingSettings(firmId: number, settings: Partial<FirmBillingSettings>): Promise<FirmBillingSettings>;
+  createFirmBillingSettings(settings: InsertFirmBillingSettings): Promise<FirmBillingSettings>;
+  
+  getBillingPermissions(userId: number, firmId: number): Promise<BillingPermission | undefined>;
+  updateBillingPermissions(userId: number, firmId: number, permissions: Partial<BillingPermission>): Promise<BillingPermission>;
+  createBillingPermissions(permissions: InsertBillingPermission): Promise<BillingPermission>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -660,6 +725,187 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)))
       .returning();
     return result.length > 0;
+  }
+
+  // Billing operations implementation
+  async createClient(insertClient: InsertClient): Promise<Client> {
+    const [client] = await db.insert(clients).values(insertClient).returning();
+    return client;
+  }
+
+  async getFirmClients(firmId: number): Promise<Client[]> {
+    return await db.select().from(clients).where(eq(clients.firmId, firmId)).orderBy(clients.name);
+  }
+
+  async getClient(id: number, firmId: number): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(and(eq(clients.id, id), eq(clients.firmId, firmId)));
+    return client || undefined;
+  }
+
+  async updateClient(id: number, updates: Partial<Client>): Promise<Client | undefined> {
+    const [client] = await db.update(clients).set({ ...updates, updatedAt: new Date() }).where(eq(clients.id, id)).returning();
+    return client || undefined;
+  }
+
+  async deleteClient(id: number, firmId: number): Promise<boolean> {
+    const result = await db.delete(clients).where(and(eq(clients.id, id), eq(clients.firmId, firmId))).returning();
+    return result.length > 0;
+  }
+
+  async createCase(insertCase: InsertCase): Promise<Case> {
+    const [caseRecord] = await db.insert(cases).values(insertCase).returning();
+    return caseRecord;
+  }
+
+  async getFirmCases(firmId: number): Promise<Case[]> {
+    return await db.select().from(cases).where(eq(cases.firmId, firmId)).orderBy(cases.name);
+  }
+
+  async getClientCases(clientId: number, firmId: number): Promise<Case[]> {
+    return await db.select().from(cases).where(and(eq(cases.clientId, clientId), eq(cases.firmId, firmId))).orderBy(cases.name);
+  }
+
+  async getCase(id: number, firmId: number): Promise<Case | undefined> {
+    const [caseRecord] = await db.select().from(cases).where(and(eq(cases.id, id), eq(cases.firmId, firmId)));
+    return caseRecord || undefined;
+  }
+
+  async updateCase(id: number, updates: Partial<Case>): Promise<Case | undefined> {
+    const [caseRecord] = await db.update(cases).set({ ...updates, updatedAt: new Date() }).where(eq(cases.id, id)).returning();
+    return caseRecord || undefined;
+  }
+
+  async deleteCase(id: number, firmId: number): Promise<boolean> {
+    const result = await db.delete(cases).where(and(eq(cases.id, id), eq(cases.firmId, firmId))).returning();
+    return result.length > 0;
+  }
+
+  async createTimeLog(insertTimeLog: InsertTimeLog): Promise<TimeLog> {
+    const [timeLog] = await db.insert(timeLogs).values(insertTimeLog).returning();
+    return timeLog;
+  }
+
+  async getFirmTimeLogs(firmId: number): Promise<TimeLog[]> {
+    return await db.select().from(timeLogs).where(eq(timeLogs.firmId, firmId)).orderBy(desc(timeLogs.loggedAt));
+  }
+
+  async getUserTimeLogs(userId: number, firmId: number): Promise<TimeLog[]> {
+    return await db.select().from(timeLogs).where(and(eq(timeLogs.userId, userId), eq(timeLogs.firmId, firmId))).orderBy(desc(timeLogs.loggedAt));
+  }
+
+  async getTimeLog(id: number, firmId: number): Promise<TimeLog | undefined> {
+    const [timeLog] = await db.select().from(timeLogs).where(and(eq(timeLogs.id, id), eq(timeLogs.firmId, firmId)));
+    return timeLog || undefined;
+  }
+
+  async updateTimeLog(id: number, updates: Partial<TimeLog>): Promise<TimeLog | undefined> {
+    const [timeLog] = await db.update(timeLogs).set({ ...updates, updatedAt: new Date() }).where(eq(timeLogs.id, id)).returning();
+    return timeLog || undefined;
+  }
+
+  async deleteTimeLog(id: number, firmId: number): Promise<boolean> {
+    const result = await db.delete(timeLogs).where(and(eq(timeLogs.id, id), eq(timeLogs.firmId, firmId))).returning();
+    return result.length > 0;
+  }
+
+  async lockTimeLog(id: number, firmId: number): Promise<boolean> {
+    const [timeLog] = await db.update(timeLogs).set({ isLocked: true, lockedAt: new Date() }).where(and(eq(timeLogs.id, id), eq(timeLogs.firmId, firmId))).returning();
+    return !!timeLog;
+  }
+
+  async getUnbilledTimeLogs(firmId: number): Promise<TimeLog[]> {
+    return await db.select().from(timeLogs).where(and(eq(timeLogs.firmId, firmId), isNull(timeLogs.invoiceId))).orderBy(desc(timeLogs.loggedAt));
+  }
+
+  async createInvoice(insertInvoice: InsertInvoice): Promise<Invoice> {
+    const [invoice] = await db.insert(invoices).values(insertInvoice).returning();
+    return invoice;
+  }
+
+  async getFirmInvoices(firmId: number): Promise<Invoice[]> {
+    return await db.select().from(invoices).where(eq(invoices.firmId, firmId)).orderBy(desc(invoices.createdAt));
+  }
+
+  async getClientInvoices(clientId: number, firmId: number): Promise<Invoice[]> {
+    return await db.select().from(invoices).where(and(eq(invoices.clientId, clientId), eq(invoices.firmId, firmId))).orderBy(desc(invoices.createdAt));
+  }
+
+  async getInvoice(id: number, firmId: number): Promise<Invoice | undefined> {
+    const [invoice] = await db.select().from(invoices).where(and(eq(invoices.id, id), eq(invoices.firmId, firmId)));
+    return invoice || undefined;
+  }
+
+  async updateInvoice(id: number, updates: Partial<Invoice>): Promise<Invoice | undefined> {
+    const [invoice] = await db.update(invoices).set({ ...updates, updatedAt: new Date() }).where(eq(invoices.id, id)).returning();
+    return invoice || undefined;
+  }
+
+  async deleteInvoice(id: number, firmId: number): Promise<boolean> {
+    const result = await db.delete(invoices).where(and(eq(invoices.id, id), eq(invoices.firmId, firmId))).returning();
+    return result.length > 0;
+  }
+
+  async createInvoiceLineItem(insertLineItem: InsertInvoiceLineItem): Promise<InvoiceLineItem> {
+    const [lineItem] = await db.insert(invoiceLineItems).values(insertLineItem).returning();
+    return lineItem;
+  }
+
+  async getInvoiceLineItems(invoiceId: number): Promise<InvoiceLineItem[]> {
+    return await db.select().from(invoiceLineItems).where(eq(invoiceLineItems.invoiceId, invoiceId)).orderBy(invoiceLineItems.sortOrder);
+  }
+
+  async updateInvoiceLineItem(id: number, updates: Partial<InvoiceLineItem>): Promise<InvoiceLineItem | undefined> {
+    const [lineItem] = await db.update(invoiceLineItems).set(updates).where(eq(invoiceLineItems.id, id)).returning();
+    return lineItem || undefined;
+  }
+
+  async deleteInvoiceLineItem(id: number): Promise<boolean> {
+    const result = await db.delete(invoiceLineItems).where(eq(invoiceLineItems.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async reorderInvoiceLineItems(invoiceId: number, itemIds: number[]): Promise<boolean> {
+    try {
+      for (let i = 0; i < itemIds.length; i++) {
+        await db.update(invoiceLineItems).set({ sortOrder: i }).where(and(eq(invoiceLineItems.id, itemIds[i]), eq(invoiceLineItems.invoiceId, invoiceId)));
+      }
+      return true;
+    } catch (error) {
+      console.error("Error reordering invoice line items:", error);
+      return false;
+    }
+  }
+
+  async getFirmBillingSettings(firmId: number): Promise<FirmBillingSettings | undefined> {
+    const [settings] = await db.select().from(firmBillingSettings).where(eq(firmBillingSettings.firmId, firmId));
+    return settings || undefined;
+  }
+
+  async updateFirmBillingSettings(firmId: number, updates: Partial<FirmBillingSettings>): Promise<FirmBillingSettings> {
+    const [settings] = await db.update(firmBillingSettings).set({ ...updates, updatedAt: new Date() }).where(eq(firmBillingSettings.firmId, firmId)).returning();
+    if (!settings) throw new Error("Billing settings not found");
+    return settings;
+  }
+
+  async createFirmBillingSettings(insertSettings: InsertFirmBillingSettings): Promise<FirmBillingSettings> {
+    const [settings] = await db.insert(firmBillingSettings).values(insertSettings).returning();
+    return settings;
+  }
+
+  async getBillingPermissions(userId: number, firmId: number): Promise<BillingPermission | undefined> {
+    const [permissions] = await db.select().from(billingPermissions).where(and(eq(billingPermissions.userId, userId), eq(billingPermissions.firmId, firmId)));
+    return permissions || undefined;
+  }
+
+  async updateBillingPermissions(userId: number, firmId: number, updates: Partial<BillingPermission>): Promise<BillingPermission> {
+    const [permissions] = await db.update(billingPermissions).set({ ...updates, updatedAt: new Date() }).where(and(eq(billingPermissions.userId, userId), eq(billingPermissions.firmId, firmId))).returning();
+    if (!permissions) throw new Error("Billing permissions not found");
+    return permissions;
+  }
+
+  async createBillingPermissions(insertPermissions: InsertBillingPermission): Promise<BillingPermission> {
+    const [permissions] = await db.insert(billingPermissions).values(insertPermissions).returning();
+    return permissions;
   }
 }
 

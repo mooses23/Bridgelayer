@@ -330,9 +330,178 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
 
+// Billing and time tracking tables
+export const clients = pgTable("clients", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address"),
+  status: text("status").notNull().default("active"), // active, inactive, archived
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const cases = pgTable("cases", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  caseNumber: text("case_number"),
+  status: text("status").notNull().default("active"), // active, closed, on_hold
+  billingType: text("billing_type").notNull().default("hourly"), // hourly, flat, contingency
+  hourlyRate: integer("hourly_rate"), // In cents
+  flatFee: integer("flat_fee"), // In cents
+  contingencyRate: integer("contingency_rate"), // Percentage * 100
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const timeLogs = pgTable("time_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id),
+  caseId: integer("case_id").references(() => cases.id),
+  description: text("description").notNull(),
+  hours: integer("hours").notNull(), // In minutes for precision
+  customField: text("custom_field"), // Additional custom data
+  billableRate: integer("billable_rate"), // Rate at time of entry (cents)
+  isLocked: boolean("is_locked").default(false),
+  lockedAt: timestamp("locked_at"),
+  invoiceId: integer("invoice_id"), // Reference to invoice when billed
+  loggedAt: timestamp("logged_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  caseId: integer("case_id").references(() => cases.id),
+  invoiceNumber: text("invoice_number").notNull(),
+  status: text("status").notNull().default("draft"), // draft, sent, paid, overdue, cancelled
+  subtotal: integer("subtotal").notNull(), // In cents
+  taxAmount: integer("tax_amount").default(0), // In cents
+  total: integer("total").notNull(), // In cents
+  dueDate: timestamp("due_date"),
+  paidDate: timestamp("paid_date"),
+  notes: text("notes"),
+  terms: text("terms"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const invoiceLineItems = pgTable("invoice_line_items", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
+  timeLogId: integer("time_log_id").references(() => timeLogs.id),
+  description: text("description").notNull(),
+  quantity: integer("quantity").notNull().default(1), // Hours or units
+  rate: integer("rate").notNull(), // Rate per unit in cents
+  amount: integer("amount").notNull(), // Total in cents
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const firmBillingSettings = pgTable("firm_billing_settings", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  defaultHourlyRate: integer("default_hourly_rate").default(25000), // $250.00 in cents
+  defaultFlatRate: integer("default_flat_rate").default(500000), // $5000.00 in cents
+  defaultContingencyRate: integer("default_contingency_rate").default(3300), // 33% as 3300
+  invoiceTerms: text("invoice_terms").default("Payment due within 30 days"),
+  logoUrl: text("logo_url"),
+  billingPlatform: text("billing_platform"), // stripe, lawpay, other
+  billingPlatformUrl: text("billing_platform_url"), // iframe/embed URL
+  lockTimeLogsAfterDays: integer("lock_time_logs_after_days").default(30),
+  hideAnalyticsTab: boolean("hide_analytics_tab").default(false),
+  billingEnabled: boolean("billing_enabled").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const billingPermissions = pgTable("billing_permissions", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  canViewBilling: boolean("can_view_billing").default(false),
+  canEditBilling: boolean("can_edit_billing").default(false),
+  canCreateInvoices: boolean("can_create_invoices").default(false),
+  canViewReports: boolean("can_view_reports").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas for billing tables
+export const insertClientSchema = createInsertSchema(clients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCaseSchema = createInsertSchema(cases).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTimeLogSchema = createInsertSchema(timeLogs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceLineItemSchema = createInsertSchema(invoiceLineItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFirmBillingSettingsSchema = createInsertSchema(firmBillingSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBillingPermissionSchema = createInsertSchema(billingPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for billing tables
+export type InsertClient = z.infer<typeof insertClientSchema>;
+export type Client = typeof clients.$inferSelect;
+export type InsertCase = z.infer<typeof insertCaseSchema>;
+export type Case = typeof cases.$inferSelect;
+export type InsertTimeLog = z.infer<typeof insertTimeLogSchema>;
+export type TimeLog = typeof timeLogs.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoiceLineItem = z.infer<typeof insertInvoiceLineItemSchema>;
+export type InvoiceLineItem = typeof invoiceLineItems.$inferSelect;
+export type InsertFirmBillingSettings = z.infer<typeof insertFirmBillingSettingsSchema>;
+export type FirmBillingSettings = typeof firmBillingSettings.$inferSelect;
+export type InsertBillingPermission = z.infer<typeof insertBillingPermissionSchema>;
+export type BillingPermission = typeof billingPermissions.$inferSelect;
+
 // Role enums for type safety
 export const UserRole = z.enum(["admin", "firm_admin", "paralegal", "viewer"]);
 export const SystemAdminRole = z.enum(["admin", "super_admin"]);
 export const FirmPlan = z.enum(["starter", "professional", "enterprise"]);
 export const DocumentStatus = z.enum(["uploaded", "processing", "analyzed", "error"]);
 export const MessageType = z.enum(["info", "warning", "error", "success"]);
+export const BillingType = z.enum(["hourly", "flat", "contingency"]);
+export const InvoiceStatus = z.enum(["draft", "sent", "paid", "overdue", "cancelled"]);
