@@ -85,6 +85,16 @@ export default function LoginPage() {
               start your 14-day free trial
             </a>
           </p>
+          
+          {/* Demo Credentials */}
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Accounts</h3>
+            <div className="text-xs text-blue-800 space-y-1">
+              <div><strong>Admin:</strong> admin@firmsync.com / password</div>
+              <div><strong>Firm Owner:</strong> owner@testfirm.com / password</div>
+              <div><strong>Staff:</strong> staff@legaledge.com / password</div>
+            </div>
+          </div>
         </div>
         
         <Card>
