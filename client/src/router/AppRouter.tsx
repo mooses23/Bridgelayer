@@ -7,6 +7,10 @@ import AdminLayout from '@/layouts/AdminLayout';
 import OnboardingPage from '@/pages/Onboarding';
 import FirmDashboardLayout from '@/layouts/FirmDashboardLayout';
 import AuthDemo from '@/components/AuthDemo';
+import AdminDashboard from '@/pages/Admin/AdminDashboard';
+import DashboardPage from '@/pages/Firm/DashboardPage';
+import CasesPage from '@/pages/Firm/CasesPage';
+import BillingPage from '@/pages/Firm/BillingPage';
 
 export default function AppRouter() {
   const { user, firm, loading } = useAuth();
@@ -50,9 +54,13 @@ export default function AppRouter() {
     return <LoginPage />;
   }
 
-  // Admin users get admin layout
+  // Admin users get admin layout with appropriate page
   if (user.role === 'admin') {
-    return <AdminLayout />;
+    if (currentPath === '/admin' || currentPath === '/') {
+      return <AdminLayout><AdminDashboard /></AdminLayout>;
+    }
+    // Default admin page for any admin route
+    return <AdminLayout><AdminDashboard /></AdminLayout>;
   }
 
   // Firm users without onboarded firm go to onboarding
@@ -60,6 +68,19 @@ export default function AppRouter() {
     return <OnboardingPage />;
   }
 
-  // Onboarded firm users get the main dashboard layout
-  return <FirmDashboardLayout />;
+  // Onboarded firm users get the main dashboard layout with appropriate page
+  if (currentPath === '/dashboard' || currentPath === '/') {
+    return <FirmDashboardLayout><DashboardPage /></FirmDashboardLayout>;
+  }
+  
+  if (currentPath === '/cases') {
+    return <FirmDashboardLayout><CasesPage /></FirmDashboardLayout>;
+  }
+  
+  if (currentPath === '/billing') {
+    return <FirmDashboardLayout><BillingPage /></FirmDashboardLayout>;
+  }
+
+  // Default to dashboard for firm users
+  return <FirmDashboardLayout><DashboardPage /></FirmDashboardLayout>;
 }
