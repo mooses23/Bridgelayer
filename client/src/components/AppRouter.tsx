@@ -262,21 +262,22 @@ function AppRouter() {
     }
   }, [isAuthenticated, isLoading, user, currentPath]);
 
+  // Handle unauthenticated routes first - these bypass all other logic
+  if (currentPath === '/login') {
+    return <Login />;
+  }
+  
+  if (currentPath === '/logout') {
+    return <Logout />;
+  }
+
+  // For all other routes, check authentication
+  if (!isAuthenticated || !user) {
+    return <Login />;
+  }
+
   // Render the appropriate route
   const renderRoute = () => {
-    // Public routes
-    if (currentPath === '/login') {
-      return <Login />;
-    }
-    
-    if (currentPath === '/logout') {
-      return <Logout />;
-    }
-
-    // Protected routes - require authentication
-    if (!isAuthenticated || !user) {
-      return <Login />;
-    }
 
     // Admin routes
     if (user.role === 'admin') {
