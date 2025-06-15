@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   Filter
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
 
 import DocumentUpload from "@/components/DocumentUpload";
 import DocumentDashboard from "@/components/DocumentDashboard";
@@ -22,6 +23,34 @@ import ReviewLogs from "@/components/ReviewLogs";
 import AIResponseDebug from "@/components/AIResponseDebug";
 
 export default function Documents() {
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const { data: documents = [] } = useQuery({
+    queryKey: ["/api/documents"],
+  });
+
+  const filteredDocuments = useMemo(() => {
+    return documents.filter((doc: any) => 
+      doc.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.type?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [documents, searchTerm]);
+
+  const folders = [
+    { id: 1, name: "Contracts", count: 12 },
+    { id: 2, name: "NDAs", count: 8 },
+    { id: 3, name: "Legal Forms", count: 15 },
+    { id: 4, name: "Templates", count: 6 }
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'analyzed': return 'bg-green-100 text-green-800';
+      case 'processing': return 'bg-blue-100 text-blue-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
   console.log("Documents page: AIResponseDebug component mounted");
   return (
     <div className="space-y-6">

@@ -308,3 +308,5 @@ export function CommunicationLogWidget() {
     </Card>
   );
 }
+
+export default CommunicationLogWidget;

@@ -119,7 +119,7 @@ export function AdminGhostModeWidget() {
     }
   };
 
-  const currentSession = sessions.find((s: AdminGhostSession) => s.isActive) || activeSession;
+  const currentSession = Array.isArray(sessions) ? sessions.find((s: AdminGhostSession) => s.isActive) : null || activeSession;
 
   return (
     <Card className="h-full">
@@ -243,7 +243,7 @@ export function AdminGhostModeWidget() {
             ) : (
               <div className="space-y-2">
                 <h4 className="font-medium text-sm">Recent Sessions</h4>
-                {sessions.slice(0, 3).map((session: AdminGhostSession) => (
+                {Array.isArray(sessions) && sessions.slice(0, 3).map((session: AdminGhostSession) => (
                   <div key={session.id} className="border rounded p-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-medium">
@@ -267,3 +267,5 @@ export function AdminGhostModeWidget() {
     </Card>
   );
 }
+
+export default AdminGhostModeWidget;
