@@ -569,35 +569,6 @@ export const systemAlerts = pgTable("system_alerts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Additional insert schemas for new tables
-export const insertPaymentSchema = createInsertSchema(payments).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertClientAuthSchema = createInsertSchema(clientAuth).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertBillingAuditLogSchema = createInsertSchema(billingAuditLogs).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertBillingFormSchema = createInsertSchema(billingForms).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const insertSystemAlertSchema = createInsertSchema(systemAlerts).omit({
-  id: true,
-  createdAt: true,
-});
-
 // Types for billing tables
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
@@ -613,16 +584,6 @@ export type InsertFirmBillingSettings = z.infer<typeof insertFirmBillingSettings
 export type FirmBillingSettings = typeof firmBillingSettings.$inferSelect;
 export type InsertBillingPermission = z.infer<typeof insertBillingPermissionSchema>;
 export type BillingPermission = typeof billingPermissions.$inferSelect;
-export type InsertPayment = z.infer<typeof insertPaymentSchema>;
-export type Payment = typeof payments.$inferSelect;
-export type InsertClientAuth = z.infer<typeof insertClientAuthSchema>;
-export type ClientAuth = typeof clientAuth.$inferSelect;
-export type InsertBillingAuditLog = z.infer<typeof insertBillingAuditLogSchema>;
-export type BillingAuditLog = typeof billingAuditLogs.$inferSelect;
-export type InsertBillingForm = z.infer<typeof insertBillingFormSchema>;
-export type BillingForm = typeof billingForms.$inferSelect;
-export type InsertSystemAlert = z.infer<typeof insertSystemAlertSchema>;
-export type SystemAlert = typeof systemAlerts.$inferSelect;
 
 // Role enums for type safety
 export const UserRole = z.enum(["admin", "firm_admin", "paralegal", "viewer"]);

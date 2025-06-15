@@ -1146,6 +1146,247 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stripe payment processing endpoints
+  app.post("/api/billing/create-payment-intent", async (req, res) => {
+    try {
+      const { invoiceId, amount, clientEmail } = req.body;
+      
+      // Get firm billing settings to retrieve Stripe keys
+      const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
+      if (!settings?.stripeEnabled || !settings.stripeSecretKey) {
+        return res.status(400).json({ message: "Stripe not configured for this firm" });
+      }
+
+      const stripe = require('stripe')(settings.stripeSecretKey);
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount), // Amount should already be in cents
+        currency: 'usd',
+        metadata: {
+          invoiceId: invoiceId.toString(),
+          firmId: DEMO_FIRM_ID.toString()
+        },
+        receipt_email: clientEmail
+      });
+
+      // Store payment record
+      await storage.createPayment({
+        firmId: DEMO_FIRM_ID,
+        invoiceId,
+        stripePaymentIntentId: paymentIntent.id,
+        amount,
+        status: 'pending'
+      });
+
+      res.json({ 
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id
+      });
+    } catch (error) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Failed to create payment intent" });
+    }
+  });
+
+  // Stripe webhook endpoint
+  app.post("/api/billing/stripe-webhook", async (req, res) => {
+    try {
+      const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
+      if (!settings?.stripeWebhookSecret) {
+        return res.status(400).json({ message: "Webhook secret not configured" });
+      }
+
+      const stripe = require('stripe')(settings.stripeSecretKey);
+      const sig = req.headers['stripe-signature'];
+      let event;
+
+      try {
+        event = stripe.webhooks.constructEvent(req.body, sig, settings.stripeWebhookSecret);
+      } catch (err) {
+        console.error('Webhook signature verification failed:', err);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      // Handle successful payment
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        const { invoiceId, firmId } = paymentIntent.metadata;
+
+        // Update payment record
+        await storage.updatePaymentByStripeId(paymentIntent.id, {
+          status: 'succeeded',
+          processedAt: new Date(),
+          webhookVerified: true,
+          paymentMethod: paymentIntent.charges.data[0]?.payment_method_details?.type
+        });
+
+        // Update invoice status
+        await storage.updateInvoice(parseInt(invoiceId), {
+          status: 'paid',
+          paidAt: new Date()
+        });
+
+        // Create system alert for successful payment
+        await storage.createSystemAlert({
+          firmId: parseInt(firmId),
+          alertType: 'payment_success',
+          title: 'Payment Received',
+          message: `Payment of $${(paymentIntent.amount / 100).toFixed(2)} received for invoice #${invoiceId}`,
+          severity: 'info'
+        });
+      }
+
+      // Handle failed payment
+      if (event.type === 'payment_intent.payment_failed') {
+        const paymentIntent = event.data.object;
+        const { invoiceId, firmId } = paymentIntent.metadata;
+
+        await storage.updatePaymentByStripeId(paymentIntent.id, {
+          status: 'failed',
+          webhookVerified: true
+        });
+
+        // Create alert for failed payment
+        await storage.createSystemAlert({
+          firmId: parseInt(firmId),
+          alertType: 'payment_failed',
+          title: 'Payment Failed',
+          message: `Payment failed for invoice #${invoiceId}: ${paymentIntent.last_payment_error?.message}`,
+          severity: 'warning'
+        });
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Webhook processing error:", error);
+      res.status(500).json({ message: "Webhook processing failed" });
+    }
+  });
+
+  // Client portal endpoints
+  app.post("/api/client-portal/login", async (req, res) => {
+    try {
+      const { email, password, token } = req.body;
+      
+      if (token) {
+        // Token-based login (secure one-click links)
+        const clientAuth = await storage.getClientAuthByToken(token);
+        if (!clientAuth || !clientAuth.isActive || 
+            (clientAuth.tokenExpiresAt && new Date() > clientAuth.tokenExpiresAt)) {
+          return res.status(401).json({ message: "Invalid or expired token" });
+        }
+        
+        await storage.updateClientAuth(clientAuth.id, { lastLoginAt: new Date() });
+        res.json({ 
+          success: true, 
+          clientId: clientAuth.clientId,
+          firmId: clientAuth.firmId 
+        });
+      } else {
+        // Email/password login
+        const clientAuth = await storage.getClientAuthByEmail(email);
+        if (!clientAuth || !clientAuth.isActive) {
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // In production, verify password hash here
+        await storage.updateClientAuth(clientAuth.id, { lastLoginAt: new Date() });
+        res.json({ 
+          success: true, 
+          clientId: clientAuth.clientId,
+          firmId: clientAuth.firmId 
+        });
+      }
+    } catch (error) {
+      console.error("Client portal login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.get("/api/client-portal/:clientId/invoices", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const invoices = await storage.getClientInvoices(clientId);
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching client invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  app.get("/api/client-portal/:clientId/payments", async (req, res) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      const payments = await storage.getClientPayments(clientId);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching client payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  // Advanced analytics endpoints
+  app.get("/api/billing/analytics/profitability", async (req, res) => {
+    try {
+      const analytics = await storage.getProfitabilityAnalytics(DEMO_FIRM_ID);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching profitability analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  app.get("/api/billing/analytics/hourly-rates", async (req, res) => {
+    try {
+      const analytics = await storage.getHourlyRateAnalytics(DEMO_FIRM_ID);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching hourly rate analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // AI-powered form generation
+  app.post("/api/billing/generate-1099", async (req, res) => {
+    try {
+      const { year, contractorData } = req.body;
+      
+      // Use existing AI service to generate 1099 form
+      const formData = await storage.generateTaxForm('1099', {
+        year,
+        firmId: DEMO_FIRM_ID,
+        contractorData
+      });
+
+      res.json({ formData });
+    } catch (error) {
+      console.error("Error generating 1099 form:", error);
+      res.status(500).json({ message: "Failed to generate 1099 form" });
+    }
+  });
+
+  // System alerts for admins
+  app.get("/api/billing/alerts", async (req, res) => {
+    try {
+      const alerts = await storage.getSystemAlerts(DEMO_FIRM_ID);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching system alerts:", error);
+      res.status(500).json({ message: "Failed to fetch alerts" });
+    }
+  });
+
+  app.patch("/api/billing/alerts/:id/read", async (req, res) => {
+    try {
+      const alertId = parseInt(req.params.id);
+      await storage.markAlertAsRead(alertId, 1); // Demo user ID
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking alert as read:", error);
+      res.status(500).json({ message: "Failed to mark alert as read" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

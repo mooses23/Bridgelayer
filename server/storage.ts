@@ -907,6 +907,129 @@ export class DatabaseStorage implements IStorage {
     const [permissions] = await db.insert(billingPermissions).values(insertPermissions).returning();
     return permissions;
   }
+
+  // Payment processing methods
+  async createPayment(data: any): Promise<any> {
+    const [payment] = await db.insert(payments).values(data).returning();
+    return payment;
+  }
+
+  async updatePaymentByStripeId(stripePaymentIntentId: string, updates: any): Promise<any> {
+    const [payment] = await db
+      .update(payments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(payments.stripePaymentIntentId, stripePaymentIntentId))
+      .returning();
+    return payment;
+  }
+
+  // Client portal methods
+  async getClientAuthByToken(token: string): Promise<any> {
+    const [auth] = await db.select().from(clientAuth).where(eq(clientAuth.loginToken, token));
+    return auth || null;
+  }
+
+  async getClientAuthByEmail(email: string): Promise<any> {
+    const [auth] = await db.select().from(clientAuth).where(eq(clientAuth.email, email));
+    return auth || null;
+  }
+
+  async updateClientAuth(id: number, updates: any): Promise<any> {
+    const [auth] = await db
+      .update(clientAuth)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clientAuth.id, id))
+      .returning();
+    return auth;
+  }
+
+  async getClientPayments(clientId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(payments)
+      .where(eq(payments.clientId, clientId))
+      .orderBy(desc(payments.createdAt));
+  }
+
+  // Analytics methods
+  async getProfitabilityAnalytics(firmId: number): Promise<any> {
+    const analytics = await db
+      .select({
+        caseId: timeLogs.caseId,
+        clientId: timeLogs.clientId,
+        totalHours: sql<number>`sum(${timeLogs.hours})`,
+        totalBilled: sql<number>`sum(${timeLogs.billableRate} * ${timeLogs.hours} / 60)`,
+        invoiceCount: sql<number>`count(distinct ${timeLogs.invoiceId})`
+      })
+      .from(timeLogs)
+      .where(eq(timeLogs.firmId, firmId))
+      .groupBy(timeLogs.caseId, timeLogs.clientId);
+    
+    return analytics;
+  }
+
+  async getHourlyRateAnalytics(firmId: number): Promise<any> {
+    const analytics = await db
+      .select({
+        userId: timeLogs.userId,
+        avgRate: sql<number>`avg(${timeLogs.billableRate})`,
+        totalHours: sql<number>`sum(${timeLogs.hours})`,
+        totalBilled: sql<number>`sum(${timeLogs.billableRate} * ${timeLogs.hours} / 60)`
+      })
+      .from(timeLogs)
+      .where(eq(timeLogs.firmId, firmId))
+      .groupBy(timeLogs.userId);
+    
+    return analytics;
+  }
+
+  // Tax form generation
+  async generateTaxForm(formType: string, data: any): Promise<any> {
+    const formRecord = await db.insert(billingForms).values({
+      firmId: data.firmId,
+      formType,
+      formName: `${formType}-${data.year}`,
+      formData: data,
+      createdBy: 1
+    }).returning();
+
+    return {
+      formId: formRecord[0].id,
+      formType,
+      year: data.year,
+      generatedData: data.contractorData
+    };
+  }
+
+  // System alerts
+  async createSystemAlert(data: any): Promise<any> {
+    const [alert] = await db.insert(systemAlerts).values(data).returning();
+    return alert;
+  }
+
+  async getSystemAlerts(firmId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(systemAlerts)
+      .where(and(
+        eq(systemAlerts.firmId, firmId),
+        eq(systemAlerts.isRead, false)
+      ))
+      .orderBy(desc(systemAlerts.createdAt));
+  }
+
+  async markAlertAsRead(alertId: number, userId: number): Promise<any> {
+    const [alert] = await db
+      .update(systemAlerts)
+      .set({ 
+        isRead: true, 
+        readBy: userId, 
+        readAt: new Date() 
+      })
+      .where(eq(systemAlerts.id, alertId))
+      .returning();
+    return alert;
+  }
 }
 
 export const storage = new DatabaseStorage();
