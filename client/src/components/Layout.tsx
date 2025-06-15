@@ -94,27 +94,27 @@ export default function Layout({ children }: LayoutProps) {
             {navigation.map((item) => {
               const active = isActive(item.href);
               return (
-                <Link key={item.name} href={item.href}>
-                  <a
-                    className={`
-                      flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                      ${active 
-                        ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                      }
-                    `}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <div className="flex items-center">
-                      <item.icon className={`w-5 h-5 mr-3 ${active ? "text-blue-600" : ""}`} />
-                      {item.name}
-                    </div>
-                    {item.badge && (
-                      <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </a>
+                <Link 
+                  key={item.name} 
+                  href={item.href}
+                  className={`
+                    flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    ${active 
+                      ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }
+                  `}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <item.icon className={`w-5 h-5 mr-3 ${active ? "text-blue-600" : ""}`} />
+                    {item.name}
+                  </div>
+                  {item.badge && (
+                    <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Link>
               );
             })}

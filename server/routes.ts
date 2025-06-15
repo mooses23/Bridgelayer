@@ -484,9 +484,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = app.listen(5000, "0.0.0.0", () => {
-    console.log("FIRMSYNC server running on port 5000");
-  });
+  // Create HTTP server but don't start listening - let index.ts handle that
+  const { createServer } = await import('http');
+  const httpServer = createServer(app);
 
   return httpServer;
 }
