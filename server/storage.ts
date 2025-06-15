@@ -13,6 +13,8 @@ import {
   type InsertFolder,
   type Message,
   type InsertMessage,
+  type MessageThread,
+  type InsertMessageThread,
   type SystemAdmin,
   type InsertSystemAdmin,
   type FirmIntegration,
@@ -28,6 +30,7 @@ import {
   documents,
   documentAnalyses,
   firmAnalysisSettings,
+  messageThreads,
   folders,
   messages,
   systemAdmins,
@@ -78,11 +81,19 @@ export interface IStorage {
   updateFirmAnalysisSettings(firmId: number, settings: Partial<FirmAnalysisSettings>): Promise<FirmAnalysisSettings>;
   createFirmAnalysisSettings(settings: InsertFirmAnalysisSettings): Promise<FirmAnalysisSettings>;
   
+  // Message threads system
+  createMessageThread(thread: InsertMessageThread): Promise<MessageThread>;
+  getMessageThread(threadId: string): Promise<MessageThread | undefined>;
+  getFirmMessageThreads(firmId: number): Promise<MessageThread[]>;
+  updateMessageThread(threadId: string, updates: Partial<MessageThread>): Promise<MessageThread | undefined>;
+  resolveMessageThread(threadId: string, resolvedBy: number): Promise<boolean>;
+  
   // Messages system
   createMessage(message: InsertMessage): Promise<Message>;
+  getThreadMessages(threadId: string): Promise<Message[]>;
   getFirmMessages(firmId: number): Promise<Message[]>;
-  getUserMessages(userId: number): Promise<Message[]>;
-  markMessageAsRead(id: number): Promise<boolean>;
+  markMessageAsRead(messageId: number, userId: number): Promise<boolean>;
+  getUnreadMessageCount(userId: number): Promise<number>;
   
   // System admin management
   createSystemAdmin(admin: InsertSystemAdmin): Promise<SystemAdmin>;
@@ -309,13 +320,75 @@ export class DatabaseStorage implements IStorage {
     return settings;
   }
 
+  // Message threads system
+  async createMessageThread(insertThread: InsertMessageThread): Promise<MessageThread> {
+    const [thread] = await db
+      .insert(messageThreads)
+      .values(insertThread)
+      .returning();
+    return thread;
+  }
+
+  async getMessageThread(threadId: string): Promise<MessageThread | undefined> {
+    const [thread] = await db
+      .select()
+      .from(messageThreads)
+      .where(eq(messageThreads.threadId, threadId));
+    return thread;
+  }
+
+  async getFirmMessageThreads(firmId: number): Promise<MessageThread[]> {
+    return await db
+      .select()
+      .from(messageThreads)
+      .where(eq(messageThreads.firmId, firmId))
+      .orderBy(desc(messageThreads.updatedAt));
+  }
+
+  async updateMessageThread(threadId: string, updates: Partial<MessageThread>): Promise<MessageThread | undefined> {
+    const [thread] = await db
+      .update(messageThreads)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(messageThreads.threadId, threadId))
+      .returning();
+    return thread;
+  }
+
+  async resolveMessageThread(threadId: string, resolvedBy: number): Promise<boolean> {
+    const result = await db
+      .update(messageThreads)
+      .set({ 
+        isResolved: true, 
+        resolvedBy, 
+        resolvedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(messageThreads.threadId, threadId));
+    return (result.rowCount || 0) > 0;
+  }
+
   // Messages system
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
     const [message] = await db
       .insert(messages)
       .values(insertMessage)
       .returning();
+    
+    // Update thread's updatedAt timestamp
+    await db
+      .update(messageThreads)
+      .set({ updatedAt: new Date() })
+      .where(eq(messageThreads.threadId, insertMessage.threadId));
+    
     return message;
+  }
+
+  async getThreadMessages(threadId: string): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.threadId, threadId))
+      .orderBy(asc(messages.createdAt));
   }
 
   async getFirmMessages(firmId: number): Promise<Message[]> {
@@ -326,20 +399,28 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(messages.createdAt));
   }
 
-  async getUserMessages(userId: number): Promise<Message[]> {
-    return await db
-      .select()
-      .from(messages)
-      .where(eq(messages.toUserId, userId))
-      .orderBy(desc(messages.createdAt));
-  }
+  async markMessageAsRead(messageId: number, userId: number): Promise<boolean> {
+    // Get current readBy array
+    const [message] = await db.select().from(messages).where(eq(messages.id, messageId));
+    if (!message) return false;
 
-  async markMessageAsRead(id: number): Promise<boolean> {
+    const currentReadBy = Array.isArray(message.readBy) ? message.readBy : [];
+    if (currentReadBy.includes(userId)) return true; // Already read
+
+    const updatedReadBy = [...currentReadBy, userId];
     const result = await db
       .update(messages)
-      .set({ isRead: true })
-      .where(eq(messages.id, id));
+      .set({ readBy: updatedReadBy })
+      .where(eq(messages.id, messageId));
     return (result.rowCount || 0) > 0;
+  }
+
+  async getUnreadMessageCount(userId: number): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(messages)
+      .where(sql`NOT (${messages.readBy} ? ${userId.toString()})`);
+    return result[0]?.count ?? 0;
   }
 
   // System admin management

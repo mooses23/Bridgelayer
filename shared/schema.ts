@@ -84,17 +84,34 @@ export const firmAnalysisSettings = pgTable("firm_analysis_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Messages/notifications system
-export const messages = pgTable("messages", {
+// Message threads for structured conversations
+export const messageThreads = pgTable("message_threads", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
-  fromUserId: integer("from_user_id").references(() => users.id),
-  toUserId: integer("to_user_id").references(() => users.id),
-  documentId: integer("document_id").references(() => documents.id), // Optional document reference
+  threadId: text("thread_id").notNull().unique(), // UUID for thread identification
   title: text("title").notNull(),
+  documentId: integer("document_id").references(() => documents.id), // Optional document reference
+  filename: text("filename"), // Associated filename if document-related
+  isResolved: boolean("is_resolved").default(false),
+  resolvedBy: integer("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Enhanced messages system with threading and role-based communication
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  threadId: text("thread_id").references(() => messageThreads.threadId).notNull(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  senderId: integer("sender_id").references(() => users.id),
+  senderRole: text("sender_role").notNull(), // paralegal, firm_admin, bridge
+  senderName: text("sender_name").notNull(),
+  recipientRole: text("recipient_role"), // admin, bridge, or null for thread-wide
   content: text("content").notNull(),
-  type: text("type").notNull().default("info"), // info, warning, error, success
-  isRead: boolean("is_read").default(false),
+  isSystemMessage: boolean("is_system_message").default(false), // For BridgeLayer automated messages
+  readBy: jsonb("read_by").default('[]'), // Array of user IDs who have read this message
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -200,6 +217,12 @@ export const insertFirmAnalysisSettingsSchema = createInsertSchema(firmAnalysisS
   updatedAt: true,
 });
 
+export const insertMessageThreadSchema = createInsertSchema(messageThreads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   createdAt: true,
@@ -245,6 +268,8 @@ export type InsertAnalysis = z.infer<typeof insertAnalysisSchema>;
 export type DocumentAnalysis = typeof documentAnalyses.$inferSelect;
 export type InsertFirmAnalysisSettings = z.infer<typeof insertFirmAnalysisSettingsSchema>;
 export type FirmAnalysisSettings = typeof firmAnalysisSettings.$inferSelect;
+export type InsertMessageThread = z.infer<typeof insertMessageThreadSchema>;
+export type MessageThread = typeof messageThreads.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertSystemAdmin = z.infer<typeof insertSystemAdminSchema>;
