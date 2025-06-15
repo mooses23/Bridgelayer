@@ -26,6 +26,12 @@ export default function Onboarding() {
     }
   });
 
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/login");
+    }
+  }, [isLoading, isAuthenticated, setLocation]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -38,12 +44,18 @@ export default function Onboarding() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return null;
   }
 
   // If user is not firm_admin or firm_owner, redirect to dashboard
-  if (user?.role !== "firm_admin" && user?.role !== "firm_owner") {
-    return <Navigate to="/dashboard" />;
+  useEffect(() => {
+    if (user && user.role !== "firm_admin" && user.role !== "firm_owner") {
+      setLocation("/dashboard");
+    }
+  }, [user?.role, setLocation]);
+
+  if (user && user.role !== "firm_admin" && user.role !== "firm_owner") {
+    return null;
   }
 
   const handleNext = () => {

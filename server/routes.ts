@@ -903,7 +903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/notifications/count", async (req, res) => {
+  app.get("/api/notifications/count", requireAuth, async (req, res) => {
     try {
       const { NotificationService } = await import('./services/notificationService.js');
       const count = await NotificationService.getUnreadCount(req.user!.id, req.user!.firmId!);

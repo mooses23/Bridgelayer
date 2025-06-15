@@ -5,12 +5,12 @@ import Login from '@/pages/Login';
 import Logout from '@/pages/Logout';
 import Onboarding from '@/pages/Onboarding';
 import Admin from '@/pages/Admin';
-import Dashboard from '@/pages/dashboard';
-import Documents from '@/pages/documents';
-import Clients from '@/pages/clients';
-import Intake from '@/pages/intake';
-import Billing from '@/pages/billing';
-import Settings from '@/pages/settings';
+import Dashboard from '@/pages/Dashboard';
+import Documents from '@/pages/Documents';
+import Clients from '@/pages/Clients';
+import Intake from '@/pages/Intake';
+import Billing from '@/pages/Billing';
+import Settings from '@/pages/Settings';
 import ClientPortal from '@/pages/client-portal';
 import NotFound from '@/pages/not-found';
 
