@@ -363,6 +363,8 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   readAt: true,
 });
 
+
+
 // Court Calendar Events table
 export const calendarEvents = pgTable("calendar_events", {
   id: serial("id").primaryKey(),
@@ -466,6 +468,8 @@ export const insertAdminGhostSessionSchema = createInsertSchema(adminGhostSessio
   startedAt: true,
   endedAt: true,
 });
+
+
 
 // Types
 export type InsertFirm = z.infer<typeof insertFirmSchema>;
@@ -657,12 +661,10 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
 
 export const insertInvoiceLineItemSchema = createInsertSchema(invoiceLineItems).omit({
   id: true,
-  createdAt: true,
 });
 
 export const insertFirmBillingSettingsSchema = createInsertSchema(firmBillingSettings).omit({
   id: true,
-  createdAt: true,
   updatedAt: true,
 });
 
@@ -670,82 +672,6 @@ export const insertBillingPermissionSchema = createInsertSchema(billingPermissio
   id: true,
   createdAt: true,
   updatedAt: true,
-});
-
-// Payment processing tables
-export const payments = pgTable("payments", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
-  clientId: integer("client_id").references(() => clients.id),
-  stripePaymentIntentId: text("stripe_payment_intent_id"),
-  lawpayTransactionId: text("lawpay_transaction_id"),
-  amount: integer("amount").notNull(), // in cents
-  status: text("status").notNull().default("pending"), // PaymentStatus enum
-  paymentMethod: text("payment_method"), // card, bank_transfer, etc
-  processedAt: timestamp("processed_at"),
-  webhookVerified: boolean("webhook_verified").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Client authentication for portal access
-export const clientAuth = pgTable("client_auth", {
-  id: serial("id").primaryKey(),
-  clientId: integer("client_id").references(() => clients.id).notNull(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  email: text("email").notNull(),
-  passwordHash: text("password_hash"),
-  loginToken: text("login_token"), // For secure one-click links
-  tokenExpiresAt: timestamp("token_expires_at"),
-  lastLoginAt: timestamp("last_login_at"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Billing audit logs
-export const billingAuditLogs = pgTable("billing_audit_logs", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  userId: integer("user_id").references(() => users.id),
-  entityType: text("entity_type").notNull(), // time_log, invoice, payment, etc
-  entityId: integer("entity_id").notNull(),
-  action: text("action").notNull(), // create, update, delete
-  oldValues: jsonb("old_values"),
-  newValues: jsonb("new_values"),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Billing forms storage (for AI-powered form generation)
-export const billingForms = pgTable("billing_forms", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  formType: text("form_type").notNull(), // 1099, invoice_template, etc
-  formName: text("form_name").notNull(),
-  formData: jsonb("form_data").notNull(),
-  templatePath: text("template_path"),
-  isActive: boolean("is_active").default(true),
-  createdBy: integer("created_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// System alerts for admins
-export const systemAlerts = pgTable("system_alerts", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id),
-  alertType: text("alert_type").notNull(), // billing_disabled, storage_high, payment_failed
-  title: text("title").notNull(),
-  message: text("message").notNull(),
-  severity: text("severity").notNull().default("info"), // info, warning, error, critical
-  isRead: boolean("is_read").default(false),
-  readBy: integer("read_by").references(() => users.id),
-  readAt: timestamp("read_at"),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Types for billing tables
