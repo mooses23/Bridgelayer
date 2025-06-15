@@ -3,22 +3,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TenantProvider } from "@/context/TenantContext";
 import RoleRouter from "@/components/RoleRouter";
-import { SessionProvider } from "@/contexts/SessionContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <SessionProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
           <TenantProvider>
             <RoleRouter />
             <Toaster />
           </TenantProvider>
-        </SessionProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
