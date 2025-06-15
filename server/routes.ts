@@ -874,7 +874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { AuditService } = await import('./services/auditService.js');
       await AuditService.logAction({
         firmId: DEMO_FIRM_ID,
-        actorId: DEMO_USER_ID,
+        actorId: req.user!.id,
         actorName: req.body.actorName || "System User",
         action: req.body.action,
         resourceType: req.body.resourceType,
@@ -895,7 +895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notifications", async (req, res) => {
     try {
       const { NotificationService } = await import('./services/notificationService.js');
-      const notifications = await NotificationService.getUserNotifications(DEMO_USER_ID, DEMO_FIRM_ID);
+      const notifications = await NotificationService.getUserNotifications(req.user!.id, req.user!.firmId!);
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -906,7 +906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notifications/count", async (req, res) => {
     try {
       const { NotificationService } = await import('./services/notificationService.js');
-      const count = await NotificationService.getUnreadCount(DEMO_USER_ID, DEMO_FIRM_ID);
+      const count = await NotificationService.getUnreadCount(req.user!.id, req.user!.firmId!);
       res.json({ count });
     } catch (error) {
       console.error("Error fetching notification count:", error);
