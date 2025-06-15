@@ -103,6 +103,27 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 15, 2025**: GHGH 13a & 13b - AuthContext & Role-Based Router Implementation Complete
+  - Created new AuthContext (`client/src/context/AuthContext.tsx`) with user/firm state tracking
+  - Implemented localStorage session persistence for MVP-friendly authentication
+  - Built comprehensive useAuth() hook for component access across the application
+  - Created role-based AppRouter (`client/src/router/AppRouter.tsx`) with clean routing logic:
+    * Loading state handling with LoadingSpinner component
+    * Public routes: /login, /logout, /auth-demo (no authentication required)
+    * Admin role routing to AdminLayout for system administration
+    * Firm user routing with onboarding state checks
+    * Automatic redirect to login for unauthenticated users
+  - Established role-specific layout architecture:
+    * AdminLayout for admin users (wraps Admin page)
+    * FirmDashboardLayout for onboarded firm users (wraps Dashboard)
+    * OnboardingPage for firm users requiring setup
+    * LogoutPage with context clearing and localStorage cleanup
+  - Removed global layout wrappers from App.tsx - layouts now role-specific
+  - Added proper /logout route that clears AuthContext and localStorage, then redirects to login
+  - Updated App.tsx to use new AuthProvider and AppRouter instead of SessionProvider/SimpleRouter
+  - Created LoadingSpinner component for authentication state loading
+  - Successfully integrated complete authentication flow with role-based access control
+
 - **June 15, 2025**: Complete Authentication System with Role-Based Login Redirects Implementation Complete
   - Fixed critical database schema mismatch (password vs passwordHash field) that was causing authentication failures
   - Implemented comprehensive role-based authentication with admin, firm_admin, and paralegal roles
