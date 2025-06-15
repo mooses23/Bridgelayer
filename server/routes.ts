@@ -12,6 +12,9 @@ import {
 } from "@shared/schema";
 import { storage } from "./storage";
 import { processDocument } from "./services/documentProcessor";
+import OpenAI from "openai";
+import fs from "fs/promises";
+import path from "path";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -23,6 +26,9 @@ const upload = multer({
 // Demo data for development - in production this would come from authentication
 const DEMO_FIRM_ID = 1;
 const DEMO_USER_ID = 1;
+
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Firm management endpoints
@@ -482,6 +488,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking message as read:", error);
       res.status(500).json({ message: "Failed to mark message as read" });
+    }
+  });
+
+  // AI Review endpoints
+  app.post("/api/review/analyze", async (req, res) => {
+    try {
+      const { firm_id, filename } = req.body;
+
+      if (!firm_id || !filename) {
+        return res.status(400).json({ 
+          message: "Missing required fields: firm_id and filename" 
+        });
+      }
+
+      // Construct file paths
+      const firmDir = path.join(process.cwd(), 'firms', firm_id);
+      const filePath = path.join(firmDir, 'files', filename);
+      const promptPath = path.join(firmDir, 'review_logs', `${path.parse(filename).name}_prompt.txt`);
+      const responsePath = path.join(firmDir, 'review_logs', `${path.parse(filename).name}_response.txt`);
+
+      // Check if files exist
+      try {
+        await fs.access(filePath);
+        await fs.access(promptPath);
+      } catch (error) {
+        return res.status(404).json({ 
+          message: "Required files not found. Ensure document and prompt exist." 
+        });
+      }
+
+      // Read file content and prompt
+      const [fileContent, promptContent] = await Promise.all([
+        fs.readFile(filePath, 'utf-8'),
+        fs.readFile(promptPath, 'utf-8')
+      ]);
+
+      console.log(`[AI Review] Starting analysis for ${filename} (firm: ${firm_id})`);
+
+      // Send request to OpenAI
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional legal document analysis assistant. Provide thorough, evidence-based analysis following the provided prompt instructions."
+          },
+          {
+            role: "user",
+            content: `${promptContent}\n\n--- DOCUMENT CONTENT ---\n${fileContent}`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 4000
+      });
+
+      const aiAnalysis = response.choices[0].message.content;
+
+      if (!aiAnalysis) {
+        throw new Error("No response received from AI analysis");
+      }
+
+      // Save AI response to file
+      await fs.writeFile(responsePath, aiAnalysis, 'utf-8');
+
+      console.log(`[AI Review] Analysis completed for ${filename}, saved to ${responsePath}`);
+
+      res.json({
+        message: "AI analysis completed successfully",
+        analysis_file: `${path.parse(filename).name}_response.txt`,
+        firm_id,
+        filename,
+        analysis_length: aiAnalysis.length,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error('[AI Review] Error during analysis:', error);
+      
+      if (error.code === 'insufficient_quota') {
+        return res.status(402).json({
+          message: "OpenAI API quota exceeded. Please check your billing status.",
+          error_type: "quota_exceeded"
+        });
+      }
+      
+      if (error.code === 'invalid_api_key') {
+        return res.status(401).json({
+          message: "Invalid OpenAI API key. Please check your configuration.",
+          error_type: "auth_error"
+        });
+      }
+
+      res.status(500).json({ 
+        message: "Failed to complete AI analysis",
+        error: error.message || "Unknown error occurred"
+      });
+    }
+  });
+
+  app.get("/api/review/status/:firm_id/:filename", async (req, res) => {
+    try {
+      const { firm_id, filename } = req.params;
+      
+      const baseFilename = path.parse(filename).name;
+      const responsePath = path.join(process.cwd(), 'firms', firm_id, 'review_logs', `${baseFilename}_response.txt`);
+      
+      try {
+        const stats = await fs.stat(responsePath);
+        const content = await fs.readFile(responsePath, 'utf-8');
+        
+        res.json({
+          status: 'reviewed',
+          completed_at: stats.mtime.toISOString(),
+          analysis_length: content.length,
+          response_file: `${baseFilename}_response.txt`
+        });
+      } catch (error) {
+        res.json({
+          status: 'pending',
+          completed_at: null,
+          analysis_length: 0,
+          response_file: null
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to check review status",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/review/result/:firm_id/:filename", async (req, res) => {
+    try {
+      const { firm_id, filename } = req.params;
+      
+      const baseFilename = path.parse(filename).name;
+      const responsePath = path.join(process.cwd(), 'firms', firm_id, 'review_logs', `${baseFilename}_response.txt`);
+      
+      try {
+        const content = await fs.readFile(responsePath, 'utf-8');
+        const stats = await fs.stat(responsePath);
+        
+        res.json({
+          analysis: content,
+          completed_at: stats.mtime.toISOString(),
+          filename: `${baseFilename}_response.txt`,
+          length: content.length
+        });
+      } catch (error) {
+        res.status(404).json({
+          message: "Analysis result not found. Document may not have been reviewed yet."
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ 
+        message: "Failed to retrieve analysis result",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

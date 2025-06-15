@@ -104,6 +104,44 @@ export default function DocumentDashboard({ firmId = "firm_1" }: DocumentDashboa
     return matchesSearch && matchesStatus;
   });
 
+  // Run AI review mutation
+  const runReviewMutation = useMutation({
+    mutationFn: async (document: DocumentWithMetadata) => {
+      const response = await fetch('/api/review/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firm_id: firmId,
+          filename: document.filename
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to start AI analysis');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, document) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/firms/${firmId}/review-logs`] });
+      toast({
+        title: "Analysis Complete",
+        description: `AI review completed for ${document.originalName}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to complete AI analysis",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Reassign reviewer mutation
   const reassignMutation = useMutation({
     mutationFn: async ({ documentId, newReviewer }: { documentId: number; newReviewer: string }) => {
@@ -137,13 +175,15 @@ export default function DocumentDashboard({ firmId = "firm_1" }: DocumentDashboa
       return;
     }
 
-    toast({
-      title: "Review Queued",
-      description: `AI review will begin for ${document.originalName}`,
-    });
-    
-    // TODO: Trigger AI review with assembled prompt
-    console.log(`Starting AI review for ${document.filename}`);
+    // Check if already reviewed (prevent multiple reviews without confirmation)
+    if (document.status === 'reviewed') {
+      if (!confirm(`This document has already been reviewed. Run analysis again?`)) {
+        return;
+      }
+    }
+
+    // Trigger AI review
+    runReviewMutation.mutate(document);
   };
 
   const formatFileSize = (bytes: number) => {
