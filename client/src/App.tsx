@@ -58,7 +58,7 @@ function Router() {
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/admin" component={Admin} />
       <Route path="/client-portal" component={ClientPortal} />
-      <Route path="/">
+      <Route path="/" nest>
         <Layout>
           <Switch>
             <Route path="/" component={DashboardTab} />
