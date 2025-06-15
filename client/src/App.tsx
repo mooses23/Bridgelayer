@@ -14,16 +14,21 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/documents" component={Documents} />
-        <Route path="/messages" component={Messages} />
-        <Route path="/team" component={Team} />
-        <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/onboarding" component={Onboarding} />
+      <Route path="/">
+        <Layout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/documents" component={Documents} />
+            <Route path="/messages" component={Messages} />
+            <Route path="/team" component={Team} />
+            <Route path="/settings" component={Settings} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
