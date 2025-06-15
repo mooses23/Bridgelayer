@@ -1,0 +1,42 @@
+MEDICAL RISK ANALYSIS
+
+Analyze this medical document for patient safety risks, clinical concerns, and regulatory compliance issues.
+
+Risk Assessment Framework:
+**HIGH RISK** 🔴 - Immediate patient safety concern, potential malpractice exposure
+**MEDIUM RISK** 🟡 - Clinical attention needed, compliance concern
+**LOW RISK** 🟢 - Minor documentation or procedural note
+
+Required Analysis:
+
+**Patient Safety Risks:**
+- Medication interactions or contraindications
+- Allergy alerts and precautions
+- Treatment protocol deviations
+- Informed consent adequacy
+
+**Clinical Risks:**
+- Diagnostic accuracy concerns
+- Treatment appropriateness
+- Follow-up care adequacy
+- Provider communication gaps
+
+**Regulatory Compliance Risks:**
+- HIPAA privacy violations
+- Documentation completeness
+- Billing and coding accuracy
+- Quality assurance standards
+
+**Legal/Liability Risks:**
+- Informed consent deficiencies
+- Standard of care deviations
+- Documentation inadequacies
+- Provider scope of practice issues
+
+For each identified risk, provide:
+- Specific evidence from document
+- Potential impact on patient care
+- Recommended corrective action
+- Escalation requirements (if any)
+
+Always err on the side of patient safety when assessing risk levels.

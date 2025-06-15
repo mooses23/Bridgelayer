@@ -2,6 +2,7 @@
   "firmId": "firm_001",
   "firmName": "Smith & Associates Law Firm",
   "plan": "professional",
+  "vertical": "firmsync",
   "aiConfig": {
     "documentTypes": ["nda", "contract", "lease", "employment", "settlement"],
     "analysisFeatures": {
