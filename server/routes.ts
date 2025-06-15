@@ -372,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/onboarding/configure", async (req, res) => {
     try {
-      const { firmName, adminEmail, selectedDocTypes, customConfigs } = req.body;
+      const { firmName, adminEmail, selectedDocTypes, documentConfigs } = req.body;
       
       // Create config files for each selected document type
       const fs = await import('fs/promises');
@@ -387,7 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate config files for each document type
       for (const docType of selectedDocTypes) {
-        const config = customConfigs[docType];
+        const config = documentConfigs[docType];
         if (config) {
           const configData = {
             docType: config.docType,
@@ -395,14 +395,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             enabled: config.enabled,
             features: {
               summarize: config.summarize,
-              risk: config.riskAnalysis,
-              clauses: config.clauseMode !== 'disabled',
+              risk: true, // Always enable risk analysis
+              clauses: config.clauseCheck,
               crossref: false,
               formatting: true
             },
             riskLevel: config.riskLevel || 'medium',
             reviewer: config.reviewer,
-            customInstructions: config.customInstructions || ''
+            suggestionMode: config.suggestionMode,
+            customInstructions: ''
           };
           
           const configPath = path.join(configDir, `${docType}.json`);
@@ -416,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminEmail,
         setupDate: new Date().toISOString(),
         documentTypes: selectedDocTypes,
-        configurations: customConfigs
+        configurations: documentConfigs
       };
       
       const summaryPath = path.join(firmDir, 'onboarding-summary.json');
