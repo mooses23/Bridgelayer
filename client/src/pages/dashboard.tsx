@@ -39,7 +39,9 @@ export default function Dashboard() {
     queryKey: ["/api/clients"],
   });
 
-{/* Phase 4 Components Grid */}
+  return (
+    <div className="space-y-6">
+      {/* Phase 4 Components Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 mb-6">
         <div>
           <div className="text-xs text-green-600 font-medium mb-2">[AdminGhostModeWidget] is live</div>
