@@ -3,6 +3,15 @@ import { storage } from "./storage";
 
 export async function seedAuthData() {
   try {
+    console.log("Checking authentication data...");
+
+    // Check if data already exists
+    const existingAdmin = await storage.getUserByEmail("admin@firmsync.com");
+    if (existingAdmin) {
+      console.log("Authentication data already exists, skipping seeding");
+      return;
+    }
+
     console.log("Seeding authentication data...");
 
     // Create test firms
@@ -22,15 +31,13 @@ export async function seedAuthData() {
       onboarded: false
     });
 
-    // Create test users with hashed passwords
-    const adminPasswordHash = await bcrypt.hash("admin123", 10);
-    const ownerPasswordHash = await bcrypt.hash("test123", 10);
-    const staffPasswordHash = await bcrypt.hash("staff123", 10);
+    // Create test users with hashed passwords (using "password" for all demo accounts)
+    const passwordHash = await bcrypt.hash("password", 10);
 
     // System admin user (no firm association)
     const adminUser = await storage.createUser({
       email: "admin@firmsync.com",
-      passwordHash: adminPasswordHash,
+      passwordHash: passwordHash,
       firstName: "System",
       lastName: "Admin",
       role: "admin",
@@ -40,7 +47,7 @@ export async function seedAuthData() {
     // Firm owner for Test Legal Firm
     const ownerUser = await storage.createUser({
       email: "owner@testfirm.com",
-      passwordHash: ownerPasswordHash,
+      passwordHash: passwordHash,
       firstName: "John",
       lastName: "Owner",
       role: "firm_admin",
@@ -51,7 +58,7 @@ export async function seedAuthData() {
     // Staff user for LegalEdge Partners
     const staffUser = await storage.createUser({
       email: "staff@legaledge.com",
-      passwordHash: staffPasswordHash,
+      passwordHash: passwordHash,
       firstName: "Jane",
       lastName: "Paralegal",
       role: "paralegal",

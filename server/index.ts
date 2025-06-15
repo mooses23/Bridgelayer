@@ -53,7 +53,7 @@ app.use((req, res, next) => {
 (async () => {
   try {
     // Auto-seed authentication data on startup if needed
-    // await seedAuthData(); // Temporarily disabled until schema migration completes
+    await seedAuthData();
     
     const server = await registerRoutes(app);
 
