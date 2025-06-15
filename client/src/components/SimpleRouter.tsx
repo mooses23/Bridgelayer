@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useSession } from '@/contexts/SessionContext';
+import { useAuth } from '@/context/AuthContext';
 import Login from '@/pages/Login';
 import Logout from '@/pages/Logout';
 import Admin from '@/pages/Admin';
 import Onboarding from '@/pages/Onboarding';
 import Dashboard from '@/pages/Dashboard';
 import NotFound from '@/pages/not-found';
+import AuthDemo from '@/components/AuthDemo';
 
 export default function SimpleRouter() {
-  const { user, isLoading, isAuthenticated } = useSession();
+  const { user, firm, loading } = useAuth();
   const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
 
   // Update path on browser navigation
@@ -28,7 +29,7 @@ export default function SimpleRouter() {
   };
 
   // Show loading screen while checking session
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -48,8 +49,13 @@ export default function SimpleRouter() {
     return <Logout />;
   }
 
+  // Add auth demo route for testing
+  if (currentPath === '/auth-demo') {
+    return <AuthDemo />;
+  }
+
   // PROTECTED ROUTES - require authentication
-  if (!isAuthenticated || !user) {
+  if (!user) {
     // Redirect to login for protected routes
     if (currentPath !== '/login') {
       navigate('/login');
