@@ -109,7 +109,7 @@ export const login = async (req: Request, res: Response) => {
       redirectPath = '/admin';
     } else if ((user.role === 'firm_owner' || user.role === 'firm_admin' || user.role === 'paralegal') && user.firmId) {
       // Check firm onboarding status
-      const firm = await storage.getFirmById(user.firmId);
+      const firm = await storage.getFirm(user.firmId);
       if (firm && !firm.onboarded) {
         redirectPath = '/onboarding';
       } else {
