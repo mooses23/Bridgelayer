@@ -959,6 +959,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Client endpoints
+  app.get("/api/clients", async (req, res) => {
+    try {
+      const clients = await storage.getFirmClients(DEMO_FIRM_ID);
+      res.json(clients);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
   app.get("/api/billing/clients", async (req, res) => {
     try {
       const clients = await storage.getFirmClients(DEMO_FIRM_ID);
