@@ -7,6 +7,7 @@ import Layout from "@/components/Layout";
 import Dashboard from "@/pages/dashboard";
 import Documents from "@/pages/documents";
 import Messaging from "@/pages/Messaging";
+import Analytics from "@/pages/Analytics";
 import Team from "@/pages/team";
 import Settings from "@/pages/settings";
 import Onboarding from "@/pages/Onboarding";
@@ -24,6 +25,7 @@ function Router() {
             <Route path="/" component={Dashboard} />
             <Route path="/documents" component={Documents} />
             <Route path="/messages" component={Messaging} />
+            <Route path="/analytics" component={Analytics} />
             <Route path="/team" component={Team} />
             <Route path="/settings" component={Settings} />
             <Route component={NotFound} />

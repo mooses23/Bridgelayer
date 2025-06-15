@@ -9,13 +9,14 @@ import {
   Building2,
   Menu,
   X,
-  Bell,
-  Search
+  Search,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import NotificationBell from "@/components/NotificationBell";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -44,6 +45,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Documents", href: "/documents", icon: FileText },
     { name: "Messages", href: "/messages", icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : undefined },
+    { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Team", href: "/team", icon: Users },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
@@ -157,14 +159,7 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 px-1 py-0.5 text-xs min-w-5 h-5">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
+              <NotificationBell />
               
               <div className="text-sm text-gray-600">
                 <span className="hidden sm:inline">Plan: </span>

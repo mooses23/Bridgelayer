@@ -832,6 +832,134 @@ export default function Admin() {
     );
   };
 
+  // Audit Log Tab Component
+  const AuditLogTab = () => {
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleString();
+    };
+
+    const getActionIcon = (action: string) => {
+      switch (action) {
+        case 'DOC_UPLOAD':
+          return <FileText className="w-4 h-4 text-blue-500" />;
+        case 'DOC_REVIEW_COMPLETED':
+          return <Shield className="w-4 h-4 text-green-500" />;
+        case 'CONFIG_CHANGE':
+          return <Settings className="w-4 h-4 text-orange-500" />;
+        case 'LOGIN':
+          return <User className="w-4 h-4 text-gray-500" />;
+        default:
+          return <Clock className="w-4 h-4 text-gray-400" />;
+      }
+    };
+
+    const getActionColor = (action: string) => {
+      switch (action) {
+        case 'DOC_UPLOAD':
+          return 'bg-blue-50 border-blue-200';
+        case 'DOC_REVIEW_COMPLETED':
+          return 'bg-green-50 border-green-200';
+        case 'CONFIG_CHANGE':
+          return 'bg-orange-50 border-orange-200';
+        case 'LOGIN':
+          return 'bg-gray-50 border-gray-200';
+        default:
+          return 'bg-gray-50 border-gray-200';
+      }
+    };
+
+    if (auditLoading) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>Audit Log</CardTitle>
+            <CardDescription>Loading compliance audit trail...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="flex items-center space-x-4 p-4 border rounded">
+                    <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5" />
+              Audit Log - Compliance Firewall
+            </CardTitle>
+            <CardDescription>
+              Immutable record of all system actions for compliance and security monitoring
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {auditLogs && auditLogs.length > 0 ? (
+                auditLogs.map((log: any) => (
+                  <div
+                    key={log.id}
+                    className={`p-4 border rounded-lg ${getActionColor(log.action)}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        {getActionIcon(log.action)}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">{log.action.replace('_', ' ')}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {log.resourceType}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Performed by <strong>{log.actorName}</strong>
+                            {log.resourceId && ` on ${log.resourceType} ${log.resourceId}`}
+                          </p>
+                          {log.details && (
+                            <div className="text-xs bg-white/50 p-2 rounded border">
+                              <pre className="whitespace-pre-wrap">
+                                {JSON.stringify(log.details, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right text-xs text-gray-500">
+                        <div>{formatDate(log.timestamp)}</div>
+                        {log.ipAddress && (
+                          <div className="mt-1">IP: {log.ipAddress}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <History className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No audit logs found</p>
+                  <p className="text-xs mt-1">System actions will appear here for compliance tracking</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   if (firmsLoading || integrationsLoading || docTypesLoading || settingsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
