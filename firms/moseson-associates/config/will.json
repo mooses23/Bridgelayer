@@ -1,0 +1,16 @@
+{
+  "docType": "will",
+  "displayName": "Wills",
+  "enabled": true,
+  "features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": false,
+    "formatting": true
+  },
+  "riskLevel": "high",
+  "reviewer": "both",
+  "suggestionMode": "review_only",
+  "customInstructions": ""
+}

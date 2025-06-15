@@ -1,0 +1,53 @@
+{
+  "firmName": "moseson associates",
+  "adminEmail": "admin@lawfirm.com",
+  "setupDate": "2025-06-15T03:09:42.498Z",
+  "documentTypes": [
+    "will",
+    "severance_agreement",
+    "partnership_agreement",
+    "nda"
+  ],
+  "configurations": {
+    "will": {
+      "docType": "will",
+      "displayName": "Wills",
+      "summarize": true,
+      "clauseCheck": true,
+      "suggestionMode": "review_only",
+      "riskLevel": "high",
+      "reviewer": "both",
+      "enabled": true
+    },
+    "severance_agreement": {
+      "docType": "severance_agreement",
+      "displayName": "Severance Agreements",
+      "summarize": true,
+      "clauseCheck": true,
+      "suggestionMode": "review_only",
+      "riskLevel": "high",
+      "reviewer": "admin",
+      "enabled": true
+    },
+    "partnership_agreement": {
+      "docType": "partnership_agreement",
+      "displayName": "Partnership Agreements",
+      "summarize": true,
+      "clauseCheck": true,
+      "suggestionMode": "review_only",
+      "riskLevel": "high",
+      "reviewer": "admin",
+      "enabled": true
+    },
+    "nda": {
+      "docType": "nda",
+      "displayName": "Non-Disclosure Agreements",
+      "summarize": true,
+      "clauseCheck": true,
+      "suggestionMode": "review_only",
+      "riskLevel": "low",
+      "reviewer": "paralegal",
+      "enabled": true
+    }
+  }
+}

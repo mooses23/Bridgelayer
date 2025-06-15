@@ -1,0 +1,16 @@
+{
+  "docType": "partnership_agreement",
+  "displayName": "Partnership Agreements",
+  "enabled": true,
+  "features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": false,
+    "formatting": true
+  },
+  "riskLevel": "high",
+  "reviewer": "admin",
+  "suggestionMode": "review_only",
+  "customInstructions": ""
+}
