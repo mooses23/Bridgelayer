@@ -1,24 +1,24 @@
-import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Layout from "@/components/Layout";
-import Dashboard from "@/pages/dashboard";
-import Documents from "@/pages/documents";
-import Clients from "@/pages/clients";
-import Intake from "@/pages/intake";
-import Billing from "@/pages/billing";
-import Settings from "@/pages/settings";
-import Onboarding from "@/pages/Onboarding";
-import Admin from "@/pages/Admin";
-import ClientPortal from "@/pages/client-portal";
-import NotFound from "@/pages/not-found";
+import { SessionProvider } from "@/contexts/SessionContext";
+import AppRouter from "@/components/AppRouter";
 
-// Tab Components
-function DashboardTab() {
-  const [activeSection, setActiveSection] = useState('overview');
-  const [lastAction, setLastAction] = useState('');
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider>
+        <TooltipProvider>
+          <Toaster />
+          <AppRouter />
+        </TooltipProvider>
+      </SessionProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;
 
   const handleAction = (action: string) => {
     setLastAction(`Action: ${action} at ${new Date().toLocaleTimeString()}`);
