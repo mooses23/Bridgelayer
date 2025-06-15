@@ -423,6 +423,18 @@ export const firmBillingSettings = pgTable("firm_billing_settings", {
   lockTimeLogsAfterDays: integer("lock_time_logs_after_days").default(30),
   hideAnalyticsTab: boolean("hide_analytics_tab").default(false),
   billingEnabled: boolean("billing_enabled").default(false),
+  // Stripe integration
+  stripeEnabled: boolean("stripe_enabled").default(false),
+  stripePublishableKey: text("stripe_publishable_key"),
+  stripeSecretKey: text("stripe_secret_key"),
+  stripeWebhookSecret: text("stripe_webhook_secret"),
+  // LawPay integration
+  lawpayEnabled: boolean("lawpay_enabled").default(false),
+  lawpayApiKey: text("lawpay_api_key"),
+  lawpayMerchantId: text("lawpay_merchant_id"),
+  // Client portal settings
+  clientPortalEnabled: boolean("client_portal_enabled").default(false),
+  requireClientLogin: boolean("require_client_login").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -439,7 +451,7 @@ export const billingPermissions = pgTable("billing_permissions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Insert schemas for billing tables
+// Insert schemas for billing tables (moved after table definitions)
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
   createdAt: true,
@@ -481,6 +493,111 @@ export const insertBillingPermissionSchema = createInsertSchema(billingPermissio
   updatedAt: true,
 });
 
+// Payment processing tables
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  lawpayTransactionId: text("lawpay_transaction_id"),
+  amount: integer("amount").notNull(), // in cents
+  status: text("status").notNull().default("pending"), // PaymentStatus enum
+  paymentMethod: text("payment_method"), // card, bank_transfer, etc
+  processedAt: timestamp("processed_at"),
+  webhookVerified: boolean("webhook_verified").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Client authentication for portal access
+export const clientAuth = pgTable("client_auth", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").references(() => clients.id).notNull(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash"),
+  loginToken: text("login_token"), // For secure one-click links
+  tokenExpiresAt: timestamp("token_expires_at"),
+  lastLoginAt: timestamp("last_login_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Billing audit logs
+export const billingAuditLogs = pgTable("billing_audit_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  entityType: text("entity_type").notNull(), // time_log, invoice, payment, etc
+  entityId: integer("entity_id").notNull(),
+  action: text("action").notNull(), // create, update, delete
+  oldValues: jsonb("old_values"),
+  newValues: jsonb("new_values"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Billing forms storage (for AI-powered form generation)
+export const billingForms = pgTable("billing_forms", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  formType: text("form_type").notNull(), // 1099, invoice_template, etc
+  formName: text("form_name").notNull(),
+  formData: jsonb("form_data").notNull(),
+  templatePath: text("template_path"),
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// System alerts for admins
+export const systemAlerts = pgTable("system_alerts", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id),
+  alertType: text("alert_type").notNull(), // billing_disabled, storage_high, payment_failed
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  severity: text("severity").notNull().default("info"), // info, warning, error, critical
+  isRead: boolean("is_read").default(false),
+  readBy: integer("read_by").references(() => users.id),
+  readAt: timestamp("read_at"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Additional insert schemas for new tables
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClientAuthSchema = createInsertSchema(clientAuth).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBillingAuditLogSchema = createInsertSchema(billingAuditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBillingFormSchema = createInsertSchema(billingForms).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSystemAlertSchema = createInsertSchema(systemAlerts).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types for billing tables
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
@@ -496,6 +613,16 @@ export type InsertFirmBillingSettings = z.infer<typeof insertFirmBillingSettings
 export type FirmBillingSettings = typeof firmBillingSettings.$inferSelect;
 export type InsertBillingPermission = z.infer<typeof insertBillingPermissionSchema>;
 export type BillingPermission = typeof billingPermissions.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
+export type InsertClientAuth = z.infer<typeof insertClientAuthSchema>;
+export type ClientAuth = typeof clientAuth.$inferSelect;
+export type InsertBillingAuditLog = z.infer<typeof insertBillingAuditLogSchema>;
+export type BillingAuditLog = typeof billingAuditLogs.$inferSelect;
+export type InsertBillingForm = z.infer<typeof insertBillingFormSchema>;
+export type BillingForm = typeof billingForms.$inferSelect;
+export type InsertSystemAlert = z.infer<typeof insertSystemAlertSchema>;
+export type SystemAlert = typeof systemAlerts.$inferSelect;
 
 // Role enums for type safety
 export const UserRole = z.enum(["admin", "firm_admin", "paralegal", "viewer"]);
@@ -504,4 +631,5 @@ export const FirmPlan = z.enum(["starter", "professional", "enterprise"]);
 export const DocumentStatus = z.enum(["uploaded", "processing", "analyzed", "error"]);
 export const MessageType = z.enum(["info", "warning", "error", "success"]);
 export const BillingType = z.enum(["hourly", "flat", "contingency"]);
-export const InvoiceStatus = z.enum(["draft", "sent", "paid", "overdue", "cancelled"]);
+export const InvoiceStatus = z.enum(["draft", "sent", "paid", "partial", "overdue", "cancelled"]);
+export const PaymentStatus = z.enum(["pending", "processing", "succeeded", "failed", "refunded"]);
