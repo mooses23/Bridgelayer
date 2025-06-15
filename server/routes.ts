@@ -46,10 +46,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", logout);
   app.get("/api/auth/session", getSession);
 
-  // Firm management endpoints
-  app.get("/api/firm", async (req, res) => {
+  // Firm management endpoints - require authentication
+  app.get("/api/firm", requireAuth, async (req: any, res) => {
     try {
-      const firm = await storage.getFirm(DEMO_FIRM_ID);
+      if (!req.user?.firmId) {
+        return res.status(403).json({ message: "No firm association" });
+      }
+      const firm = await storage.getFirm(req.user.firmId);
       if (!firm) {
         return res.status(404).json({ message: "Firm not found" });
       }
@@ -131,8 +134,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertFolderSchema.parse({
         ...req.body,
-        firmId: DEMO_FIRM_ID,
-        createdBy: DEMO_USER_ID
+        firmId: 1, // Will be replaced with proper auth
+        createdBy: 1 // Will be replaced with proper auth
       });
       const folder = await storage.createFolder(validatedData);
       res.status(201).json(folder);
@@ -209,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `${Date.now()}_${req.file.originalname}`,
         content,
         req.file.size,
-        `user_${DEMO_USER_ID}`,
+        `user_1`, // Will be replaced with proper auth
         selectedDocType
       );
       

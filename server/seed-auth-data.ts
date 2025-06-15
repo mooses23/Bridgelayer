@@ -8,26 +8,18 @@ export async function seedAuthData() {
     // Create test firms
     const testFirm = await storage.createFirm({
       name: "Test Legal Firm",
-      address: "123 Main Street, Suite 100",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      phone: "(555) 123-4567",
-      email: "contact@testfirm.com",
+      slug: "test-legal-firm",
       plan: "professional",
-      status: "active"
+      status: "active",
+      onboarded: true
     });
 
     const legalEdgeFirm = await storage.createFirm({
       name: "LegalEdge Partners",
-      address: "456 Business Ave, Floor 20",
-      city: "Chicago",
-      state: "IL",
-      zipCode: "60601",
-      phone: "(312) 555-7890",
-      email: "info@legaledge.com",
+      slug: "legaledge-partners",
       plan: "enterprise",
-      status: "active"
+      status: "active",
+      onboarded: false
     });
 
     // Create test users with hashed passwords
