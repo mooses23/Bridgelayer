@@ -650,6 +650,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Vertical Plugin System API endpoints
+  app.get("/api/vertical/config/:firmId", async (req, res) => {
+    try {
+      const firmId = parseInt(req.params.firmId);
+      const { getFirmVerticalInfo } = await import('./services/verticalAwareDocumentProcessor.js');
+      
+      const verticalInfo = await getFirmVerticalInfo(firmId);
+      res.json(verticalInfo);
+    } catch (error) {
+      console.error("Error fetching vertical configuration:", error);
+      res.status(500).json({ message: "Failed to fetch vertical configuration" });
+    }
+  });
+
+  app.get("/api/vertical/document-types/:firmId", async (req, res) => {
+    try {
+      const firmId = parseInt(req.params.firmId);
+      const { getFirmDocumentTypes } = await import('./services/verticalAwareDocumentProcessor.js');
+      
+      const documentTypes = await getFirmDocumentTypes(firmId);
+      res.json(documentTypes);
+    } catch (error) {
+      console.error("Error fetching vertical document types:", error);
+      res.status(500).json({ message: "Failed to fetch document types" });
+    }
+  });
+
+  app.post("/api/vertical/analyze", async (req, res) => {
+    try {
+      const { documentId, firmId } = req.body;
+      
+      if (!documentId || !firmId) {
+        return res.status(400).json({ message: "Document ID and Firm ID are required" });
+      }
+
+      const { processDocumentWithVertical } = await import('./services/verticalAwareDocumentProcessor.js');
+      
+      await processDocumentWithVertical(documentId, firmId);
+      res.json({ 
+        message: "Document processed successfully with vertical-aware analysis",
+        status: "completed"
+      });
+    } catch (error) {
+      console.error("Error processing document with vertical analysis:", error);
+      res.status(500).json({ 
+        message: "Failed to process document",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/vertical/available", async (req, res) => {
+    try {
+      const availableVerticals = [
+        {
+          name: "firmsync",
+          displayName: "FIRMSYNC - Legal Document Analysis",
+          industry: "legal",
+          description: "Comprehensive legal document analysis for law firms"
+        },
+        {
+          name: "medsync", 
+          displayName: "MEDSYNC - Medical Document Analysis",
+          industry: "healthcare",
+          description: "Clinical document analysis for healthcare providers"
+        },
+        {
+          name: "edusync",
+          displayName: "EDUSYNC - Educational Document Analysis", 
+          industry: "education",
+          description: "Academic document analysis for educational institutions"
+        },
+        {
+          name: "hrsync",
+          displayName: "HRSYNC - HR Document Analysis",
+          industry: "human_resources", 
+          description: "Human resources document analysis for HR professionals"
+        }
+      ];
+      
+      res.json(availableVerticals);
+    } catch (error) {
+      console.error("Error fetching available verticals:", error);
+      res.status(500).json({ message: "Failed to fetch available verticals" });
+    }
+  });
+
   // Create HTTP server but don't start listening - let index.ts handle that
   const { createServer } = await import('http');
   const httpServer = createServer(app);

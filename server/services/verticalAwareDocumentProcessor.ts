@@ -22,8 +22,9 @@ export async function processDocumentWithVertical(documentId: number, firmId: nu
   // Auto-detect document type using vertical-specific detection
   let documentType = document.documentType;
   if (!documentType && document.content) {
-    documentType = await detectDocumentTypeWithVertical(document.content, verticalName);
-    if (documentType) {
+    const detectedType = await detectDocumentTypeWithVertical(document.content, verticalName);
+    if (detectedType) {
+      documentType = detectedType;
       await storage.updateDocument(documentId, { documentType });
     }
   }
