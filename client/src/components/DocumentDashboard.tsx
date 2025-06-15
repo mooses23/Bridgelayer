@@ -96,9 +96,9 @@ export default function DocumentDashboard({ firmId = "firm_1" }: DocumentDashboa
 
   // Filter documents based on search and status
   const filteredDocuments = documentsWithMetadata.filter(doc => {
-    const matchesSearch = doc.originalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doc.doc_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         doc.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (doc.originalName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (doc.doc_type || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (doc.uploaded_by || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || doc.status === statusFilter;
     

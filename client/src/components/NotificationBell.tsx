@@ -58,9 +58,14 @@ export default function NotificationBell() {
   const { data: countData } = useQuery({
     queryKey: ["/api/notifications/count"],
     queryFn: async () => {
-      const response = await fetch("/api/notifications/count");
-      if (!response.ok) throw new Error("Failed to fetch notification count");
-      return response.json();
+      try {
+        const response = await fetch("/api/notifications/count");
+        if (!response.ok) return { count: 0 };
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching notification count:', error);
+        return { count: 0 };
+      }
     },
     refetchInterval: 30000, // Refetch every 30 seconds
   });
@@ -69,9 +74,14 @@ export default function NotificationBell() {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["/api/notifications"],
     queryFn: async () => {
-      const response = await fetch("/api/notifications");
-      if (!response.ok) throw new Error("Failed to fetch notifications");
-      return response.json();
+      try {
+        const response = await fetch("/api/notifications");
+        if (!response.ok) return [];
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        return [];
+      }
     },
     enabled: isOpen,
   });

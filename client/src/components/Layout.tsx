@@ -32,13 +32,31 @@ export default function Layout({ children }: LayoutProps) {
   // Fetch firm data
   const { data: firm } = useQuery({
     queryKey: ["/api/firm"],
-    queryFn: () => fetch("/api/firm").then(res => res.json())
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/firm");
+        if (!res.ok) throw new Error('Failed to fetch firm data');
+        return res.json();
+      } catch (error) {
+        console.error('Error fetching firm:', error);
+        return null;
+      }
+    }
   });
 
   // Fetch message threads for unread count
   const { data: threads } = useQuery({
     queryKey: ["/api/message-threads"],
-    queryFn: () => fetch("/api/message-threads").then(res => res.json()),
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/message-threads");
+        if (!res.ok) throw new Error('Failed to fetch threads');
+        return res.json();
+      } catch (error) {
+        console.error('Error fetching threads:', error);
+        return [];
+      }
+    },
     retry: false
   });
 
