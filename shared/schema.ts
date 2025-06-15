@@ -212,6 +212,40 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at"),
 });
 
+// CRM Communication Logs for tracking client interactions
+export const communicationLogs = pgTable("communication_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  clientId: integer("client_id").references(() => clientIntakes.id).notNull(),
+  caseId: integer("case_id").references(() => cases.id),
+  userId: integer("user_id").references(() => users.id).notNull(), // Who logged the communication
+  type: text("type").notNull(), // 'call', 'email', 'meeting', 'note', 'document_shared', 'invoice_sent', 'auto_system'
+  direction: text("direction"), // 'inbound', 'outbound' (null for notes)
+  subject: text("subject"),
+  content: text("content").notNull(),
+  attachments: jsonb("attachments"), // Array of file references
+  metadata: jsonb("metadata"), // Additional context (duration for calls, email headers, etc.)
+  isPrivate: boolean("is_private").default(true), // Always private to firm, not shown to clients
+  tags: text("tags").array(), // For categorization and filtering
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Admin Ghost Mode Sessions for super-admin firm simulation
+export const adminGhostSessions = pgTable("admin_ghost_sessions", {
+  id: serial("id").primaryKey(),
+  adminUserId: integer("admin_user_id").references(() => users.id).notNull(),
+  targetFirmId: integer("target_firm_id").references(() => firms.id).notNull(),
+  sessionToken: uuid("session_token").defaultRandom().notNull().unique(),
+  isActive: boolean("is_active").default(true),
+  permissions: jsonb("permissions"), // What the admin can access in ghost mode
+  auditTrail: jsonb("audit_trail"), // Track actions taken during ghost session
+  startedAt: timestamp("started_at").defaultNow(),
+  endedAt: timestamp("ended_at"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,
@@ -387,6 +421,19 @@ export const insertAiTriageResultSchema = createInsertSchema(aiTriageResults).om
   reviewedAt: true,
 });
 
+export const insertCommunicationLogSchema = createInsertSchema(communicationLogs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAdminGhostSessionSchema = createInsertSchema(adminGhostSessions).omit({
+  id: true,
+  sessionToken: true,
+  startedAt: true,
+  endedAt: true,
+});
+
 // Types
 export type InsertFirm = z.infer<typeof insertFirmSchema>;
 export type Firm = typeof firms.$inferSelect;
@@ -424,6 +471,10 @@ export type InsertClientIntake = z.infer<typeof insertClientIntakeSchema>;
 export type ClientIntake = typeof clientIntakes.$inferSelect;
 export type InsertAiTriageResult = z.infer<typeof insertAiTriageResultSchema>;
 export type AiTriageResult = typeof aiTriageResults.$inferSelect;
+export type InsertCommunicationLog = z.infer<typeof insertCommunicationLogSchema>;
+export type CommunicationLog = typeof communicationLogs.$inferSelect;
+export type InsertAdminGhostSession = z.infer<typeof insertAdminGhostSessionSchema>;
+export type AdminGhostSession = typeof adminGhostSessions.$inferSelect;
 
 // Billing and time tracking tables
 export const clients = pgTable("clients", {
