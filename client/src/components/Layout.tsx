@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
 import { 
   Home, 
   FileText, 
@@ -23,10 +22,11 @@ import NotificationBell from "@/components/NotificationBell";
 
 interface LayoutProps {
   children: React.ReactNode;
+  currentView?: string;
+  onNavigate?: (view: string) => void;
 }
 
-export default function Layout({ children }: LayoutProps) {
-  const [location] = useLocation();
+export default function Layout({ children, currentView = 'dashboard', onNavigate }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Fetch firm data
@@ -63,18 +63,22 @@ export default function Layout({ children }: LayoutProps) {
   const unreadCount = threads?.filter((thread: any) => !thread.isResolved).length || 0;
 
   const navigation = [
-    { name: "Dashboard", href: "/", icon: Home },
-    { name: "Clients", href: "/clients", icon: Users },
-    { name: "Intake", href: "/intake", icon: UserCheck },
-    { name: "Documents", href: "/documents", icon: FileText },
-    { name: "Billing", href: "/billing", icon: CreditCard },
-    { name: "Calendar", href: "/calendar", icon: Calendar },
-    { name: "Settings", href: "/settings", icon: Settings },
+    { name: "Dashboard", id: "dashboard", icon: Home },
+    { name: "Clients", id: "clients", icon: Users },
+    { name: "Intake", id: "intake", icon: UserCheck },
+    { name: "Documents", id: "documents", icon: FileText },
+    { name: "Billing", id: "billing", icon: CreditCard },
+    { name: "Calendar", id: "calendar", icon: Calendar },
+    { name: "Settings", id: "settings", icon: Settings },
   ];
 
-  const isActive = (href: string) => {
-    if (href === "/") return location === "/";
-    return location.startsWith(href);
+  const isActive = (id: string) => currentView === id;
+
+  const handleNavigation = (id: string) => {
+    setSidebarOpen(false);
+    if (onNavigate) {
+      onNavigate(id);
+    }
   };
 
   return (
@@ -117,26 +121,24 @@ export default function Layout({ children }: LayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navigation.map((item) => {
-              const active = isActive(item.href);
+              const active = isActive(item.id);
               return (
-                <Link 
+                <button 
                   key={item.name} 
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <div className={`
-                    flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                  onClick={() => handleNavigation(item.id)}
+                  className={`
+                    w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left
                     ${active 
                       ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     }
-                  `}>
-                    <span className="flex items-center">
-                      <item.icon className={`w-5 h-5 mr-3 ${active ? "text-blue-600" : ""}`} />
-                      {item.name}
-                    </span>
-                  </div>
-                </Link>
+                  `}
+                >
+                  <span className="flex items-center">
+                    <item.icon className={`w-5 h-5 mr-3 ${active ? "text-blue-600" : ""}`} />
+                    {item.name}
+                  </span>
+                </button>
               );
             })}
           </nav>

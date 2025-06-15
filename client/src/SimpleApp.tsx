@@ -191,7 +191,7 @@ function SimpleApp() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Layout>
+        <Layout currentView={currentView} onNavigate={setCurrentView}>
           {renderView()}
         </Layout>
       </TooltipProvider>
