@@ -65,7 +65,7 @@ export default function SimpleRouter() {
 
   // Handle authentication redirects
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (user) {
       // Admin users go to admin dashboard
       if (user.role === 'admin' && (currentPath === '/' || currentPath === '/login')) {
         navigate('/admin');
@@ -73,13 +73,13 @@ export default function SimpleRouter() {
       }
       
       // Firm users
-      if ((user.role === 'firm_user' || user.role === 'firm_owner' || user.role === 'firm_admin') && user.firmId) {
+      if ((user.role === 'firm_user' || user.role === 'firm_owner' || user.role === 'firm_admin') && user.firm_id) {
         if (currentPath === '/' || currentPath === '/login') {
           navigate('/dashboard');
         }
       }
     }
-  }, [isAuthenticated, user, currentPath]);
+  }, [user, currentPath]);
 
   // AUTHENTICATED ROUTES
   if (user.role === 'admin') {
