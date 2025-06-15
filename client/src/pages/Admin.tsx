@@ -1,40 +1,20 @@
-import { useSession } from "@/contexts/SessionContext";
-import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building, Users, Settings, Shield, Activity } from "lucide-react";
 
 export default function Admin() {
-  const { user, isLoading, isAuthenticated } = useSession();
-  const [location, setLocation] = useLocation();
+  console.log("[Admin] loaded");
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setLocation("/login");
-    } else if (!isLoading && isAuthenticated && user?.role !== "admin") {
-      setLocation("/dashboard");
-    }
-  }, [isLoading, isAuthenticated, user, setLocation]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || user?.role !== "admin") {
-    return null;
-  }
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/login';
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div id="admin-page" className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-8">
@@ -162,7 +142,7 @@ export default function Admin() {
               <Building className="w-4 h-4 mr-2" />
               Firm Management
             </Button>
-            <Button variant="outline" onClick={() => window.location.href = '/api/logout'}>
+            <Button variant="outline" onClick={handleLogout}>
               Logout
             </Button>
           </div>

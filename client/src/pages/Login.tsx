@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { useSession } from '@/contexts/SessionContext';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLocation } from 'wouter';
 
 export default function Login() {
-  const [, setLocation] = useLocation();
-  const { login } = useSession();
+  console.log("[Login] loaded");
+  const { setSession } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,21 +18,32 @@ export default function Login() {
     setIsLoading(true);
     setError('');
 
-    const result = await login(email, password);
-    
-    if (result.success) {
-      // Use the redirect path returned from server or default to dashboard
-      const redirectPath = result.redirectPath || '/dashboard';
-      setLocation(redirectPath);
-    } else {
-      setError('Invalid email or password');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // Set session data in AuthContext
+        setSession(result.user, result.firm);
+        // Redirect will be handled by AppRouter based on user role
+        window.location.reload();
+      } else {
+        setError(result.message || 'Invalid email or password');
+      }
+    } catch (error) {
+      setError('Login failed. Please try again.');
     }
     
     setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div id="login-page" className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-900">

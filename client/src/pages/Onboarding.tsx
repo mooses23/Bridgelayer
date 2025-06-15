@@ -1,6 +1,5 @@
-import { useSession } from "@/contexts/SessionContext";
-import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CheckCircle, Building, Users, Settings } from "lucide-react";
 
 export default function Onboarding() {
-  const { user, isLoading, isAuthenticated } = useSession();
+  console.log("[Onboarding] loaded");
+  const { user, firm, setSession } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firmName: "",
@@ -26,37 +26,7 @@ export default function Onboarding() {
     }
   });
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setLocation("/login");
-    }
-  }, [isLoading, isAuthenticated, setLocation]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // If user is not firm_admin or firm_owner, redirect to dashboard
-  useEffect(() => {
-    if (user && user.role !== "firm_admin" && user.role !== "firm_owner") {
-      setLocation("/dashboard");
-    }
-  }, [user?.role, setLocation]);
-
-  if (user && user.role !== "firm_admin" && user.role !== "firm_owner") {
-    return null;
-  }
 
   const handleNext = () => {
     if (currentStep < 3) {
