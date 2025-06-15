@@ -56,14 +56,16 @@ export default function CalendarWidget() {
   const queryClient = useQueryClient();
 
   // Fetch calendar events
-  const { data: events = [], isLoading } = useQuery({
-    queryKey: ["/api/calendar-events"],
-    queryFn: () => apiRequest("/api/calendar-events")
+  const { data: events = [], isLoading } = useQuery<CalendarEvent[]>({
+    queryKey: ["/api/calendar-events"]
   });
 
   // Create new event mutation
   const createEventMutation = useMutation({
-    mutationFn: (eventData: any) => apiRequest("POST", "/api/calendar-events", eventData),
+    mutationFn: async (eventData: any) => {
+      const response = await apiRequest("POST", "/api/calendar-events", eventData);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/calendar-events"] });
       setIsCreateDialogOpen(false);
@@ -82,7 +84,10 @@ export default function CalendarWidget() {
 
   // Confirm AI suggested event mutation
   const confirmEventMutation = useMutation({
-    mutationFn: (eventId: number) => apiRequest("POST", `/api/calendar-events/${eventId}/confirm`),
+    mutationFn: async (eventId: number) => {
+      const response = await apiRequest("POST", `/api/calendar-events/${eventId}/confirm`);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/calendar-events"] });
     }
@@ -90,7 +95,10 @@ export default function CalendarWidget() {
 
   // Delete event mutation
   const deleteEventMutation = useMutation({
-    mutationFn: (eventId: number) => apiRequest("DELETE", `/api/calendar-events/${eventId}`),
+    mutationFn: async (eventId: number) => {
+      const response = await apiRequest("DELETE", `/api/calendar-events/${eventId}`);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/calendar-events"] });
     }
@@ -98,7 +106,10 @@ export default function CalendarWidget() {
 
   // Google Calendar sync mutation
   const syncGoogleCalendarMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/calendar-events/sync-google"),
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/calendar-events/sync-google");
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/calendar-events"] });
     }
@@ -142,9 +153,13 @@ export default function CalendarWidget() {
     );
   }
 
-  const upcomingEvents = events.filter((event: CalendarEvent) => 
-    new Date(event.startTime) >= new Date()
-  ).slice(0, 5);
+  const upcomingEvents = events.filter((event: CalendarEvent) => {
+    try {
+      return event.startTime && new Date(event.startTime) >= new Date();
+    } catch {
+      return false;
+    }
+  }).slice(0, 5);
 
   const aiSuggestedEvents = events.filter((event: CalendarEvent) => 
     event.isAiSuggested && event.confirmationStatus === "pending"
@@ -284,7 +299,7 @@ export default function CalendarWidget() {
                         <div className="flex items-center gap-4 text-sm text-blue-700">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {format(new Date(event.startTime), "MMM d, h:mm a")}
+                            {event.startTime ? format(new Date(event.startTime), "MMM d, h:mm a") : "Invalid date"}
                           </span>
                           {event.location && (
                             <span className="flex items-center gap-1">
@@ -348,7 +363,7 @@ export default function CalendarWidget() {
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {format(new Date(event.startTime), "MMM d, h:mm a")}
+                            {event.startTime ? format(new Date(event.startTime), "MMM d, h:mm a") : "Invalid date"}
                           </span>
                           {event.location && (
                             <span className="flex items-center gap-1">

@@ -1886,7 +1886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calendar Events API
   app.get("/api/calendar-events", async (req, res) => {
     try {
-      const events = await storage.getCalendarEvents(DEMO_FIRM_ID);
+      const events = await storage.getFirmCalendarEvents(DEMO_FIRM_ID);
       res.json(events);
     } catch (error) {
       console.error("Error fetching calendar events:", error);
