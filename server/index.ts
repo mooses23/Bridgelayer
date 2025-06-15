@@ -60,7 +60,13 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
-  });
+  
+  // Check if server is already listening to prevent duplicate listeners
+  if (!server.listening) {
+    server.listen(port, "0.0.0.0", () => {
+      log(`serving on port ${port}`);
+    });
+  } else {
+    log(`server already listening on port ${port}`);
+  }
 })();
