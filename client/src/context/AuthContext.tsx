@@ -17,6 +17,7 @@ interface AuthContextType {
   firm: Firm | null;
   loading: boolean;
   setSession: (userData: { user: User; firm?: Firm }) => void;
+  clearSession: () => void;
   logout: () => Promise<void>;
 }
 
@@ -107,15 +108,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const clearSession = () => {
+    setUser(null);
+    setFirm(null);
+    localStorage.removeItem('firmsync_auth');
+  };
+
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
       console.error('Logout request failed:', error);
     } finally {
-      setUser(null);
-      setFirm(null);
-      localStorage.removeItem('firmsync_auth');
+      clearSession();
     }
   };
 
@@ -124,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     firm,
     loading,
     setSession,
+    clearSession,
     logout,
   };
 
