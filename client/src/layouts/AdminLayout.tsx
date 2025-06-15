@@ -1,5 +1,6 @@
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { Outlet } from "react-router-dom";
 import { 
   Building2, 
   BarChart3, 
@@ -12,11 +13,7 @@ import {
   Home
 } from "lucide-react";
 
-interface AdminLayoutProps {
-  children: ReactNode;
-}
-
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout() {
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -123,7 +120,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Page content */}
         <main className="flex-1 p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

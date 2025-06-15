@@ -1,12 +1,8 @@
-import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
+import { Outlet } from "react-router-dom";
 import { Home, FileText, DollarSign, LogOut } from "lucide-react";
 
-interface ClientLayoutProps {
-  children: ReactNode;
-}
-
-export default function ClientLayout({ children }: ClientLayoutProps) {
+export default function ClientLayout() {
   const [location] = useLocation();
 
   const navigation = [
@@ -61,7 +57,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
+        <Outlet />
       </main>
     </div>
   );

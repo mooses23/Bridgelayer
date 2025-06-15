@@ -1,38 +1,32 @@
+
 import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function LogoutPage() {
-  useEffect(() => {
-    // Clear any authentication tokens/sessions
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Redirect to login after a brief delay
-    const timer = setTimeout(() => {
-      window.location.href = "/login";
-    }, 2000);
+  const { logout } = useAuth();
 
-    return () => clearTimeout(timer);
-  }, []);
+  useEffect(() => {
+    // Clear authentication and redirect
+    logout();
+  }, [logout]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full text-center">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Signing you out...
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              You have been successfully logged out
-            </p>
-            <div className="mt-6">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Signing you out...
+              </h2>
+              <p className="text-gray-600">
+                You are being redirected to the login page.
+              </p>
             </div>
-            <p className="mt-4 text-xs text-gray-500">
-              Redirecting to login page...
-            </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

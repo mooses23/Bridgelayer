@@ -1,25 +1,20 @@
-import { ReactNode, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import { Outlet } from "react-router-dom";
 import { 
   Home, 
   Users, 
-  FileText, 
   Inbox, 
+  FileText, 
   DollarSign, 
   Settings, 
   Menu, 
   X, 
-  Bell,
-  ChevronDown,
-  LogOut
+  LogOut 
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
-interface FirmLayoutProps {
-  children: ReactNode;
-}
-
-export default function FirmLayout({ children }: FirmLayoutProps) {
+export default function FirmLayout() {
   const { user, firm, logout } = useAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -135,14 +130,14 @@ export default function FirmLayout({ children }: FirmLayoutProps) {
             >
               <Menu className="w-5 h-5" />
             </button>
-            
+
             <div className="flex-1 lg:flex lg:items-center lg:justify-between">
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">
                   {firm?.name || "Dashboard"}
                 </h1>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <button className="p-2 text-gray-400 hover:text-gray-500">
                   <Bell className="w-5 h-5" />
@@ -154,7 +149,7 @@ export default function FirmLayout({ children }: FirmLayoutProps) {
 
         {/* Page content */}
         <main className="flex-1 p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

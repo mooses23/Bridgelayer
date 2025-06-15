@@ -1,4 +1,27 @@
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+
 export default function ClientLoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    // TODO: Implement client authentication logic
+    console.log("Client login attempt:", { email, password });
+    
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -7,60 +30,71 @@ export default function ClientLoginPage() {
             Client Portal Access
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to view your documents and invoices
+            Sign in to view your case information and documents
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" action="#" method="POST">
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="client-email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="client-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
-            </div>
-            <div>
-              <label htmlFor="client-password" className="sr-only">
-                Access Code
-              </label>
-              <input
-                id="client-password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                placeholder="Access code"
-              />
-            </div>
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Client Login</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <Label htmlFor="email">Email address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1"
+                  placeholder="Enter your password"
+                />
+              </div>
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Access Portal
-            </button>
-          </div>
-          
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Need help accessing your account?{' '}
-              <a href="#" className="font-medium text-green-600 hover:text-green-500">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                    Forgot your password?
+                  </a>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Access Portal"}
+              </Button>
+            </form>
+            
+            <div className="mt-6 text-center text-sm text-gray-600">
+              <p>Need help accessing your account?</p>
+              <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
                 Contact your legal team
               </a>
-            </p>
-          </div>
-        </form>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

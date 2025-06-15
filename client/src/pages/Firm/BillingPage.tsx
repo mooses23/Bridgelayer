@@ -1,129 +1,205 @@
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { DollarSign, Clock, FileText, TrendingUp, Plus, Download } from "lucide-react";
+
 export default function BillingPage() {
+  const invoices = [
+    {
+      id: "INV-001",
+      client: "ABC Corporation",
+      amount: 15750.00,
+      status: "Paid",
+      date: "Jan 15, 2025",
+      dueDate: "Jan 30, 2025"
+    },
+    {
+      id: "INV-002",
+      client: "Tech Startup Inc",
+      amount: 8900.00,
+      status: "Pending",
+      date: "Jan 18, 2025",
+      dueDate: "Feb 2, 2025"
+    },
+    {
+      id: "INV-003",
+      client: "Property Holdings LLC",
+      amount: 12300.00,
+      status: "Overdue",
+      date: "Dec 28, 2024",
+      dueDate: "Jan 12, 2025"
+    }
+  ];
+
+  const timeEntries = [
+    {
+      id: 1,
+      attorney: "Sarah Wilson",
+      client: "ABC Corporation",
+      description: "Contract review and analysis",
+      hours: 3.5,
+      rate: 450,
+      date: "Jan 22, 2025"
+    },
+    {
+      id: 2,
+      attorney: "John Davis",
+      client: "Tech Startup Inc",
+      description: "Employment agreement drafting",
+      hours: 2.0,
+      rate: 375,
+      date: "Jan 22, 2025"
+    },
+    {
+      id: 3,
+      attorney: "Emily Chen",
+      client: "Property Holdings LLC",
+      description: "Due diligence review",
+      hours: 4.25,
+      rate: 425,
+      date: "Jan 21, 2025"
+    }
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Paid": return "bg-green-100 text-green-800";
+      case "Pending": return "bg-yellow-100 text-yellow-800";
+      case "Overdue": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Billing</h1>
-          <p className="mt-2 text-gray-600">Manage invoices, time tracking, and billing settings</p>
+          <h1 className="text-3xl font-bold text-gray-900">Billing & Time Tracking</h1>
+          <p className="text-gray-600">Manage invoices, time entries, and billing analytics</p>
         </div>
-        <div className="flex space-x-3">
-          <button className="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50">
-            Export
-          </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+        <div className="flex space-x-2">
+          <Button variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
             New Invoice
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Outstanding Invoices</h3>
-          <p className="text-3xl font-bold text-red-600">$45,250</p>
-          <p className="text-sm text-gray-500 mt-1">12 invoices overdue</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">This Month's Revenue</h3>
-          <p className="text-3xl font-bold text-green-600">$125,400</p>
-          <p className="text-sm text-gray-500 mt-1">+12% from last month</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Unbilled Time</h3>
-          <p className="text-3xl font-bold text-blue-600">42.5 hrs</p>
-          <p className="text-sm text-gray-500 mt-1">$8,500 potential revenue</p>
-        </div>
+      {/* Billing Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$245,890</div>
+            <p className="text-xs text-muted-foreground">+12% from last month</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$36,950</div>
+            <p className="text-xs text-muted-foreground">3 overdue invoices</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Billable Hours</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">142.5</div>
+            <p className="text-xs text-muted-foreground">This month</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$415</div>
+            <p className="text-xs text-muted-foreground">Per hour</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Recent Invoices */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-medium text-gray-900">Recent Invoices</h2>
-          <div className="flex space-x-2">
-            <select className="border border-gray-300 rounded-md px-3 py-1 text-sm">
-              <option>All Statuses</option>
-              <option>Sent</option>
-              <option>Paid</option>
-              <option>Overdue</option>
-            </select>
-          </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Invoice #
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Client
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Due Date
-                </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  INV-2025-001
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ABC Corporation
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  $12,500.00
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                    Paid
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Jan 15, 2025
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900">View</button>
-                </td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  INV-2025-002
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  XYZ LLC
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  $8,750.00
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Sent
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Jan 30, 2025
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-900">View</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Invoices */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Invoices</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {invoices.map((invoice) => (
+                <div
+                  key={invoice.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                >
+                  <div className="space-y-1">
+                    <p className="font-medium text-gray-900">{invoice.id}</p>
+                    <p className="text-sm text-gray-600">{invoice.client}</p>
+                    <p className="text-xs text-gray-500">Due: {invoice.dueDate}</p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="font-semibold">{formatCurrency(invoice.amount)}</p>
+                    <Badge className={getStatusColor(invoice.status)}>
+                      {invoice.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Time Entries */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Time Entries</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {timeEntries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                >
+                  <div className="space-y-1 flex-1">
+                    <p className="font-medium text-gray-900">{entry.attorney}</p>
+                    <p className="text-sm text-gray-600">{entry.description}</p>
+                    <p className="text-xs text-gray-500">{entry.client} • {entry.date}</p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="font-semibold">{entry.hours}h</p>
+                    <p className="text-sm text-gray-600">{formatCurrency(entry.hours * entry.rate)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

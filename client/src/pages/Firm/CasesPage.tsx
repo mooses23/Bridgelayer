@@ -1,122 +1,167 @@
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Users, Calendar, FileText, Plus } from "lucide-react";
+
 export default function CasesPage() {
+  const cases = [
+    {
+      id: 1,
+      title: "Smith vs. Johnson",
+      type: "Civil Litigation",
+      status: "Active",
+      priority: "High",
+      attorney: "Sarah Wilson",
+      client: "ABC Corporation",
+      nextDeadline: "Jan 25, 2025",
+      documentsCount: 24
+    },
+    {
+      id: 2,
+      title: "Employment Agreement Review",
+      type: "Contract Review",
+      status: "Review",
+      priority: "Medium",
+      attorney: "John Davis",
+      client: "Tech Startup Inc",
+      nextDeadline: "Jan 30, 2025",
+      documentsCount: 8
+    },
+    {
+      id: 3,
+      title: "Real Estate Transaction",
+      type: "Real Estate",
+      status: "Active",
+      priority: "Low",
+      attorney: "Emily Chen",
+      client: "Property Holdings LLC",
+      nextDeadline: "Feb 5, 2025",
+      documentsCount: 15
+    }
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Active": return "bg-green-100 text-green-800";
+      case "Review": return "bg-yellow-100 text-yellow-800";
+      case "Closed": return "bg-gray-100 text-gray-800";
+      default: return "bg-blue-100 text-blue-800";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "High": return "bg-red-100 text-red-800";
+      case "Medium": return "bg-yellow-100 text-yellow-800";
+      case "Low": return "bg-green-100 text-green-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Cases</h1>
-          <p className="mt-2 text-gray-600">Manage your active cases and legal matters</p>
+          <p className="text-gray-600">Manage and track all active cases</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
           New Case
-        </button>
+        </Button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex space-x-4">
-          <select className="border border-gray-300 rounded-md px-3 py-2">
-            <option>All Statuses</option>
-            <option>Active</option>
-            <option>Pending</option>
-            <option>Closed</option>
-          </select>
-          <select className="border border-gray-300 rounded-md px-3 py-2">
-            <option>All Practice Areas</option>
-            <option>Corporate Law</option>
-            <option>Litigation</option>
-            <option>Employment</option>
-          </select>
-          <input 
-            type="text" 
-            placeholder="Search cases..." 
-            className="border border-gray-300 rounded-md px-3 py-2 flex-1"
-          />
-        </div>
+      {/* Cases Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Cases</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">24</div>
+            <p className="text-xs text-muted-foreground">+3 from last month</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">18</div>
+            <p className="text-xs text-muted-foreground">+2 from last week</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">High Priority</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">5</div>
+            <p className="text-xs text-muted-foreground">Requires attention</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">This Week</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">8</div>
+            <p className="text-xs text-muted-foreground">Upcoming deadlines</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Cases Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Case Number
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Client
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Matter Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Assigned Attorney
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Next Deadline
-              </th>
-              <th className="relative px-6 py-3">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                CASE-2025-001
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                ABC Corporation
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Contract Dispute
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                  Active
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Sarah Johnson
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Jan 20, 2025
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <a href="#" className="text-blue-600 hover:text-blue-900">View</a>
-              </td>
-            </tr>
-            <tr>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                CASE-2025-002
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                XYZ LLC
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Employment Matter
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                  Pending
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Michael Chen
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Jan 25, 2025
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <a href="#" className="text-blue-600 hover:text-blue-900">View</a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {/* Cases List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Cases</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {cases.map((case_) => (
+              <div
+                key={case_.id}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+              >
+                <div className="flex-1 space-y-1">
+                  <h3 className="font-medium text-gray-900">{case_.title}</h3>
+                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                    <span>{case_.type}</span>
+                    <span>•</span>
+                    <span>{case_.attorney}</span>
+                    <span>•</span>
+                    <span>{case_.client}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="text-right text-sm">
+                    <p className="text-gray-900">Next: {case_.nextDeadline}</p>
+                    <p className="text-gray-600">{case_.documentsCount} documents</p>
+                  </div>
+                  
+                  <div className="flex flex-col space-y-1">
+                    <Badge className={getStatusColor(case_.status)}>
+                      {case_.status}
+                    </Badge>
+                    <Badge className={getPriorityColor(case_.priority)}>
+                      {case_.priority}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

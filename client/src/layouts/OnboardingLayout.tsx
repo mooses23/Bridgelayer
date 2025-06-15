@@ -1,14 +1,12 @@
-import { ReactNode } from "react";
+import { Outlet } from "react-router-dom";
 import { CheckCircle, Circle } from "lucide-react";
 
 interface OnboardingLayoutProps {
-  children: ReactNode;
   currentStep?: number;
   totalSteps?: number;
 }
 
 export default function OnboardingLayout({ 
-  children, 
   currentStep = 1, 
   totalSteps = 4 
 }: OnboardingLayoutProps) {
@@ -79,7 +77,7 @@ export default function OnboardingLayout({
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>

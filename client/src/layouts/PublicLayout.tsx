@@ -1,10 +1,6 @@
-import { ReactNode } from "react";
+import { Outlet } from "react-router-dom";
 
-interface PublicLayoutProps {
-  children: ReactNode;
-}
-
-export default function PublicLayout({ children }: PublicLayoutProps) {
+export default function PublicLayout() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -25,7 +21,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1">
-        {children}
+        <Outlet />
       </main>
 
       {/* Footer */}

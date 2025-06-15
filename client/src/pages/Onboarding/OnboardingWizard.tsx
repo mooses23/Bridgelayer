@@ -1,184 +1,216 @@
+
 import { useState } from "react";
-import { ChevronRight, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function OnboardingWizard() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    firmName: "",
+  const [firmData, setFirmData] = useState({
+    name: "",
     address: "",
-    contactEmail: "",
     phone: "",
-    documentTypes: [] as string[],
-    teamMembers: [] as { name: string; email: string; role: string }[]
+    email: "",
+    practiceAreas: [],
+    teamSize: "",
+    setupComplete: false
   });
 
-  const steps = [
-    { id: 1, name: "Firm Details", description: "Basic information about your firm" },
-    { id: 2, name: "Document Types", description: "Configure your document workflows" },
-    { id: 3, name: "Team Setup", description: "Add team members and roles" },
-    { id: 4, name: "Review", description: "Confirm your settings" }
-  ];
-
-  const handleNext = () => {
-    if (currentStep < steps.length) {
+  const nextStep = () => {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
 
-  const handlePrevious = () => {
+  const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
-  const renderStepContent = () => {
+  const renderStep = () => {
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Firm Information</h3>
-            <div className="grid grid-cols-1 gap-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Firm Details
+              </h2>
+              <p className="text-gray-600">
+                Let's start with your basic firm information.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Firm Name</label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.firmName}
-                  onChange={(e) => setFormData({ ...formData, firmName: e.target.value })}
+                <Label htmlFor="firmName">Firm Name</Label>
+                <Input
+                  id="firmName"
+                  placeholder="Enter your firm name"
+                  value={firmData.name}
+                  onChange={(e) => setFirmData({...firmData, name: e.target.value})}
                 />
               </div>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700">Address</label>
-                <textarea
-                  rows={3}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                <Label htmlFor="address">Address</Label>
+                <Textarea
+                  id="address"
+                  placeholder="Enter your firm address"
+                  value={firmData.address}
+                  onChange={(e) => setFirmData({...firmData, address: e.target.value})}
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Contact Email</label>
-                  <input
-                    type="email"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    value={formData.contactEmail}
-                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    placeholder="(555) 123-4567"
+                    value={firmData.phone}
+                    onChange={(e) => setFirmData({...firmData, phone: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone</label>
-                  <input
-                    type="tel"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="contact@firm.com"
+                    value={firmData.email}
+                    onChange={(e) => setFirmData({...firmData, email: e.target.value})}
                   />
                 </div>
               </div>
             </div>
           </div>
         );
+      
       case 2:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Document Types</h3>
-            <p className="text-sm text-gray-600">Select the types of documents your firm commonly works with:</p>
-            <div className="grid grid-cols-2 gap-4">
-              {["NDA", "Contracts", "Leases", "Employment", "Settlement", "Discovery", "Litigation"].map((type) => (
-                <label key={type} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    checked={formData.documentTypes.includes(type)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData({ ...formData, documentTypes: [...formData.documentTypes, type] });
-                      } else {
-                        setFormData({ ...formData, documentTypes: formData.documentTypes.filter(t => t !== type) });
-                      }
-                    }}
-                  />
-                  <span className="ml-2 text-sm text-gray-700">{type}</span>
-                </label>
-              ))}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Document Types
+              </h2>
+              <p className="text-gray-600">
+                Configure your workflows and document processing.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <Label>Practice Areas</Label>
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  {["Corporate Law", "Employment Law", "Real Estate", "Litigation", "Contract Law", "Family Law"].map((area) => (
+                    <div key={area} className="flex items-center space-x-2">
+                      <Checkbox id={area} />
+                      <Label htmlFor={area} className="text-sm">{area}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         );
+      
       case 3:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Team Setup</h3>
-            <p className="text-sm text-gray-600">Add team members who will use the platform:</p>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Team Setup
+              </h2>
+              <p className="text-gray-600">
+                Add team members and configure permissions.
+              </p>
+            </div>
+            
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <input type="text" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input type="email" className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Role</label>
-                  <select className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    <option>Paralegal</option>
-                    <option>Associate</option>
-                    <option>Partner</option>
-                    <option>Admin</option>
-                  </select>
-                </div>
+              <div>
+                <Label htmlFor="teamSize">Team Size</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-5">1-5 people</SelectItem>
+                    <SelectItem value="6-15">6-15 people</SelectItem>
+                    <SelectItem value="16-50">16-50 people</SelectItem>
+                    <SelectItem value="50+">50+ people</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <button className="text-blue-600 hover:text-blue-500 text-sm">+ Add Team Member</button>
             </div>
           </div>
         );
+      
       case 4:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Review & Confirm</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <dl className="space-y-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Firm Name</dt>
-                  <dd className="text-sm text-gray-900">{formData.firmName || "Not specified"}</dd>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Review & Confirm
+              </h2>
+              <p className="text-gray-600">
+                Review your settings and complete setup.
+              </p>
+            </div>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <p><strong>Firm:</strong> {firmData.name || "Not specified"}</p>
+                  <p><strong>Address:</strong> {firmData.address || "Not specified"}</p>
+                  <p><strong>Phone:</strong> {firmData.phone || "Not specified"}</p>
+                  <p><strong>Email:</strong> {firmData.email || "Not specified"}</p>
                 </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Document Types</dt>
-                  <dd className="text-sm text-gray-900">{formData.documentTypes.join(", ") || "None selected"}</dd>
-                </div>
-              </dl>
+              </CardContent>
+            </Card>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="terms" 
+                checked={firmData.setupComplete}
+                onCheckedChange={(checked) => setFirmData({...firmData, setupComplete: !!checked})}
+              />
+              <Label htmlFor="terms" className="text-sm">
+                I agree to the Terms of Service and Privacy Policy
+              </Label>
             </div>
           </div>
         );
+      
       default:
         return null;
     }
   };
 
   return (
-    <div>
-      {/* Step content */}
-      {renderStepContent()}
-
-      {/* Navigation buttons */}
-      <div className="mt-8 flex justify-between">
-        <button
-          onClick={handlePrevious}
+    <div className="space-y-8">
+      {renderStep()}
+      
+      <div className="flex justify-between pt-6 border-t">
+        <Button
+          variant="outline"
+          onClick={prevStep}
           disabled={currentStep === 1}
-          className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Previous
-        </button>
+        </Button>
         
-        <button
-          onClick={currentStep === steps.length ? () => {/* Complete onboarding */} : handleNext}
-          className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        <Button
+          onClick={nextStep}
+          disabled={currentStep === 4 && !firmData.setupComplete}
         >
-          {currentStep === steps.length ? "Complete Setup" : "Next"}
-          {currentStep < steps.length && <ChevronRight className="ml-2 h-4 w-4" />}
-        </button>
+          {currentStep === 4 ? "Complete Setup" : "Next"}
+        </Button>
       </div>
     </div>
   );
