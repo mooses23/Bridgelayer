@@ -10,7 +10,8 @@ import {
   Settings, 
   Menu, 
   X, 
-  LogOut 
+  LogOut,
+  Bell 
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
