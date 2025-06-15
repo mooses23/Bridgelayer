@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Mail, Phone, User } from "lucide-react";
+import CommunicationsLog from "@/components/CommunicationsLog";
 
 export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,6 +126,11 @@ export default function Clients() {
           </CardContent>
         </Card>
       )}
+
+      {/* Communications Log Section */}
+      <div className="mt-8">
+        <CommunicationsLog compact={true} />
+      </div>
     </div>
   );
 }

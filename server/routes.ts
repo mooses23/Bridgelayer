@@ -1860,6 +1860,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Triage API
+  app.get("/api/ai-triage", async (req, res) => {
+    try {
+      const results = await storage.getAiTriageResults(DEMO_FIRM_ID);
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching AI triage results:", error);
+      res.status(500).json({ message: "Failed to fetch AI triage results" });
+    }
+  });
+
+  app.post("/api/ai-triage/:id/review", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { humanOverride } = req.body;
+      const result = await storage.reviewAiTriageResult(id, humanOverride);
+      res.json(result);
+    } catch (error) {
+      console.error("Error reviewing AI triage:", error);
+      res.status(500).json({ message: "Failed to review AI triage" });
+    }
+  });
+
+  // Calendar Events API
+  app.get("/api/calendar-events", async (req, res) => {
+    try {
+      const events = await storage.getCalendarEvents(DEMO_FIRM_ID);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching calendar events:", error);
+      res.status(500).json({ message: "Failed to fetch calendar events" });
+    }
+  });
+
+  app.post("/api/calendar-events", async (req, res) => {
+    try {
+      const eventData = {
+        ...req.body,
+        firmId: DEMO_FIRM_ID,
+        createdBy: 1 // Default user
+      };
+      const event = await storage.createCalendarEvent(eventData);
+      res.json(event);
+    } catch (error) {
+      console.error("Error creating calendar event:", error);
+      res.status(500).json({ message: "Failed to create calendar event" });
+    }
+  });
+
+  app.post("/api/calendar-events/:id/confirm", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.confirmCalendarEvent(id);
+      res.json(event);
+    } catch (error) {
+      console.error("Error confirming calendar event:", error);
+      res.status(500).json({ message: "Failed to confirm calendar event" });
+    }
+  });
+
+  app.delete("/api/calendar-events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCalendarEvent(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting calendar event:", error);
+      res.status(500).json({ message: "Failed to delete calendar event" });
+    }
+  });
+
+  app.post("/api/calendar-events/sync-google", async (req, res) => {
+    try {
+      // Google Calendar sync functionality would be implemented here
+      res.json({ message: "Google Calendar sync initiated" });
+    } catch (error) {
+      console.error("Error syncing Google Calendar:", error);
+      res.status(500).json({ message: "Failed to sync Google Calendar" });
+    }
+  });
+
+  // Communications Log API
+  app.get("/api/communications", async (req, res) => {
+    try {
+      const { clientId, caseId } = req.query;
+      const communications = await storage.getCommunications(DEMO_FIRM_ID, {
+        clientId: clientId ? parseInt(clientId as string) : undefined,
+        caseId: caseId ? parseInt(caseId as string) : undefined
+      });
+      res.json(communications);
+    } catch (error) {
+      console.error("Error fetching communications:", error);
+      res.status(500).json({ message: "Failed to fetch communications" });
+    }
+  });
+
+  app.post("/api/communications", async (req, res) => {
+    try {
+      const communicationData = {
+        ...req.body,
+        firmId: DEMO_FIRM_ID,
+        createdBy: 1 // Default user
+      };
+      const communication = await storage.createCommunication(communicationData);
+      res.json(communication);
+    } catch (error) {
+      console.error("Error creating communication:", error);
+      res.status(500).json({ message: "Failed to create communication" });
+    }
+  });
+
+  app.post("/api/communications/export", async (req, res) => {
+    try {
+      const { clientId, caseId } = req.body;
+      const communications = await storage.getCommunications(DEMO_FIRM_ID, {
+        clientId,
+        caseId
+      });
+      res.json({
+        exportedAt: new Date().toISOString(),
+        totalEntries: communications.length,
+        data: communications
+      });
+    } catch (error) {
+      console.error("Error exporting communications:", error);
+      res.status(500).json({ message: "Failed to export communications" });
+    }
+  });
+
+  // Admin Ghost Mode API
+  app.get("/api/admin/firms", async (req, res) => {
+    try {
+      const firms = await storage.getAllFirms();
+      res.json(firms);
+    } catch (error) {
+      console.error("Error fetching firms:", error);
+      res.status(500).json({ message: "Failed to fetch firms" });
+    }
+  });
+
+  app.get("/api/admin/ghost-session/current", async (req, res) => {
+    try {
+      const session = await storage.getCurrentGhostSession(1); // Admin user ID
+      res.json(session);
+    } catch (error) {
+      console.error("Error fetching current ghost session:", error);
+      res.status(500).json({ message: "Failed to fetch current ghost session" });
+    }
+  });
+
+  app.get("/api/admin/ghost-sessions", async (req, res) => {
+    try {
+      const sessions = await storage.getGhostSessions(1); // Admin user ID
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching ghost sessions:", error);
+      res.status(500).json({ message: "Failed to fetch ghost sessions" });
+    }
+  });
+
+  app.post("/api/admin/ghost-session/start", async (req, res) => {
+    try {
+      const { targetFirmId, purpose, notes } = req.body;
+      const sessionToken = `ghost_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const sessionData = {
+        adminUserId: 1, // Admin user ID
+        targetFirmId,
+        sessionToken,
+        purpose,
+        actionsPerformed: notes ? [notes] : [],
+        viewedData: {},
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || 'Unknown'
+      };
+
+      const session = await storage.createGhostSession(sessionData);
+      res.json(session);
+    } catch (error) {
+      console.error("Error starting ghost session:", error);
+      res.status(500).json({ message: "Failed to start ghost session" });
+    }
+  });
+
+  app.post("/api/admin/ghost-session/:id/end", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const session = await storage.endGhostSession(id);
+      res.json(session);
+    } catch (error) {
+      console.error("Error ending ghost session:", error);
+      res.status(500).json({ message: "Failed to end ghost session" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

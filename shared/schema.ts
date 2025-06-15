@@ -435,6 +435,8 @@ export const aiTriageResults = pgTable("ai_triage_results", {
   createdAt: timestamp("created_at").defaultNow(),
   reviewedAt: timestamp("reviewed_at"),
 });
+  durationMinutes: integer("duration_minutes"),
+});
 
 // Insert schemas for new tables
 export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
