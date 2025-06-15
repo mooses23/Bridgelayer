@@ -23,10 +23,14 @@ export async function detectDocumentTypeWithVertical(content: string, verticalNa
     let score = 0;
     
     // Check for keyword matches
-    for (const keyword of info.keywords) {
-      const keywordLower = keyword.toLowerCase();
-      const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
-      score += matches;
+    if (info.keywords && Array.isArray(info.keywords)) {
+      for (const keyword of info.keywords) {
+        if (keyword && typeof keyword === 'string') {
+          const keywordLower = keyword.toLowerCase();
+          const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
+          score += matches;
+        }
+      }
     }
     
     // Bonus for exact document type name matches

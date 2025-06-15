@@ -46,10 +46,14 @@ export function detectDocumentType(content: string): string | undefined {
     scores[docType] = 0;
     
     // Count keyword matches
-    for (const keyword of config.keywords) {
-      const keywordLower = keyword.toLowerCase();
-      const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
-      scores[docType] += matches;
+    if (config.keywords && Array.isArray(config.keywords)) {
+      for (const keyword of config.keywords) {
+        if (keyword && typeof keyword === 'string') {
+          const keywordLower = keyword.toLowerCase();
+          const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
+          scores[docType] += matches;
+        }
+      }
     }
   }
   
