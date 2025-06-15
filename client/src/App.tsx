@@ -9,6 +9,8 @@ import Documents from "@/pages/documents";
 import Messaging from "@/pages/Messaging";
 import Analytics from "@/pages/Analytics";
 import Billing from "@/pages/billing";
+import BillingAnalytics from "@/pages/billing-analytics";
+import ClientPortal from "@/pages/client-portal";
 import Team from "@/pages/team";
 import Settings from "@/pages/settings";
 import Onboarding from "@/pages/Onboarding";
@@ -20,6 +22,7 @@ function Router() {
     <Switch>
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/admin" component={Admin} />
+      <Route path="/client-portal" component={ClientPortal} />
       <Route path="/">
         <Layout>
           <Switch>
@@ -27,6 +30,7 @@ function Router() {
             <Route path="/documents" component={Documents} />
             <Route path="/messages" component={Messaging} />
             <Route path="/billing" component={Billing} />
+            <Route path="/billing-analytics" component={BillingAnalytics} />
             <Route path="/analytics" component={Analytics} />
             <Route path="/team" component={Team} />
             <Route path="/settings" component={Settings} />
