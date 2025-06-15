@@ -47,7 +47,7 @@ export default function RoleRouter() {
   }
 
   // Platform admin routes
-  if (user.role === 'platform_admin') {
+  if (['platform_admin', 'admin', 'super_admin'].includes(user.role)) {
     return (
       <AdminLayout>
         <Routes>
