@@ -54,7 +54,7 @@ export function CommunicationLogWidget() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["/api/communication-logs", selectedClientId],
     queryFn: async () => {
-      const params = selectedClientId ? `?clientId=${selectedClientId}` : "";
+      const params = selectedClientId && selectedClientId !== "all" ? `?clientId=${selectedClientId}` : "";
       const response = await fetch(`/api/communication-logs${params}`);
       return response.json();
     }
@@ -65,7 +65,8 @@ export function CommunicationLogWidget() {
     queryKey: ["/api/client-intakes"],
     queryFn: async () => {
       const response = await fetch("/api/client-intakes");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     }
   });
 
@@ -251,8 +252,8 @@ export function CommunicationLogWidget() {
               <SelectValue placeholder="All clients" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All clients</SelectItem>
-              {clients.map((client: ClientIntake) => (
+              <SelectItem value="all">All clients</SelectItem>
+              {Array.isArray(clients) && clients.map((client: ClientIntake) => (
                 <SelectItem key={client.id} value={client.id.toString()}>
                   {client.clientName}
                 </SelectItem>

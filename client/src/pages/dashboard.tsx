@@ -19,6 +19,8 @@ import {
 import CalendarWidget from "@/components/CalendarWidget";
 import ClientIntakeWidget from "@/components/ClientIntakeWidget";
 import AiTriageWidget from "@/components/AiTriageWidget";
+import { CommunicationLogWidget } from "@/components/CommunicationLogWidget";
+import { AdminGhostModeWidget } from "@/components/AdminGhostModeWidget";
 
 export default function Dashboard() {
   // Fetch dashboard data
@@ -274,6 +276,12 @@ export default function Dashboard() {
 
       {/* AI Triage Section */}
       <AiTriageWidget />
+
+      {/* CRM Communication Logs and Admin Ghost Mode */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CommunicationLogWidget />
+        <AdminGhostModeWidget />
+      </div>
 
       {/* Firm Info */}
       <Card>
