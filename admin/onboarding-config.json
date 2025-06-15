@@ -1,0 +1,47 @@
+{
+  "onboardingFlow": {
+    "steps": [
+      {
+        "id": "firm-setup",
+        "title": "Firm Information",
+        "description": "Basic firm details and contact information",
+        "fields": ["firmName", "adminEmail", "slug", "timezone"]
+      },
+      {
+        "id": "document-types", 
+        "title": "Document Types",
+        "description": "Select legal document types your firm handles",
+        "options": ["nda", "contract", "lease", "employment", "settlement", "litigation", "merger"]
+      },
+      {
+        "id": "workflow-config",
+        "title": "Review Workflow",
+        "description": "Configure analysis features and reviewer assignments",
+        "features": ["summarization", "riskAnalysis", "clauseExtraction", "formatting"]
+      },
+      {
+        "id": "team-setup",
+        "title": "Team Members",
+        "description": "Invite initial team members and assign roles",
+        "roles": ["firm_admin", "paralegal", "viewer"]
+      }
+    ]
+  },
+  "defaultSettings": {
+    "plan": "starter",
+    "trialDays": 14,
+    "analysisFeatures": {
+      "summarization": true,
+      "riskAnalysis": true,
+      "clauseExtraction": false,
+      "crossReference": false,
+      "formatting": true,
+      "autoAnalysis": false
+    }
+  },
+  "integrationOptions": {
+    "documentStorage": ["local", "s3", "google-drive"],
+    "notifications": ["email", "slack", "webhook"],
+    "sso": ["disabled", "google", "microsoft", "okta"]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "firmId": "firm_001",
+  "firmName": "Smith & Associates Law Firm",
+  "plan": "professional",
+  "aiConfig": {
+    "documentTypes": ["nda", "contract", "lease", "employment", "settlement"],
+    "analysisFeatures": {
+      "summarization": true,
+      "riskAnalysis": true,
+      "clauseExtraction": true,
+      "crossReference": false,
+      "formatting": true,
+      "autoAnalysis": false
+    },
+    "trustLayer": {
+      "evidenceRequired": true,
+      "uncertaintyTracking": true,
+      "attorneyReviewFlags": true
+    }
+  },
+  "reviewerRoles": {
+    "nda": "paralegal",
+    "contract": "associate", 
+    "lease": "associate",
+    "employment": "associate",
+    "settlement": "admin",
+    "litigation": "admin"
+  },
+  "permissions": {
+    "firm_admin": ["read", "write", "delete", "configure", "invite"],
+    "paralegal": ["read", "write", "analyze"],
+    "viewer": ["read"]
+  },
+  "integrations": {
+    "documentStorage": "local",
+    "notificationEmail": true,
+    "slackWebhook": null,
+    "customDomain": null
+  },
+  "createdAt": "2025-06-15T00:00:00Z",
+  "lastModified": "2025-06-15T00:00:00Z"
+}

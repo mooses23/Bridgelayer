@@ -1,0 +1,90 @@
+{
+  "analysisId": "analysis_001",
+  "documentId": "doc_001",
+  "firmId": "firm_001",
+  "documentName": "sample-nda.txt",
+  "documentType": "nda",
+  "analysisTimestamp": "2025-06-15T00:30:00Z",
+  "analysisResults": {
+    "summarization": {
+      "confidence": 85,
+      "documentType": "Non-Disclosure Agreement",
+      "purpose": "Protect confidential information sharing between parties",
+      "parties": [
+        {
+          "name": "Disclosing Party",
+          "role": "Information provider"
+        },
+        {
+          "name": "Receiving Party", 
+          "role": "Information recipient"
+        }
+      ],
+      "keyTerms": [
+        {
+          "term": "Confidential Information",
+          "description": "Proprietary and sensitive business information",
+          "section": "Section 1"
+        },
+        {
+          "term": "Term",
+          "description": "Agreement duration of 2 years",
+          "section": "Section 3"
+        }
+      ],
+      "uncertainties": []
+    },
+    "riskAnalysis": {
+      "confidence": 78,
+      "documentRiskCategory": "low",
+      "risks": [
+        {
+          "level": "low",
+          "title": "Definition Scope",
+          "description": "Confidential information definition could be more specific",
+          "impact": "Potential ambiguity in what constitutes confidential information",
+          "suggestedAction": "Consider adding specific examples or exclusions",
+          "evidenceSection": "Section 1.1",
+          "requiresAttorneyReview": false
+        }
+      ],
+      "escalationFlags": []
+    },
+    "clauseExtraction": {
+      "confidence": 90,
+      "clauses": [
+        {
+          "type": "confidentiality",
+          "status": "found",
+          "content": "Receiving Party agrees to maintain confidentiality...",
+          "section": "Section 2",
+          "confidenceLevel": "high"
+        },
+        {
+          "type": "term",
+          "status": "found", 
+          "content": "This Agreement shall remain in effect for 2 years...",
+          "section": "Section 3",
+          "confidenceLevel": "high"
+        },
+        {
+          "type": "jurisdiction",
+          "status": "found",
+          "content": "This Agreement shall be governed by laws of California...",
+          "section": "Section 5",
+          "confidenceLevel": "medium"
+        }
+      ],
+      "uncertainties": []
+    }
+  },
+  "reviewStatus": "completed",
+  "reviewedBy": "paralegal",
+  "reviewNotes": "Standard NDA structure, minimal risk identified",
+  "processingTime": "45 seconds",
+  "trustLayerFlags": {
+    "evidenceBased": true,
+    "uncertaintyTracked": true,
+    "attorneyReviewRequired": false
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "sessionConfig": {
+    "secret": "firmsync-session-secret-key",
+    "cookieName": "firmsync.sid",
+    "maxAge": 86400000,
+    "secure": false,
+    "httpOnly": true,
+    "sameSite": "lax"
+  },
+  "authProviders": {
+    "local": {
+      "enabled": true,
+      "passwordMinLength": 8,
+      "requireEmailVerification": false,
+      "maxLoginAttempts": 5,
+      "lockoutDuration": 900000
+    },
+    "google": {
+      "enabled": false,
+      "clientId": null,
+      "clientSecret": null
+    },
+    "microsoft": {
+      "enabled": false,
+      "clientId": null,
+      "clientSecret": null
+    }
+  },
+  "permissions": {
+    "routes": {
+      "/api/firm": ["firm_admin"],
+      "/api/users": ["firm_admin"],
+      "/api/documents": ["firm_admin", "paralegal", "viewer"],
+      "/api/folders": ["firm_admin", "paralegal"],
+      "/api/messages": ["firm_admin", "paralegal", "viewer"],
+      "/api/firm/analysis-settings": ["firm_admin"]
+    }
+  }
+}

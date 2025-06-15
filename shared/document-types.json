@@ -1,0 +1,88 @@
+{
+  "documentTypes": {
+    "nda": {
+      "displayName": "Non-Disclosure Agreement",
+      "category": "contracts",
+      "riskLevel": "low",
+      "defaultReviewer": "paralegal",
+      "analysisFeatures": ["summarization", "clauseExtraction", "formatting"],
+      "requiredClauses": ["confidentiality", "term", "jurisdiction"],
+      "keywords": ["confidential", "non-disclosure", "proprietary", "trade secret"]
+    },
+    "contract": {
+      "displayName": "General Contract",
+      "category": "contracts", 
+      "riskLevel": "medium",
+      "defaultReviewer": "associate",
+      "analysisFeatures": ["summarization", "riskAnalysis", "clauseExtraction", "crossReference"],
+      "requiredClauses": ["payment", "termination", "liability", "jurisdiction"],
+      "keywords": ["agreement", "contract", "party", "consideration"]
+    },
+    "lease": {
+      "displayName": "Lease Agreement",
+      "category": "real-estate",
+      "riskLevel": "medium", 
+      "defaultReviewer": "associate",
+      "analysisFeatures": ["summarization", "riskAnalysis", "clauseExtraction"],
+      "requiredClauses": ["rent", "term", "security deposit", "maintenance"],
+      "keywords": ["lease", "tenant", "landlord", "premises", "rent"]
+    },
+    "employment": {
+      "displayName": "Employment Agreement",
+      "category": "employment",
+      "riskLevel": "medium",
+      "defaultReviewer": "associate", 
+      "analysisFeatures": ["summarization", "riskAnalysis", "clauseExtraction"],
+      "requiredClauses": ["compensation", "termination", "non-compete", "confidentiality"],
+      "keywords": ["employee", "employer", "salary", "benefits", "termination"]
+    },
+    "settlement": {
+      "displayName": "Settlement Agreement",
+      "category": "litigation",
+      "riskLevel": "high",
+      "defaultReviewer": "admin",
+      "analysisFeatures": ["summarization", "riskAnalysis", "clauseExtraction", "crossReference"],
+      "requiredClauses": ["release", "payment", "confidentiality", "compliance"],
+      "keywords": ["settlement", "release", "claims", "dispute", "resolution"]
+    },
+    "litigation": {
+      "displayName": "Litigation Document",
+      "category": "litigation",
+      "riskLevel": "high", 
+      "defaultReviewer": "admin",
+      "analysisFeatures": ["summarization", "riskAnalysis", "crossReference", "formatting"],
+      "requiredClauses": ["jurisdiction", "service", "relief", "facts"],
+      "keywords": ["plaintiff", "defendant", "court", "complaint", "motion"]
+    },
+    "merger": {
+      "displayName": "Merger Agreement",
+      "category": "corporate",
+      "riskLevel": "high",
+      "defaultReviewer": "admin", 
+      "analysisFeatures": ["summarization", "riskAnalysis", "clauseExtraction", "crossReference"],
+      "requiredClauses": ["consideration", "closing", "representations", "indemnification"],
+      "keywords": ["merger", "acquisition", "shares", "consideration", "closing"]
+    }
+  },
+  "categories": {
+    "contracts": "General Contracts",
+    "real-estate": "Real Estate", 
+    "employment": "Employment Law",
+    "litigation": "Litigation & Disputes",
+    "corporate": "Corporate Law"
+  },
+  "riskLevels": {
+    "low": {
+      "color": "green",
+      "description": "Standard documents with minimal risk"
+    },
+    "medium": {
+      "color": "yellow", 
+      "description": "Documents requiring careful review"
+    },
+    "high": {
+      "color": "red",
+      "description": "Complex documents requiring attorney review"
+    }
+  }
+}
