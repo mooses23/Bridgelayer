@@ -7,12 +7,12 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
-        id: string;
+        id: number;
         email: string;
         firstName: string;
         lastName: string;
         role: string;
-        firmId?: string | null;
+        firmId?: number | null;
         firm?: any;
       };
     }
@@ -22,19 +22,19 @@ declare global {
 // Session type extension
 declare module "express-session" {
   interface SessionData {
-    userId?: string;
+    userId?: number;
     userRole?: string;
   }
 }
 
 export interface AuthenticatedRequest extends Request {
   user?: {
-    id: string;
+    id: number;
     email: string;
     firstName: string;
     lastName: string;
     role: string;
-    firmId?: string | null;
+    firmId?: number | null;
     firm?: any;
   };
 }
@@ -102,12 +102,6 @@ export const login = async (req: Request, res: Response) => {
     req.session.userId = user.id;
     req.session.userRole = user.role;
 
-    // Get firm info if user has one
-    let firm = null;
-    if (user.firmId) {
-      firm = await storage.getFirmById(user.firmId);
-    }
-
     res.json({
       success: true,
       user: {
@@ -116,8 +110,7 @@ export const login = async (req: Request, res: Response) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        firmId: user.firmId,
-        firm
+        firmId: user.firmId
       }
     });
   } catch (error) {
@@ -150,12 +143,6 @@ export const getSession = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-    // Get firm info if user has one
-    let firm = null;
-    if (user.firmId) {
-      firm = await storage.getFirmById(user.firmId);
-    }
-
     res.json({
       user: {
         id: user.id,
@@ -163,8 +150,7 @@ export const getSession = async (req: Request, res: Response) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        firmId: user.firmId,
-        firm
+        firmId: user.firmId
       }
     });
   } catch (error) {

@@ -4,16 +4,13 @@ import { z } from "zod";
 
 // Firms table for multi-tenancy
 export const firms = pgTable("firms", {
-  id: text("id").primaryKey(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  slug: text("slug"), // URL-friendly identifier
+  slug: text("slug").notNull().unique(), // URL-friendly identifier
   domain: text("domain"), // Custom domain if configured
   plan: text("plan").notNull().default("starter"), // starter, professional, enterprise
   status: text("status").notNull().default("active"), // active, suspended, trial
   onboarded: boolean("onboarded").notNull().default(false), // Onboarding completion status
-  jurisdiction: text("jurisdiction"), // Legal jurisdiction
-  billingEnabled: boolean("billing_enabled").notNull().default(false),
-  ownerEmail: text("owner_email"), // Primary contact email
   settings: jsonb("settings"), // Firm-specific configurations
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -21,8 +18,8 @@ export const firms = pgTable("firms", {
 
 // Enhanced users table with firm association and roles
 export const users = pgTable("users", {
-  id: text("id").primaryKey(), // Changed to text for string IDs
-  firmId: text("firm_id").references(() => firms.id), // Made nullable for admin users
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id), // Made nullable for admin users
   email: text("email").notNull().unique(),
   username: text("username"),
   passwordHash: text("password_hash").notNull(),
