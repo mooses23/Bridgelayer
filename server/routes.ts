@@ -1466,7 +1466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/time-entries", requireAuth, async (req, res) => {
     try {
       const firmId = req.user!.firmId;
-      const timeEntries = await storage.getTimeEntries(firmId);
+      const timeEntries = await billingStorage.getTimeEntries(firmId);
       res.json(timeEntries);
     } catch (error) {
       console.error("Error fetching time entries:", error);
@@ -1478,7 +1478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = req.user!.firmId;
       const userId = req.user!.id;
-      const timeEntry = await storage.createTimeEntry({
+      const timeEntry = await billingStorage.createTimeEntry({
         ...req.body,
         firmId,
         userId,
@@ -1494,7 +1494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = req.user!.firmId;
       const entryId = parseInt(req.params.id);
-      const timeEntry = await storage.lockTimeEntry(firmId, entryId);
+      const timeEntry = await billingStorage.lockTimeEntry(firmId, entryId);
       res.json(timeEntry);
     } catch (error) {
       console.error("Error locking time entry:", error);
@@ -1506,7 +1506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cases", requireAuth, async (req, res) => {
     try {
       const firmId = req.user!.firmId;
-      const cases = await storage.getCases(firmId);
+      const cases = await billingStorage.getCases(firmId);
       res.json(cases);
     } catch (error) {
       console.error("Error fetching cases:", error);
@@ -1519,7 +1519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = req.user!.firmId;
       const status = req.query.status as string;
-      const invoices = await storage.getInvoices(firmId, status);
+      const invoices = await billingStorage.getInvoices(firmId, status);
       res.json(invoices);
     } catch (error) {
       console.error("Error fetching invoices:", error);
@@ -1531,7 +1531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = req.user!.firmId;
       const userId = req.user!.id;
-      const invoice = await storage.createInvoice({
+      const invoice = await billingStorage.createInvoice({
         ...req.body,
         firmId,
         createdBy: userId,
@@ -1547,7 +1547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = req.user!.firmId;
       const invoiceId = parseInt(req.params.id);
-      const pdfBuffer = await storage.generateInvoicePDF(firmId, invoiceId);
+      const pdfBuffer = await billingStorage.generateInvoicePDF(firmId, invoiceId);
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceId}.pdf`);
@@ -1584,7 +1584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/billing/settings", requireAuth, async (req, res) => {
     try {
       const firmId = req.user!.firmId;
-      const settings = await storage.getBillingSettings(firmId);
+      const settings = await billingStorage.getBillingSettings(firmId);
       res.json(settings);
     } catch (error) {
       console.error("Error fetching billing settings:", error);
@@ -1595,7 +1595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/billing/settings", requireAuth, async (req, res) => {
     try {
       const firmId = req.user!.firmId;
-      const settings = await storage.updateBillingSettings(firmId, req.body);
+      const settings = await billingStorage.updateBillingSettings(firmId, req.body);
       res.json(settings);
     } catch (error) {
       console.error("Error updating billing settings:", error);
