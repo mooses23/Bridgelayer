@@ -59,6 +59,10 @@ export default function AiTriageWidget() {
     queryFn: () => apiRequest("GET", "/api/users")
   });
 
+  // Ensure data is always arrays
+  const triageArray = Array.isArray(triageResults) ? triageResults : [];
+  const usersArray = Array.isArray(users) ? users : [];
+
   const reviewTriageMutation = useMutation({
     mutationFn: ({ id, overrides }: any) => 
       apiRequest("PUT", `/api/ai-triage/${id}/review`, { overrides }),
@@ -78,14 +82,14 @@ export default function AiTriageWidget() {
     }
   });
 
-  const recentTriage = triageResults
+  const recentTriage = triageArray
     .sort((a: AiTriageResult, b: AiTriageResult) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
     .slice(0, 5);
 
-  const pendingReviews = triageResults.filter((result: AiTriageResult) => !result.isHumanReviewed);
-  const highPriorityItems = triageResults.filter((result: AiTriageResult) => 
+  const pendingReviews = triageArray.filter((result: AiTriageResult) => !result.isHumanReviewed);
+  const highPriorityItems = triageArray.filter((result: AiTriageResult) => 
     result.aiUrgencyLevel === 'urgent' || result.aiUrgencyLevel === 'high'
   );
 
@@ -108,7 +112,7 @@ export default function AiTriageWidget() {
 
   const getAssigneeName = (assignedTo?: number) => {
     if (!assignedTo) return "Unassigned";
-    const user = users.find((u: any) => u.id === assignedTo);
+    const user = usersArray.find((u: any) => u.id === assignedTo);
     return user ? `${user.firstName} ${user.lastName}` : "Unknown";
   };
 
@@ -174,7 +178,7 @@ export default function AiTriageWidget() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Analyzed</p>
-                <p className="text-2xl font-bold">{triageResults.length}</p>
+                <p className="text-2xl font-bold">{triageArray.length}</p>
               </div>
               <Brain className="w-8 h-8 text-purple-500" />
             </div>
