@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import NotificationBell from "@/components/NotificationBell";
+import { useTenant } from "@/context/TenantContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -29,20 +30,8 @@ interface LayoutProps {
 export default function Layout({ children, currentView = 'dashboard', onNavigate }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Fetch firm data
-  const { data: firm } = useQuery({
-    queryKey: ["/api/firm"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/firm");
-        if (!res.ok) throw new Error('Failed to fetch firm data');
-        return res.json();
-      } catch (error) {
-        console.error('Error fetching firm:', error);
-        return null;
-      }
-    }
-  });
+  // Use tenant data from TenantContext instead of direct API call
+  const { tenant: firm } = useTenant();
 
   // Fetch message threads for unread count
   const { data: threads } = useQuery({

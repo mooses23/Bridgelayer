@@ -40,17 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
-
-          // Fetch firm data if user has firmId
-          if (userData.firmId) {
-            const firmResponse = await fetch('/api/firm', {
-              credentials: 'include'
-            });
-            if (firmResponse.ok) {
-              const firmData = await firmResponse.json();
-              setFirm(firmData);
-            }
-          }
+          // Note: Firm data is now handled by TenantContext via subdomain detection
         }
       } catch (error) {
         console.error('Auth check failed:', error);
