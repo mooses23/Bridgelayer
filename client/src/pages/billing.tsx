@@ -161,6 +161,8 @@ export default function Billing() {
   const timeLogForm = useForm({
     resolver: zodResolver(timeLogSchema),
     defaultValues: {
+      clientId: "",
+      caseId: "",
       description: "",
       hours: "",
       customField: "",
