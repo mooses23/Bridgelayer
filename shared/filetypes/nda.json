@@ -1,0 +1,13 @@
+{
+  "doc_type": "NDA",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": false,
+    "formatting": true
+  },
+  "riskLevel": "low",
+  "customInstructions": "Focus on confidentiality scope, permitted disclosures, and return/destruction obligations. Verify mutual vs. unilateral structure matches business arrangement.",
+  "reviewerRole": "paralegal"
+}

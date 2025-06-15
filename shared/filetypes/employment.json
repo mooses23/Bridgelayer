@@ -1,0 +1,13 @@
+{
+  "doc_type": "employment",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": false,
+    "formatting": true
+  },
+  "riskLevel": "medium",
+  "customInstructions": "Examine non-compete and non-solicitation provisions for enforceability. Review termination clauses, severance terms, and intellectual property assignments. Flag any provisions that may conflict with state employment laws.",
+  "reviewerRole": "associate"
+}

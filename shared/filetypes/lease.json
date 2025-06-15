@@ -1,0 +1,13 @@
+{
+  "doc_type": "lease",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": false
+  },
+  "riskLevel": "medium",
+  "customInstructions": "Prioritize rent escalation clauses, maintenance responsibilities, and default provisions. Check for compliance with local landlord-tenant laws and notice requirements.",
+  "reviewerRole": "associate"
+}
