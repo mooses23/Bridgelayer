@@ -103,6 +103,19 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 15, 2025**: File Upload and Prompt Routing System Complete
+  - Built comprehensive document type detection with auto-detection and manual selection
+  - Created modular upload processor that routes files to correct prompt assembly flow
+  - Implemented firm-specific file organization: `/firms/[firm]/files/` and `/firms/[firm]/review_logs/`
+  - Added document type selection dropdown with 7+ legal document types (NDA, Lease, Employment, Settlement, etc.)
+  - Built metadata tracking system storing upload details, features enabled, and reviewer assignments
+  - Created ReviewLogs component to display processed documents with filtering and management
+  - Enhanced DocumentUpload component with document type selection and auto-detection toggle
+  - Added tabbed interface to Documents page: Upload & Process, Documents, Review Logs
+  - Successfully tested complete workflow: file upload → type detection → config loading → prompt assembly → file storage
+  - All prompts saved to `/firms/[firm]/review_logs/[filename]_prompt.txt` with corresponding metadata in `_meta.json`
+  - System automatically assigns reviewers based on document type and enables appropriate analysis features
+
 - **June 15, 2025**: FIRMSYNC Multi-Tenant SaaS Foundation Complete
   - Established comprehensive multi-tenant folder structure with firm isolation
   - Created modular dashboard with 5 core sections: Home, Documents, Messages, Team, Settings

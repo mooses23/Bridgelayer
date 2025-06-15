@@ -1,0 +1,15 @@
+{
+  "doc_type": "nda",
+  "uploaded_by": "user_1",
+  "timestamp": "2025-06-15T02:17:07.126Z",
+  "features_enabled": [
+    "summarize",
+    "risk",
+    "clauses",
+    "formatting"
+  ],
+  "assigned_reviewer": "paralegal",
+  "filename": "1749953827125_test-nda.txt",
+  "file_size": 101,
+  "auto_detected": true
+}
