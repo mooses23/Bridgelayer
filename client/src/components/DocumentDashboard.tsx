@@ -18,7 +18,8 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Download
+  Download,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -339,9 +340,14 @@ export default function DocumentDashboard({ firmId = "firm_1" }: DocumentDashboa
                           size="sm" 
                           className="h-8 w-8 p-0"
                           onClick={() => handleRunReview(doc)}
-                          disabled={!doc.promptExists}
+                          disabled={!doc.promptExists || runReviewMutation.isPending}
+                          title={!doc.promptExists ? "Prompt not ready" : "Run AI Review"}
                         >
-                          <Play className="w-4 h-4" />
+                          {runReviewMutation.isPending && runReviewMutation.variables?.filename === doc.filename ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
                         </Button>
                         <Button 
                           variant="ghost" 
