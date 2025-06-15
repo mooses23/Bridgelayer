@@ -103,18 +103,19 @@ export default function Layout({ children }: LayoutProps) {
                   key={item.name} 
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`
+                >
+                  <div className={`
                     flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
                     ${active 
                       ? "bg-blue-50 text-blue-700 border-r-2 border-blue-600" 
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     }
-                  `}
-                >
-                  <span className="flex items-center">
-                    <item.icon className={`w-5 h-5 mr-3 ${active ? "text-blue-600" : ""}`} />
-                    {item.name}
-                  </span>
+                  `}>
+                    <span className="flex items-center">
+                      <item.icon className={`w-5 h-5 mr-3 ${active ? "text-blue-600" : ""}`} />
+                      {item.name}
+                    </span>
+                  </div>
                 </Link>
               );
             })}
