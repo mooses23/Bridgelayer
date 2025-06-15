@@ -29,6 +29,11 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Add defensive check for queryKey
+    if (!queryKey || !queryKey[0] || typeof queryKey[0] !== 'string') {
+      throw new Error('Invalid query key provided');
+    }
+
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
     });

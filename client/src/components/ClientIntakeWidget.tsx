@@ -312,7 +312,7 @@ export default function ClientIntakeWidget() {
                         {intake.status}
                       </Badge>
                       <span className="text-xs text-gray-500">
-                        {format(new Date(intake.submittedAt), "MMM d, h:mm a")}
+                        {intake.submittedAt ? format(new Date(intake.submittedAt), "MMM d, h:mm a") : "Invalid date"}
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 mt-2 line-clamp-2">
