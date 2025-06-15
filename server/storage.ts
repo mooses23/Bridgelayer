@@ -1191,8 +1191,7 @@ export class DatabaseStorage implements IStorage {
         clientId: timeLogs.clientId,
         caseId: timeLogs.caseId,
         client: {
-          firstName: clients.firstName,
-          lastName: clients.lastName,
+          name: clients.name,
         },
         case: {
           name: cases.name,
@@ -1226,8 +1225,7 @@ export class DatabaseStorage implements IStorage {
         clientId: timeLogs.clientId,
         caseId: timeLogs.caseId,
         client: {
-          firstName: clients.firstName,
-          lastName: clients.lastName,
+          name: clients.name,
         },
         case: {
           name: cases.name,
@@ -1355,8 +1353,7 @@ export class DatabaseStorage implements IStorage {
         dueDate: invoices.dueDate,
         paidDate: invoices.paidDate,
         client: {
-          firstName: clients.firstName,
-          lastName: clients.lastName,
+          name: clients.name,
         },
         case: {
           name: cases.name,
