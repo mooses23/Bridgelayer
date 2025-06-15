@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileText, 
   TrendingUp, 
@@ -11,8 +12,13 @@ import {
   Upload,
   Folder,
   Users,
-  Activity
+  Activity,
+  Calendar,
+  Brain
 } from "lucide-react";
+import CalendarWidget from "@/components/CalendarWidget";
+import ClientIntakeWidget from "@/components/ClientIntakeWidget";
+import AiTriageWidget from "@/components/AiTriageWidget";
 
 export default function Dashboard() {
   // Fetch dashboard data
@@ -255,6 +261,19 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Three New Features in Dashboard Layout */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <CalendarWidget />
+        </div>
+        <div>
+          <ClientIntakeWidget />
+        </div>
+      </div>
+
+      {/* AI Triage Section */}
+      <AiTriageWidget />
 
       {/* Firm Info */}
       <Card>
