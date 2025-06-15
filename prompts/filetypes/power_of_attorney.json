@@ -1,0 +1,12 @@
+{
+  "document_type": "Power of Attorney",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on agent powers, scope limitations, durability provisions, and revocation procedures. Review successor agent appointments, compensation terms, and fiduciary duties. Pay attention to specific vs. general powers, effective dates, and witnessing requirements."
+}

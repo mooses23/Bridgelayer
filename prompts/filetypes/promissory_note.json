@@ -1,0 +1,12 @@
+{
+  "document_type": "Promissory Note",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on principal amount, interest rate, payment schedule, and maturity date. Review default provisions, acceleration clauses, and collection rights. Pay attention to personal guarantees, collateral references, and late payment penalties."
+}

@@ -1,0 +1,12 @@
+{
+  "document_type": "Security Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on collateral descriptions, security interest scope, default events, and enforcement rights. Review perfection requirements, insurance obligations, and disposition procedures. Pay attention to after-acquired property clauses, proceeds coverage, and debtor warranties."
+}

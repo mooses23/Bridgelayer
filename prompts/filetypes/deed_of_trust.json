@@ -1,0 +1,12 @@
+{
+  "document_type": "Deed of Trust",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on property description, loan terms, trustee powers, and foreclosure procedures. Review insurance requirements, property maintenance obligations, and due-on-sale clauses. Pay attention to reconveyance provisions, subordination clauses, and notice requirements."
+}

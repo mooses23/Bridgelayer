@@ -1,0 +1,12 @@
+{
+  "document_type": "Escrow Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on escrow property, release conditions, escrow agent duties, and dispute resolution. Review instruction requirements, fees allocation, and liability limitations. Pay attention to termination provisions, interpleader rights, and conflicting claim procedures."
+}

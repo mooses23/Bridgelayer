@@ -1,0 +1,12 @@
+{
+  "document_type": "Indemnity Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on indemnified parties, covered risks, scope of indemnification, and defense obligations. Review notice requirements, cooperation duties, and settlement restrictions. Pay attention to exclusions, caps on liability, and insurance requirements."
+}
