@@ -791,6 +791,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enterprise-grade systems API endpoints
+  
+  // 1. Audit Logging API
+  app.get("/api/audit-logs", async (req, res) => {
+    try {
+      const { AuditService } = await import('./services/auditService.js');
+      const { limit, action, startDate, endDate } = req.query;
+      
+      let logs;
+      if (action) {
+        logs = await AuditService.getAuditLogsByAction(DEMO_FIRM_ID, action as string);
+      } else if (startDate && endDate) {
+        logs = await AuditService.getAuditLogsByDateRange(
+          DEMO_FIRM_ID, 
+          new Date(startDate as string), 
+          new Date(endDate as string)
+        );
+      } else {
+        logs = await AuditService.getFirmAuditLogs(DEMO_FIRM_ID, limit ? parseInt(limit as string) : undefined);
+      }
+      
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
+  app.post("/api/audit-logs", async (req, res) => {
+    try {
+      const { AuditService } = await import('./services/auditService.js');
+      await AuditService.logAction({
+        firmId: DEMO_FIRM_ID,
+        actorId: DEMO_USER_ID,
+        actorName: req.body.actorName || "System User",
+        action: req.body.action,
+        resourceType: req.body.resourceType,
+        resourceId: req.body.resourceId,
+        details: req.body.details,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+      });
+      
+      res.json({ message: "Audit log created successfully" });
+    } catch (error) {
+      console.error("Error creating audit log:", error);
+      res.status(500).json({ message: "Failed to create audit log" });
+    }
+  });
+
+  // 2. Notifications API
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const { NotificationService } = await import('./services/notificationService.js');
+      const notifications = await NotificationService.getUserNotifications(DEMO_USER_ID, DEMO_FIRM_ID);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/count", async (req, res) => {
+    try {
+      const { NotificationService } = await import('./services/notificationService.js');
+      const count = await NotificationService.getUnreadCount(DEMO_USER_ID, DEMO_FIRM_ID);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching notification count:", error);
+      res.status(500).json({ message: "Failed to fetch notification count" });
+    }
+  });
+
+  app.post("/api/notifications", async (req, res) => {
+    try {
+      const { NotificationService } = await import('./services/notificationService.js');
+      await NotificationService.createNotification({
+        firmId: DEMO_FIRM_ID,
+        userId: req.body.userId || DEMO_USER_ID,
+        type: req.body.type,
+        title: req.body.title,
+        message: req.body.message,
+        resourceType: req.body.resourceType,
+        resourceId: req.body.resourceId,
+        priority: req.body.priority,
+      });
+      
+      res.json({ message: "Notification created successfully" });
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      res.status(500).json({ message: "Failed to create notification" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const { NotificationService } = await import('./services/notificationService.js');
+      const notificationId = parseInt(req.params.id);
+      const success = await NotificationService.markAsRead(notificationId, DEMO_USER_ID);
+      
+      if (success) {
+        res.json({ message: "Notification marked as read" });
+      } else {
+        res.status(404).json({ message: "Notification not found" });
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  // 3. Analytics Dashboard API
+  app.get("/api/analytics", async (req, res) => {
+    try {
+      const { AnalyticsService } = await import('./services/analyticsService.js');
+      const analytics = await AnalyticsService.getFirmAnalytics(DEMO_FIRM_ID);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+
   // Create HTTP server but don't start listening - let index.ts handle that
   // Register admin routes for BridgeLayer staff
   registerAdminRoutes(app);

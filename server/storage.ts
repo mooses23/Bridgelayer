@@ -566,6 +566,101 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return setting;
   }
+
+  // Audit logging operations
+  async createAuditLog(insertAuditLog: InsertAuditLog): Promise<AuditLog> {
+    const [auditLog] = await db
+      .insert(auditLogs)
+      .values(insertAuditLog)
+      .returning();
+    return auditLog;
+  }
+
+  async getFirmAuditLogs(firmId: number, limit: number = 100): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.firmId, firmId))
+      .orderBy(desc(auditLogs.timestamp))
+      .limit(limit);
+  }
+
+  async getAuditLogsByAction(firmId: number, action: string): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(and(eq(auditLogs.firmId, firmId), eq(auditLogs.action, action)))
+      .orderBy(desc(auditLogs.timestamp));
+  }
+
+  async getAuditLogsByDateRange(firmId: number, startDate: Date, endDate: Date): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(and(
+        eq(auditLogs.firmId, firmId),
+        sql`${auditLogs.timestamp} >= ${startDate}`,
+        sql`${auditLogs.timestamp} <= ${endDate}`
+      ))
+      .orderBy(desc(auditLogs.timestamp));
+  }
+
+  // Notification operations
+  async createNotification(insertNotification: InsertNotification): Promise<Notification> {
+    const [notification] = await db
+      .insert(notifications)
+      .values(insertNotification)
+      .returning();
+    return notification;
+  }
+
+  async getUserNotifications(userId: number, firmId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.firmId, firmId)))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationAsRead(notificationId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ 
+        isRead: true,
+        readAt: new Date() 
+      })
+      .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getUnreadNotificationCount(userId: number, firmId: number): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.firmId, firmId),
+        eq(notifications.isRead, false)
+      ));
+    return result[0]?.count || 0;
+  }
+
+  async getFirmNotifications(firmId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.firmId, firmId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async deleteNotification(notificationId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(notifications)
+      .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
 }
 
 export const storage = new DatabaseStorage();
