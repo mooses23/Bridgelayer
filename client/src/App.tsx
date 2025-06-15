@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,20 +7,50 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/dashboard";
 import Documents from "@/pages/documents";
-import TestDocuments from "@/pages/test-documents";
-import SimpleDocuments from "@/pages/simple-documents";
 import Clients from "@/pages/clients";
 import Intake from "@/pages/intake";
-import Messaging from "@/pages/Messaging";
-import Analytics from "@/pages/Analytics";
 import Billing from "@/pages/billing";
-import BillingAnalytics from "@/pages/billing-analytics";
-import ClientPortal from "@/pages/client-portal";
-import Team from "@/pages/team";
 import Settings from "@/pages/settings";
 import Onboarding from "@/pages/Onboarding";
 import Admin from "@/pages/Admin";
+import ClientPortal from "@/pages/client-portal";
 import NotFound from "@/pages/not-found";
+
+// Tab Components
+function DashboardTab() {
+  console.log("DashboardTab rendered");
+  return <Dashboard />;
+}
+
+function DocumentsTab() {
+  console.log("DocumentsTab rendered");
+  return <Documents />;
+}
+
+function ClientsTab() {
+  console.log("ClientsTab rendered");
+  return <Clients />;
+}
+
+function IntakeTab() {
+  console.log("IntakeTab rendered");
+  return <Intake />;
+}
+
+function BillingTab() {
+  console.log("BillingTab rendered");
+  return <Billing />;
+}
+
+function SettingsTab() {
+  console.log("SettingsTab rendered");
+  return <Settings />;
+}
+
+function CalendarTab() {
+  console.log("CalendarTab rendered");
+  return <div>This is the Calendar tab.</div>;
+}
 
 function Router() {
   return (
@@ -30,12 +61,13 @@ function Router() {
       <Route path="/">
         <Layout>
           <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/clients" component={Clients} />
-            <Route path="/intake" component={Intake} />
-            <Route path="/documents" component={Documents} />
-            <Route path="/billing" component={Billing} />
-            <Route path="/settings" component={Settings} />
+            <Route path="/" component={DashboardTab} />
+            <Route path="/clients" component={ClientsTab} />
+            <Route path="/intake" component={IntakeTab} />
+            <Route path="/documents" component={DocumentsTab} />
+            <Route path="/billing" component={BillingTab} />
+            <Route path="/settings" component={SettingsTab} />
+            <Route path="/calendar" component={CalendarTab} />
             <Route component={NotFound} />
           </Switch>
         </Layout>

@@ -12,7 +12,8 @@ import {
   Search,
   BarChart3,
   CreditCard,
-  UserCheck
+  UserCheck,
+  Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Intake", href: "/intake", icon: UserCheck },
     { name: "Documents", href: "/documents", icon: FileText },
     { name: "Billing", href: "/billing", icon: CreditCard },
+    { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 
