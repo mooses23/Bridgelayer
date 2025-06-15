@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/dashboard";
 import Documents from "@/pages/documents";
@@ -53,37 +54,53 @@ function CalendarTab() {
 }
 
 function Router() {
-  return (
-    <Switch>
-      <Route path="/onboarding" component={Onboarding} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/client-portal" component={ClientPortal} />
-      <Route path="/" nest>
-        <Layout>
-          <Switch>
-            <Route path="/" component={DashboardTab} />
-            <Route path="/clients" component={ClientsTab} />
-            <Route path="/intake" component={IntakeTab} />
-            <Route path="/documents" component={DocumentsTab} />
-            <Route path="/billing" component={BillingTab} />
-            <Route path="/settings" component={SettingsTab} />
-            <Route path="/calendar" component={CalendarTab} />
-            <Route component={NotFound} />
-          </Switch>
-        </Layout>
-      </Route>
-    </Switch>
-  );
+  try {
+    const currentPath = window.location.pathname || '/';
+    
+    return (
+      <Switch>
+        <Route path="/onboarding" component={Onboarding} />
+        <Route path="/admin" component={Admin} />
+        <Route path="/client-portal" component={ClientPortal} />
+        <Route path="/" nest>
+          <Layout>
+            <Switch>
+              <Route path="/" component={DashboardTab} />
+              <Route path="/clients" component={ClientsTab} />
+              <Route path="/intake" component={IntakeTab} />
+              <Route path="/documents" component={DocumentsTab} />
+              <Route path="/billing" component={BillingTab} />
+              <Route path="/settings" component={SettingsTab} />
+              <Route path="/calendar" component={CalendarTab} />
+              <Route component={NotFound} />
+            </Switch>
+          </Layout>
+        </Route>
+      </Switch>
+    );
+  } catch (error) {
+    console.error('Router error:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-gray-900">Navigation Error</h1>
+          <p className="text-gray-600 mt-2">Please refresh the page</p>
+        </div>
+      </div>
+    );
+  }
 }
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
