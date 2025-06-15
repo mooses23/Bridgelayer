@@ -1690,6 +1690,50 @@ export class DatabaseStorage implements IStorage {
     return session || undefined;
   }
 
+  // Missing ghost session methods that routes are calling
+  async getGhostSessions(adminUserId: number): Promise<AdminGhostSession[]> {
+    return await db
+      .select()
+      .from(adminGhostSessions)
+      .where(eq(adminGhostSessions.adminUserId, adminUserId))
+      .orderBy(desc(adminGhostSessions.startedAt));
+  }
+
+  async getCurrentGhostSession(adminUserId: number): Promise<AdminGhostSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(adminGhostSessions)
+      .where(and(
+        eq(adminGhostSessions.adminUserId, adminUserId),
+        eq(adminGhostSessions.isActive, true)
+      ))
+      .orderBy(desc(adminGhostSessions.startedAt))
+      .limit(1);
+    return session || undefined;
+  }
+
+  async createGhostSession(sessionData: any): Promise<AdminGhostSession> {
+    const [session] = await db
+      .insert(adminGhostSessions)
+      .values({
+        adminUserId: sessionData.adminUserId,
+        targetFirmId: sessionData.targetFirmId,
+        sessionToken: sessionData.sessionToken,
+        permissions: sessionData.permissions || {},
+        auditTrail: {
+          purpose: sessionData.purpose,
+          actionsPerformed: sessionData.actionsPerformed || [],
+          viewedData: sessionData.viewedData || {},
+          notes: sessionData.notes || ''
+        },
+        ipAddress: sessionData.ipAddress,
+        userAgent: sessionData.userAgent,
+        isActive: true
+      })
+      .returning();
+    return session;
+  }
+
   // Document Generation Storage Methods
   async getFirmTemplates(firmId: number): Promise<any[]> {
     // Return empty array for now - templates can be added later

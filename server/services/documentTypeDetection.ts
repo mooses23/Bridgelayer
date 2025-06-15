@@ -32,6 +32,10 @@ export function getAvailableDocumentTypes(): Record<string, DocumentTypeInfo> {
  * Auto-detects document type based on content keywords
  */
 export function detectDocumentType(content: string): string | undefined {
+  if (!content || typeof content !== 'string') {
+    return undefined;
+  }
+  
   const documentTypes = getAvailableDocumentTypes();
   const contentLower = content.toLowerCase();
   
