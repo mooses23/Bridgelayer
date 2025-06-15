@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import { storage } from "./storage";
 import { processDocument } from "./services/documentProcessor";
+import { registerAdminRoutes } from "./routes/admin";
 import OpenAI from "openai";
 import fs from "fs/promises";
 import path from "path";
@@ -738,6 +739,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create HTTP server but don't start listening - let index.ts handle that
+  // Register admin routes for BridgeLayer staff
+  registerAdminRoutes(app);
+
   const { createServer } = await import('http');
   const httpServer = createServer(app);
 
