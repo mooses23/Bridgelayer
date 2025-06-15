@@ -123,8 +123,9 @@ export default function Onboarding() {
 
   const completeOnboarding = useMutation({
     mutationFn: async (data: OnboardingData) => {
-      const response = await apiRequest('/api/onboarding/configure', {
+      const response = await fetch('/api/onboarding/configure', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
       return response.json();
