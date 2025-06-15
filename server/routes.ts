@@ -11,6 +11,7 @@ import {
   insertMessageSchema
 } from "@shared/schema";
 import { storage } from "./storage";
+import { billingStorage } from "./storage-billing";
 import { processDocument } from "./services/documentProcessor";
 import { registerAdminRoutes } from "./routes/admin";
 import OpenAI from "openai";
