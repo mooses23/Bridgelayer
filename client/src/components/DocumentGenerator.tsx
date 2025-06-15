@@ -273,7 +273,7 @@ export default function DocumentGenerator() {
               </div>
 
               {/* Uploaded Templates */}
-              {uploadedTemplates && uploadedTemplates.length > 0 && (
+              {Array.isArray(uploadedTemplates) && uploadedTemplates.length > 0 && (
                 <div className="space-y-2">
                   <Label>Available Templates</Label>
                   <div className="flex flex-wrap gap-2">
