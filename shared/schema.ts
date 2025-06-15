@@ -298,6 +298,95 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   readAt: true,
 });
 
+// Court Calendar Events table
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  caseId: integer("case_id").references(() => cases.id),
+  clientId: integer("client_id").references(() => clients.id),
+  documentId: integer("document_id").references(() => documents.id), // Source document if AI-suggested
+  title: text("title").notNull(),
+  description: text("description"),
+  eventType: text("event_type").notNull(), // hearing, trial, deposition, deadline, meeting
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time"),
+  location: text("location"),
+  isAllDay: boolean("is_all_day").default(false),
+  isAiSuggested: boolean("is_ai_suggested").default(false), // Auto-suggested from document analysis
+  aiConfidence: integer("ai_confidence"), // 0-100 confidence score
+  status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled, rescheduled
+  reminderMinutes: integer("reminder_minutes").default(60), // Minutes before event to remind
+  googleCalendarId: text("google_calendar_id"), // Sync with Google Calendar
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Client Intake Forms table
+export const clientIntakes = pgTable("client_intakes", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  intakeNumber: text("intake_number").notNull().unique(), // Auto-generated reference
+  clientName: text("client_name").notNull(),
+  clientEmail: text("client_email").notNull(),
+  clientPhone: text("client_phone"),
+  caseType: text("case_type").notNull(), // dropdown selection
+  urgencyLevel: text("urgency_level").notNull(), // low, medium, high, urgent
+  caseDescription: text("case_description").notNull(),
+  preferredContactMethod: text("preferred_contact_method").notNull().default("email"),
+  availableTimeSlots: text("available_time_slots").array(), // For scheduling
+  documentIds: text("document_ids").array(), // Uploaded documents with intake
+  status: text("status").notNull().default("received"), // received, drafted, filed, archived
+  assignedTo: integer("assigned_to").references(() => users.id), // Assigned reviewer
+  aiTriageData: jsonb("ai_triage_data"), // AI analysis results
+  followUpDate: timestamp("follow_up_date"),
+  isPortalEnabled: boolean("is_portal_enabled").default(true), // Firm can enable/disable portal
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// AI Triage Results table
+export const aiTriageResults = pgTable("ai_triage_results", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  intakeId: integer("intake_id").references(() => clientIntakes.id),
+  documentId: integer("document_id").references(() => documents.id),
+  resourceType: text("resource_type").notNull(), // intake, document
+  aiCaseType: text("ai_case_type").notNull(), // AI-detected case category
+  aiUrgencyLevel: text("ai_urgency_level").notNull(), // AI-assessed urgency
+  aiRecommendedActions: text("ai_recommended_actions").array(), // Array of next steps
+  aiSummary: text("ai_summary").notNull(), // Brief AI-generated summary
+  aiConfidenceScore: integer("ai_confidence_score").notNull(), // 0-100
+  suggestedAssignee: integer("suggested_assignee").references(() => users.id), // AI-recommended reviewer
+  flaggedIssues: text("flagged_issues").array(), // Potential red flags
+  estimatedComplexity: text("estimated_complexity").notNull(), // low, medium, high
+  isHumanReviewed: boolean("is_human_reviewed").default(false),
+  humanOverride: jsonb("human_override"), // Human edits to AI assessment
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
+// Insert schemas for new tables
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClientIntakeSchema = createInsertSchema(clientIntakes).omit({
+  id: true,
+  submittedAt: true,
+  processedAt: true,
+  updatedAt: true,
+});
+
+export const insertAiTriageResultSchema = createInsertSchema(aiTriageResults).omit({
+  id: true,
+  createdAt: true,
+  reviewedAt: true,
+});
+
 // Types
 export type InsertFirm = z.infer<typeof insertFirmSchema>;
 export type Firm = typeof firms.$inferSelect;
@@ -329,6 +418,12 @@ export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertClientIntake = z.infer<typeof insertClientIntakeSchema>;
+export type ClientIntake = typeof clientIntakes.$inferSelect;
+export type InsertAiTriageResult = z.infer<typeof insertAiTriageResultSchema>;
+export type AiTriageResult = typeof aiTriageResults.$inferSelect;
 
 // Billing and time tracking tables
 export const clients = pgTable("clients", {
