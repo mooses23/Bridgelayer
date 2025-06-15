@@ -1,0 +1,12 @@
+{
+  "document_type": "Trademark License",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on licensed marks, territory restrictions, quality control standards, and royalty terms. Review trademark usage guidelines, termination rights, and infringement procedures. Pay attention to exclusivity provisions, sublicensing rights, and brand protection obligations."
+}

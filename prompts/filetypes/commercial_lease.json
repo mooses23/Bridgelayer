@@ -1,0 +1,12 @@
+{
+  "document_type": "Commercial Lease",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on rent amount, lease term, permitted uses, and maintenance responsibilities. Review assignment/subletting restrictions, renewal options, and termination provisions. Pay attention to CAM charges, insurance requirements, and compliance with ADA and environmental regulations."
+}

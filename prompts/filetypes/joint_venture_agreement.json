@@ -1,0 +1,12 @@
+{
+  "document_type": "Joint Venture Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on venture purpose, capital contributions, profit/loss sharing, and management structure. Review decision-making authority, exit strategies, and intellectual property rights. Pay attention to termination provisions, dispute resolution, and competitive restrictions."
+}

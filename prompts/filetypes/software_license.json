@@ -1,0 +1,12 @@
+{
+  "document_type": "Software License",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on software description, usage rights, user limitations, and support obligations. Review installation restrictions, reverse engineering prohibitions, and termination conditions. Pay attention to warranty disclaimers, liability limitations, and compliance requirements."
+}

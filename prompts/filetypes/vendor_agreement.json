@@ -1,0 +1,12 @@
+{
+  "document_type": "Vendor Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on product/service specifications, pricing terms, delivery schedules, and quality standards. Review payment terms, warranty provisions, and liability limitations. Pay attention to termination clauses, force majeure provisions, and intellectual property protections."
+}

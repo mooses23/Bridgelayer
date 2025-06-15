@@ -1,0 +1,12 @@
+{
+  "document_type": "Maintenance Agreement",
+  "risk_level": "low",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on maintenance scope, service schedules, response times, and performance standards. Review payment terms, parts/labor coverage, and emergency service provisions. Pay attention to warranty exclusions, liability limitations, and equipment modification restrictions."
+}
