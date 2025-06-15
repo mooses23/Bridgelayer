@@ -125,17 +125,20 @@ export default function DocumentGenerator() {
 
   const generateDocumentMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest("/api/generate-document", {
+      const response = await fetch("/api/generate-document", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
-      return response;
+      if (!response.ok) {
+        throw new Error('Failed to generate document');
+      }
+      return await response.json();
     },
     onSuccess: (data) => {
-      setGeneratedDocument(data.document);
+      setGeneratedDocument(data.document || data.generatedContent);
       toast({
         title: "Document Generated",
         description: "Your document has been successfully generated using AI.",
