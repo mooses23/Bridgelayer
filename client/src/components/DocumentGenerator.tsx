@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import AIResponseDebug from "@/components/AIResponseDebug";
 
 interface DocumentType {
   id: string;
@@ -106,6 +107,8 @@ export default function DocumentGenerator() {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [generatedDocument, setGeneratedDocument] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [lastPrompt, setLastPrompt] = useState<string>('');
+  const [lastResponse, setLastResponse] = useState<any>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -125,6 +128,10 @@ export default function DocumentGenerator() {
 
   const generateDocumentMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Store the prompt for debugging
+      const prompt = `Generate ${data.documentType} for ${data.county} with data: ${JSON.stringify(data.formData)}`;
+      setLastPrompt(prompt);
+      
       const response = await fetch("/api/generate-document", {
         method: "POST",
         headers: {
@@ -135,10 +142,15 @@ export default function DocumentGenerator() {
       if (!response.ok) {
         throw new Error('Failed to generate document');
       }
-      return await response.json();
+      const result = await response.json();
+      
+      // Store the response for debugging
+      setLastResponse(result);
+      return result;
     },
     onSuccess: (data) => {
       setGeneratedDocument(data.document || data.generatedContent);
+      console.log("Document generation successful:", data);
       toast({
         title: "Document Generated",
         description: "Your document has been successfully generated using AI.",
@@ -406,6 +418,16 @@ export default function DocumentGenerator() {
               )}
             </CardContent>
           </Card>
+          
+          {/* AI Debug Response Preview */}
+          {(lastPrompt || lastResponse) && (
+            <AIResponseDebug
+              prompt={lastPrompt}
+              response={lastResponse}
+              title="Document Generation AI Debug"
+              isVisible={false}
+            />
+          )}
         </div>
       </div>
     </div>

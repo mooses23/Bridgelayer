@@ -78,13 +78,12 @@ export default function Intake() {
   });
 
   const submitIntakeMutation = useMutation({
-    mutationFn: (data: IntakeFormData) => 
-      apiRequest("/api/client-intakes", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      }),
-    onSuccess: () => {
+    mutationFn: (data: IntakeFormData) => {
+      console.log("Submitting intake form:", data);
+      return apiRequest("POST", "/api/client-intakes", data);
+    },
+    onSuccess: (response) => {
+      console.log("Intake submission successful:", response);
       toast({
         title: "Intake Submitted",
         description: "Client intake form has been submitted successfully. AI pre-prompting will be generated based on your selections.",
@@ -94,6 +93,7 @@ export default function Intake() {
       setIsSubmitting(false);
     },
     onError: (error: any) => {
+      console.error("Intake submission failed:", error);
       toast({
         title: "Submission Failed",
         description: error.message || "Failed to submit intake form. Please try again.",
