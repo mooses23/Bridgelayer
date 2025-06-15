@@ -177,7 +177,7 @@ export function CommunicationLogWidget() {
                       <SelectValue placeholder="Select client" />
                     </SelectTrigger>
                     <SelectContent>
-                      {clients.map((client: ClientIntake) => (
+                      {Array.isArray(clients) && clients.map((client: ClientIntake) => (
                         <SelectItem key={client.id} value={client.id.toString()}>
                           {client.clientName}
                         </SelectItem>
