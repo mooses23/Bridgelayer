@@ -22,7 +22,7 @@ export const users = pgTable("users", {
   firmId: integer("firm_id").references(() => firms.id), // Made nullable for admin users
   email: text("email").notNull().unique(),
   username: text("username"),
-  passwordHash: text("password_hash").notNull(),
+  password: text("password").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   role: text("role").notNull().default("viewer"), // admin, firm_owner, firm_user, viewer
