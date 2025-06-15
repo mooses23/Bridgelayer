@@ -35,7 +35,7 @@ import AIReasoning from "@/components/AIReasoning";
 import AIResponseDebug from "@/components/AIResponseDebug";
 
 export default function Dashboard() {
-  console.log("DashboardTab rendered");
+  console.log("[Dashboard] loaded");
   
   // State management for interactivity
   const [activeSection, setActiveSection] = useState("overview");
@@ -63,7 +63,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div id="dashboard-page" className="space-y-6">
       {/* Action Feedback */}
       {lastAction && (
         <Card className="bg-green-50 border-green-200">

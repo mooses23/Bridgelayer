@@ -52,7 +52,10 @@ export default function Onboarding() {
       });
 
       if (response.ok) {
-        window.location.href = '/dashboard';
+        const result = await response.json();
+        // Update firm state with onboarded status
+        setSession(user, { ...firm, onboarded: true });
+        window.location.reload();
       } else {
         console.error('Onboarding failed');
       }
@@ -68,7 +71,7 @@ export default function Onboarding() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div id="onboarding-page" className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Welcome to FirmSync</h1>

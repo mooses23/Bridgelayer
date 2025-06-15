@@ -1,5 +1,15 @@
-import Dashboard from '@/pages/Dashboard';
+import { ReactNode } from "react";
 
-export default function FirmDashboardLayout() {
-  return <Dashboard />;
+interface FirmDashboardLayoutProps {
+  children: ReactNode;
+}
+
+export default function FirmDashboardLayout({ children }: FirmDashboardLayoutProps) {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </div>
+    </div>
+  );
 }
