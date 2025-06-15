@@ -13,6 +13,7 @@ interface User {
 interface SessionContextType {
   user: User | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
@@ -81,6 +82,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     isLoading,
+    isAuthenticated: !!user,
     login,
     logout,
     checkSession,
