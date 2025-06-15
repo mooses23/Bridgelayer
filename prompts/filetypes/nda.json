@@ -8,5 +8,11 @@
     "crossref": true,
     "formatting": true
   },
-  "custom_instructions": "Pay close attention to vague confidentiality language, missing duration clauses, and undefined terms. Do not alter tone unless clause appears overly broad. Focus on confidentiality provisions, definition of confidential information, and term duration. Pay special attention to return of materials clauses and jurisdiction provisions."
+  "custom_instructions": "Pay close attention to vague confidentiality language, missing duration clauses, and undefined terms. Do not alter tone unless clause appears overly broad. Focus on confidentiality provisions, definition of confidential information, and term duration. Pay special attention to return of materials clauses and jurisdiction provisions.",
+  "onboarding_questions": {
+    "summary": "Would you like a summary highlighting the parties, confidentiality scope, and key restrictions?",
+    "risk_check": "Should we check for overly broad confidentiality terms and missing duration limits?",
+    "clause_review": "For NDAs, should we verify standard protection clauses or suggest improvements for missing ones?",
+    "reviewer": "Who typically handles confidentiality agreements at your firm?"
+  }
 }
