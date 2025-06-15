@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import DocumentUpload from "@/components/DocumentUpload";
 import ReviewLogs from "@/components/ReviewLogs";
 import DocumentDashboard from "@/components/DocumentDashboard";
+import DocumentGenerator from "@/components/DocumentGenerator";
 
 export default function Documents() {
   const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
@@ -111,8 +112,9 @@ export default function Documents() {
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="generator">Document Generator</TabsTrigger>
           <TabsTrigger value="upload">Upload & Process</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="review-logs">Review Logs</TabsTrigger>
@@ -120,6 +122,10 @@ export default function Documents() {
 
         <TabsContent value="dashboard" className="space-y-4">
           <DocumentDashboard firmId="firm_1" />
+        </TabsContent>
+
+        <TabsContent value="generator" className="space-y-4">
+          <DocumentGenerator />
         </TabsContent>
 
         <TabsContent value="upload" className="space-y-4">

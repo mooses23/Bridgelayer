@@ -246,6 +246,37 @@ export const adminGhostSessions = pgTable("admin_ghost_sessions", {
   userAgent: text("user_agent"),
 });
 
+// Firm Form Templates for document generation
+export const firmFormTemplates = pgTable("firm_form_templates", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  name: text("name").notNull(),
+  documentType: text("document_type").notNull(), // 'eviction-notice', 'lease-agreement', etc.
+  templateContent: text("template_content").notNull(), // The actual template content
+  fileName: text("file_name").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  isActive: boolean("is_active").default(true),
+  uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Generated Documents Log
+export const generatedDocuments = pgTable("generated_documents", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  documentType: text("document_type").notNull(),
+  county: text("county").notNull(),
+  templateId: integer("template_id").references(() => firmFormTemplates.id),
+  formData: jsonb("form_data").notNull(), // The input data used for generation
+  generatedContent: text("generated_content").notNull(),
+  aiPrompt: text("ai_prompt"), // The AI prompt used for generation
+  status: text("status").notNull().default("generated"), // 'generated', 'downloaded', 'uploaded_to_cloud'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,
