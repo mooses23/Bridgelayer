@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { Home, FileText, DollarSign, LogOut } from "lucide-react";
 
