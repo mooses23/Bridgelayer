@@ -1149,10 +1149,329 @@ export class DatabaseStorage implements IStorage {
       .from(calendarEvents)
       .where(and(
         eq(calendarEvents.firmId, firmId),
-        sql`${calendarEvents.startTime} >= ${startDate}`,
-        sql`${calendarEvents.startTime} <= ${endDate}`
+        gte(calendarEvents.startTime, startDate),
+        lte(calendarEvents.startTime, endDate)
       ))
       .orderBy(asc(calendarEvents.startTime));
+  }
+
+  // Time Tracking & Billing Implementation
+  async createTimeEntry(entry: any): Promise<any> {
+    const [timeEntry] = await db
+      .insert(timeLogs)
+      .values({
+        firmId: entry.firmId,
+        userId: entry.userId,
+        clientId: entry.clientId,
+        caseId: entry.caseId,
+        description: entry.description,
+        hours: entry.hours,
+        customField: entry.customField,
+        billableRate: entry.billableRate || 25000, // Default $250/hour in cents
+        loggedAt: entry.entryDate || new Date(),
+      })
+      .returning();
+    
+    // Return with client and case info
+    return await this.getTimeEntryWithDetails(timeEntry.id, entry.firmId);
+  }
+
+  async getTimeEntries(firmId: number): Promise<any[]> {
+    const entries = await db
+      .select({
+        id: timeLogs.id,
+        description: timeLogs.description,
+        hours: timeLogs.hours,
+        hourlyRate: timeLogs.billableRate,
+        customField: timeLogs.customField,
+        entryDate: timeLogs.loggedAt,
+        isLocked: timeLogs.isLocked,
+        invoiceId: timeLogs.invoiceId,
+        createdAt: timeLogs.createdAt,
+        clientId: timeLogs.clientId,
+        caseId: timeLogs.caseId,
+        client: {
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+        },
+        case: {
+          name: cases.name,
+        },
+      })
+      .from(timeLogs)
+      .leftJoin(clients, eq(timeLogs.clientId, clients.id))
+      .leftJoin(cases, eq(timeLogs.caseId, cases.id))
+      .where(eq(timeLogs.firmId, firmId))
+      .orderBy(desc(timeLogs.loggedAt));
+    
+    return entries.map(entry => ({
+      ...entry,
+      client: entry.clientId ? entry.client : null,
+      case: entry.caseId ? entry.case : null,
+    }));
+  }
+
+  async getTimeEntryWithDetails(id: number, firmId: number): Promise<any> {
+    const [entry] = await db
+      .select({
+        id: timeLogs.id,
+        description: timeLogs.description,
+        hours: timeLogs.hours,
+        hourlyRate: timeLogs.billableRate,
+        customField: timeLogs.customField,
+        entryDate: timeLogs.loggedAt,
+        isLocked: timeLogs.isLocked,
+        invoiceId: timeLogs.invoiceId,
+        createdAt: timeLogs.createdAt,
+        clientId: timeLogs.clientId,
+        caseId: timeLogs.caseId,
+        client: {
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+        },
+        case: {
+          name: cases.name,
+        },
+      })
+      .from(timeLogs)
+      .leftJoin(clients, eq(timeLogs.clientId, clients.id))
+      .leftJoin(cases, eq(timeLogs.caseId, cases.id))
+      .where(and(eq(timeLogs.id, id), eq(timeLogs.firmId, firmId)));
+    
+    if (!entry) return null;
+    
+    return {
+      ...entry,
+      client: entry.clientId ? entry.client : null,
+      case: entry.caseId ? entry.case : null,
+    };
+  }
+
+  async lockTimeEntry(firmId: number, entryId: number): Promise<any> {
+    const [entry] = await db
+      .update(timeLogs)
+      .set({ 
+        isLocked: true, 
+        lockedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(and(eq(timeLogs.id, entryId), eq(timeLogs.firmId, firmId)))
+      .returning();
+    
+    return await this.getTimeEntryWithDetails(entry.id, firmId);
+  }
+
+  async getCases(firmId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(cases)
+      .where(eq(cases.firmId, firmId))
+      .orderBy(asc(cases.name));
+  }
+
+  // Invoice Management
+  async createInvoice(invoiceData: any): Promise<any> {
+    const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+    
+    // Get unbilled time entries for the client/case
+    const timeEntriesQuery = db
+      .select()
+      .from(timeLogs)
+      .where(and(
+        eq(timeLogs.firmId, invoiceData.firmId),
+        eq(timeLogs.clientId, parseInt(invoiceData.clientId)),
+        eq(timeLogs.isLocked, false),
+        isNull(timeLogs.invoiceId)
+      ));
+    
+    if (invoiceData.caseId) {
+      timeEntriesQuery.where(eq(timeLogs.caseId, parseInt(invoiceData.caseId)));
+    }
+    
+    const timeEntries = await timeEntriesQuery;
+    
+    // Calculate totals
+    const subtotal = timeEntries.reduce((sum, entry) => {
+      return sum + Math.round((entry.hours / 100) * entry.billableRate);
+    }, 0);
+    
+    const taxRate = 0; // Get from firm settings
+    const taxAmount = Math.round(subtotal * taxRate / 100);
+    const total = subtotal + taxAmount;
+    
+    // Create invoice
+    const [invoice] = await db
+      .insert(invoices)
+      .values({
+        firmId: invoiceData.firmId,
+        createdBy: invoiceData.createdBy,
+        clientId: parseInt(invoiceData.clientId),
+        caseId: invoiceData.caseId ? parseInt(invoiceData.caseId) : null,
+        invoiceNumber,
+        subtotal,
+        taxAmount,
+        total,
+        issueDate: new Date(),
+        dueDate: invoiceData.dueDate,
+        terms: invoiceData.terms,
+        notes: invoiceData.notes,
+      })
+      .returning();
+    
+    // Create line items from time entries
+    if (timeEntries.length > 0) {
+      const lineItems = timeEntries.map((entry, index) => ({
+        invoiceId: invoice.id,
+        timeLogId: entry.id,
+        description: entry.description,
+        quantity: entry.hours, // Hours in hundredths
+        rate: entry.billableRate,
+        amount: Math.round((entry.hours / 100) * entry.billableRate),
+        sortOrder: index,
+      }));
+      
+      await db.insert(invoiceLineItems).values(lineItems);
+      
+      // Update time entries to reference this invoice
+      await db
+        .update(timeLogs)
+        .set({ invoiceId: invoice.id })
+        .where(inArray(timeLogs.id, timeEntries.map(e => e.id)));
+    }
+    
+    return await this.getInvoiceWithDetails(invoice.id, invoiceData.firmId);
+  }
+
+  async getInvoices(firmId: number, status?: string): Promise<any[]> {
+    let query = db
+      .select({
+        id: invoices.id,
+        invoiceNumber: invoices.invoiceNumber,
+        status: invoices.status,
+        subtotal: invoices.subtotal,
+        taxAmount: invoices.taxAmount,
+        total: invoices.total,
+        issueDate: invoices.issueDate,
+        dueDate: invoices.dueDate,
+        paidDate: invoices.paidDate,
+        client: {
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+        },
+        case: {
+          name: cases.name,
+        },
+      })
+      .from(invoices)
+      .leftJoin(clients, eq(invoices.clientId, clients.id))
+      .leftJoin(cases, eq(invoices.caseId, cases.id))
+      .where(eq(invoices.firmId, firmId));
+    
+    if (status === 'unpaid') {
+      query = query.where(ne(invoices.status, 'paid'));
+    } else if (status) {
+      query = query.where(eq(invoices.status, status));
+    }
+    
+    const results = await query.orderBy(desc(invoices.createdAt));
+    
+    return results.map(invoice => ({
+      ...invoice,
+      case: invoice.case?.name ? invoice.case : null,
+    }));
+  }
+
+  async getInvoiceWithDetails(id: number, firmId: number): Promise<any> {
+    const [invoice] = await db
+      .select({
+        id: invoices.id,
+        invoiceNumber: invoices.invoiceNumber,
+        status: invoices.status,
+        subtotal: invoices.subtotal,
+        taxAmount: invoices.taxAmount,
+        total: invoices.total,
+        issueDate: invoices.issueDate,
+        dueDate: invoices.dueDate,
+        paidDate: invoices.paidDate,
+        terms: invoices.terms,
+        notes: invoices.notes,
+        client: {
+          firstName: clients.firstName,
+          lastName: clients.lastName,
+        },
+        case: {
+          name: cases.name,
+        },
+      })
+      .from(invoices)
+      .leftJoin(clients, eq(invoices.clientId, clients.id))
+      .leftJoin(cases, eq(invoices.caseId, cases.id))
+      .where(and(eq(invoices.id, id), eq(invoices.firmId, firmId)));
+    
+    if (!invoice) return null;
+    
+    // Get line items
+    const lineItems = await db
+      .select()
+      .from(invoiceLineItems)
+      .where(eq(invoiceLineItems.invoiceId, id))
+      .orderBy(asc(invoiceLineItems.sortOrder));
+    
+    return {
+      ...invoice,
+      case: invoice.case?.name ? invoice.case : null,
+      lineItems,
+    };
+  }
+
+  async generateInvoicePDF(firmId: number, invoiceId: number): Promise<Buffer> {
+    // This would integrate with a PDF generation library
+    // For now, return a placeholder
+    const invoice = await this.getInvoiceWithDetails(invoiceId, firmId);
+    if (!invoice) {
+      throw new Error("Invoice not found");
+    }
+    
+    // PDF generation would go here using libraries like puppeteer or pdfkit
+    // For demonstration, returning empty buffer
+    return Buffer.from("PDF content would be generated here");
+  }
+
+  // Billing Settings
+  async getBillingSettings(firmId: number): Promise<any> {
+    const [settings] = await db
+      .select()
+      .from(firmBillingSettings)
+      .where(eq(firmBillingSettings.firmId, firmId));
+    
+    return settings || {
+      paymentsEnabled: false,
+      defaultPaymentTerms: 30,
+      autoLockDays: 30,
+      taxRate: 0,
+    };
+  }
+
+  async updateBillingSettings(firmId: number, settings: any): Promise<any> {
+    const [existing] = await db
+      .select()
+      .from(firmBillingSettings)
+      .where(eq(firmBillingSettings.firmId, firmId));
+    
+    if (existing) {
+      const [updated] = await db
+        .update(firmBillingSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(firmBillingSettings.firmId, firmId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(firmBillingSettings)
+        .values({ firmId, ...settings })
+        .returning();
+      return created;
+    }
   }
 
   // Client Intakes Implementation

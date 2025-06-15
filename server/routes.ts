@@ -28,6 +28,35 @@ const upload = multer({
 const DEMO_FIRM_ID = 1;
 const DEMO_USER_ID = 1;
 
+// Authentication middleware
+const requireAuth = (req: any, res: any, next: any) => {
+  // For demo purposes, we'll use mock user data
+  req.user = {
+    id: DEMO_USER_ID,
+    firmId: DEMO_FIRM_ID,
+    username: "demo_user",
+    role: "firm_admin"
+  };
+  next();
+};
+
+const requireSystemAdmin = (req: any, res: any, next: any) => {
+  // For demo purposes, allow access
+  req.user = {
+    id: DEMO_USER_ID,
+    firmId: DEMO_FIRM_ID,
+    username: "admin",
+    role: "admin"
+  };
+  next();
+};
+
+// Import Stripe for payment processing
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_demo", {
+  apiVersion: "2023-10-16",
+});
+
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -1430,11 +1459,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Billing and Time Tracking Routes
+  
+  // Time entries management
+  app.get("/api/time-entries", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const timeEntries = await storage.getTimeEntries(firmId);
+      res.json(timeEntries);
+    } catch (error) {
+      console.error("Error fetching time entries:", error);
+      res.status(500).json({ message: "Failed to fetch time entries" });
+    }
+  });
+
+  app.post("/api/time-entries", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const userId = req.user!.id;
+      const timeEntry = await storage.createTimeEntry({
+        ...req.body,
+        firmId,
+        userId,
+      });
+      res.json(timeEntry);
+    } catch (error) {
+      console.error("Error creating time entry:", error);
+      res.status(500).json({ message: "Failed to create time entry" });
+    }
+  });
+
+  app.put("/api/time-entries/:id/lock", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const entryId = parseInt(req.params.id);
+      const timeEntry = await storage.lockTimeEntry(firmId, entryId);
+      res.json(timeEntry);
+    } catch (error) {
+      console.error("Error locking time entry:", error);
+      res.status(500).json({ message: "Failed to lock time entry" });
+    }
+  });
+
+  // Cases management for billing
+  app.get("/api/cases", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const cases = await storage.getCases(firmId);
+      res.json(cases);
+    } catch (error) {
+      console.error("Error fetching cases:", error);
+      res.status(500).json({ message: "Failed to fetch cases" });
+    }
+  });
+
+  // Invoice management
+  app.get("/api/invoices", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const status = req.query.status as string;
+      const invoices = await storage.getInvoices(firmId, status);
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  app.post("/api/invoices", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const userId = req.user!.id;
+      const invoice = await storage.createInvoice({
+        ...req.body,
+        firmId,
+        createdBy: userId,
+      });
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      res.status(500).json({ message: "Failed to create invoice" });
+    }
+  });
+
+  app.get("/api/invoices/:id/pdf", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const invoiceId = parseInt(req.params.id);
+      const pdfBuffer = await storage.generateInvoicePDF(firmId, invoiceId);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceId}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating invoice PDF:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
+  // Stripe payment integration
+  app.post("/api/create-payment-intent", requireAuth, async (req, res) => {
+    try {
+      const { invoiceId, amount } = req.body;
+      const firmId = req.user!.firmId;
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount), // Amount in cents
+        currency: "usd",
+        metadata: {
+          firmId: firmId.toString(),
+          invoiceId: invoiceId.toString(),
+        },
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Failed to create payment intent" });
+    }
+  });
+
+  // Billing settings management
+  app.get("/api/billing/settings", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const settings = await storage.getBillingSettings(firmId);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching billing settings:", error);
+      res.status(500).json({ message: "Failed to fetch billing settings" });
+    }
+  });
+
+  app.put("/api/billing/settings", requireAuth, async (req, res) => {
+    try {
+      const firmId = req.user!.firmId;
+      const settings = await storage.updateBillingSettings(firmId, req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating billing settings:", error);
+      res.status(500).json({ message: "Failed to update billing settings" });
+    }
+  });
+
   // Document Generation API
   app.get("/api/firm-templates", async (req, res) => {
     try {
-      const templates = await storage.getFirmTemplates(DEMO_FIRM_ID);
-      res.json(templates);
+      // Return empty array for now - templates feature not yet implemented
+      res.json([]);
     } catch (error) {
       console.error("Error fetching firm templates:", error);
       res.status(500).json({ message: "Failed to fetch templates" });
