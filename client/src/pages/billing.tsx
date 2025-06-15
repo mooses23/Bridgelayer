@@ -13,7 +13,15 @@ import {
   GripVertical,
   Download,
   Eye,
-  Save
+  Save,
+  Shield,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  BarChart3,
+  FileTextIcon,
+  Calendar,
+  User
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -81,6 +89,9 @@ export default function Billing() {
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [editingTimeLog, setEditingTimeLog] = useState<any>(null);
   const [selectedTimeLogs, setSelectedTimeLogs] = useState<number[]>([]);
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [auditLogFilter, setAuditLogFilter] = useState({ type: "all", dateRange: "7d" });
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -109,6 +120,17 @@ export default function Billing() {
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ["/api/billing/invoices"],
     queryFn: () => fetch("/api/billing/invoices").then(res => res.json())
+  });
+
+  const { data: auditLogs, isLoading: auditLogsLoading } = useQuery({
+    queryKey: ["/api/billing/audit-logs", auditLogFilter],
+    queryFn: () => fetch(`/api/billing/audit-logs?type=${auditLogFilter.type}&dateRange=${auditLogFilter.dateRange}`).then(res => res.json()),
+    enabled: showAuditLog
+  });
+
+  const { data: billingAlerts, isLoading: alertsLoading } = useQuery({
+    queryKey: ["/api/billing/alerts"],
+    queryFn: () => fetch("/api/billing/alerts").then(res => res.json())
   });
 
   // Mutations
@@ -154,6 +176,21 @@ export default function Billing() {
       queryClient.invalidateQueries({ queryKey: ["/api/billing/time-logs"] });
       setSelectedTimeLogs([]);
       toast({ title: "Invoice created successfully" });
+    }
+  });
+
+  const purgeAuditLogsMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/billing/audit-logs/purge", {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/billing/audit-logs"] });
+      toast({ title: "Audit logs purged successfully" });
+    }
+  });
+
+  const generateTaxFormMutation = useMutation({
+    mutationFn: (data: any) => apiRequest("POST", "/api/billing/generate-tax-form", data),
+    onSuccess: () => {
+      toast({ title: "Tax form generated successfully" });
     }
   });
 
@@ -487,6 +524,188 @@ export default function Billing() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Audit Log Section */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  <CardTitle>Audit Trail</CardTitle>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAuditLog(!showAuditLog)}
+                  className="flex items-center gap-2"
+                >
+                  {showAuditLog ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {showAuditLog ? "Hide" : "Show"} Audit Log
+                </Button>
+              </div>
+            </CardHeader>
+            {showAuditLog && (
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label>Filter by:</Label>
+                    <Select value={auditLogFilter.type} onValueChange={(value) => setAuditLogFilter(prev => ({ ...prev, type: value }))}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Changes</SelectItem>
+                        <SelectItem value="time_log">Time Logs</SelectItem>
+                        <SelectItem value="invoice">Invoices</SelectItem>
+                        <SelectItem value="client">Clients</SelectItem>
+                        <SelectItem value="case">Cases</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label>Period:</Label>
+                    <Select value={auditLogFilter.dateRange} onValueChange={(value) => setAuditLogFilter(prev => ({ ...prev, dateRange: value }))}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1d">Last 24h</SelectItem>
+                        <SelectItem value="7d">Last 7 days</SelectItem>
+                        <SelectItem value="30d">Last 30 days</SelectItem>
+                        <SelectItem value="90d">Last 90 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm("Are you sure you want to purge all audit logs? This action cannot be undone.")) {
+                        purgeAuditLogsMutation.mutate();
+                      }
+                    }}
+                    disabled={purgeAuditLogsMutation.isPending}
+                    className="ml-auto"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Purge Logs
+                  </Button>
+                </div>
+
+                {auditLogsLoading ? (
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="animate-pulse bg-gray-200 h-12 rounded"></div>
+                    ))}
+                  </div>
+                ) : auditLogs?.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Shield className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>No audit logs found for the selected period</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {auditLogs?.map((log: any) => (
+                      <div key={log.id} className="border rounded-lg p-3">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium">{log.userName || `User ${log.userId}`}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {log.action}
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date(log.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{log.description}</p>
+                        {log.changes && (
+                          <div className="text-xs bg-gray-50 p-2 rounded">
+                            <strong>Changes:</strong> {JSON.stringify(log.changes, null, 2)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Billing Alerts */}
+          {billingAlerts && billingAlerts.length > 0 && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  <CardTitle className="text-orange-800">Billing Alerts</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {billingAlerts.map((alert: any) => (
+                    <div key={alert.id} className="flex items-start gap-3 p-3 bg-white rounded border">
+                      <AlertTriangle className="w-5 h-5 text-orange-500 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{alert.title}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                        <span className="text-xs text-gray-500">
+                          {new Date(alert.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <Badge variant={alert.severity === "critical" ? "destructive" : "secondary"}>
+                        {alert.severity}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Advanced Analytics Preview */}
+          {billingSettings?.enableAdvancedAnalytics && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    <CardTitle>Analytics Preview</CardTitle>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open('/billing-analytics', '_blank')}
+                  >
+                    View Full Analytics
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      ${((timeLogs?.reduce((sum: number, log: any) => sum + (log.hours / 60) * (log.billableRate || 25000), 0) || 0) / 100).toFixed(0)}
+                    </div>
+                    <div className="text-sm text-gray-600">Total Unbilled</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {((timeLogs?.reduce((sum: number, log: any) => sum + log.hours, 0) || 0) / 60).toFixed(1)}h
+                    </div>
+                    <div className="text-sm text-gray-600">Total Hours</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      ${(billingSettings?.defaultHourlyRate ? billingSettings.defaultHourlyRate / 100 : 250)}
+                    </div>
+                    <div className="text-sm text-gray-600">Avg Rate/Hour</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Invoicing Tab */}
