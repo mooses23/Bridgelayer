@@ -162,6 +162,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GHGH 20.3 - Tenant detection by subdomain (no auth required for tenant lookup)
+  app.get('/api/tenant/:subdomain', async (req, res) => {
+    try {
+      const subdomain = req.params.subdomain;
+
+      if (!subdomain) {
+        return res.status(400).json({ error: 'Subdomain is required' });
+      }
+
+      // Find firm by slug (subdomain)
+      const firm = await storage.getFirmBySlug(subdomain);
+
+      if (!firm) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+
+      // Return tenant data with features
+      const tenantData = {
+        id: firm.slug,
+        name: firm.name,
+        slug: firm.slug,
+        onboarded: firm.onboarded,
+        plan: firm.plan,
+        features: {
+          billingEnabled: true,
+          aiDebug: false,
+          documentsEnabled: true,
+          intakeEnabled: true,
+          communicationsEnabled: true,
+          calendarEnabled: true,
+          adminGhostMode: false,
+          ...(firm.features || {})
+        }
+      };
+
+      res.json(tenantData);
+    } catch (error) {
+      console.error('Error fetching tenant:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Firm management endpoints - require authentication
   app.get('/api/firm', requireAuth, async (req, res) => {
     try {

@@ -103,6 +103,16 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 15, 2025**: GHGH 20.3 - Subdomain Tenant Detection Implementation Complete
+  - Updated TenantContext.tsx to detect tenant from subdomain using `window.location.hostname`
+  - Added `/api/tenant/:subdomain` endpoint that looks up firms by slug without requiring authentication
+  - Implemented `getFirmBySlug` method in DatabaseStorage for subdomain-based tenant lookup
+  - Removed fallback logic that used hard-coded firm IDs - now relies purely on subdomain detection
+  - System now supports multi-tenant architecture where different subdomains (e.g., acme.firmsync.com, legal.firmsync.com) load different tenant configurations
+  - Added proper error handling for localhost and non-subdomain environments
+  - Tenant data includes features configuration with proper defaults for billingEnabled, documentsEnabled, etc.
+  - Successfully deployed subdomain-based tenant detection system ready for multi-tenant testing
+
 - **June 15, 2025**: GHGH 14.2 - Complete Layouts & Page Shells Implementation Complete
   - Created comprehensive layout system with 5 distinct layouts for different user types:
     * PublicLayout: Header/footer for marketing and authentication pages

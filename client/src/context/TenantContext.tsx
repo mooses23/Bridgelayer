@@ -34,72 +34,46 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // GHGH 20.3 – Detect Tenant from Subdomain
+  const host = window.location.hostname;           // e.g. "acme.firmsync.com"
+  const [subdomain] = host.split('.');             // e.g. "acme"
+
   // Helper function to check if a feature is enabled
   const hasFeature = (featureName: keyof TenantFeatures): boolean => {
     return tenant?.features?.[featureName] || false;
   };
 
-  // Detect tenant from subdomain
-  const detectTenantFromSubdomain = (): string | null => {
-    const host = window.location.hostname;
-    const parts = host.split('.');
-
-    // Check if we're on a subdomain (more than 2 parts for domain.com)
-    if (parts.length > 2) {
-      return parts[0]; // Return subdomain as tenantId
-    }
-    return null;
-  };
-
   useEffect(() => {
-    const fetchTenant = async () => {
-      try {
-        // Try subdomain detection first
-        const subdomainTenant = detectTenantFromSubdomain();
-
-        let tenantId: string | null = null;
-
-        if (subdomainTenant) {
-          tenantId = subdomainTenant;
-        } else if (user?.firm_id) {
-          tenantId = user.firm_id;
-        }
-
-        if (tenantId) {
-          const response = await fetch(`/api/firms/${tenantId}`, {
-            headers: {
-              'X-Tenant-ID': tenantId,
+    if (subdomain && subdomain !== 'localhost' && subdomain !== '127') {
+      fetch(`/api/tenant/${subdomain}`)
+        .then(res => res.json())
+        .then(data => {
+          // Set default features if not provided
+          const tenantWithFeatures = {
+            ...data,
+            features: {
+              billingEnabled: true,
+              aiDebug: false,
+              documentsEnabled: true,
+              intakeEnabled: true,
+              communicationsEnabled: true,
+              calendarEnabled: true,
+              adminGhostMode: false,
+              ...data.features
             }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            // Set default features if not provided
-            const tenantWithFeatures = {
-              ...data,
-              features: {
-                billingEnabled: true,
-                aiDebug: false,
-                documentsEnabled: true,
-                intakeEnabled: true,
-                communicationsEnabled: true,
-                calendarEnabled: true,
-                adminGhostMode: false,
-                ...data.features
-              }
-            };
-            setTenant(tenantWithFeatures);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching tenant:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTenant();
-  }, [user]);
+          };
+          setTenant(tenantWithFeatures);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error fetching tenant:', err);
+          setLoading(false);
+        });
+    } else {
+      // Fallback for localhost or non-subdomain environments
+      setLoading(false);
+    }
+  }, [subdomain]);
 
 return (
     <TenantContext.Provider value={{ tenant, loading, setTenant, hasFeature }}>
