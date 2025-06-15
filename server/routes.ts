@@ -1397,6 +1397,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document Generation API
+  app.get("/api/firm-templates", async (req, res) => {
+    try {
+      const templates = await storage.getFirmTemplates(DEMO_FIRM_ID);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching firm templates:", error);
+      res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+
+  app.post("/api/generate-document", async (req, res) => {
+    try {
+      const { documentType, county, formData, useTemplate } = req.body;
+      
+      // Get firm-specific template if requested
+      let templateContent = null;
+      if (useTemplate) {
+        const templates = await storage.getFirmTemplates(DEMO_FIRM_ID);
+        const template = templates.find((t: any) => t.documentType === documentType);
+        if (template) {
+          templateContent = template.templateContent;
+        }
+      }
+
+      // Build AI prompt for document generation
+      const prompt = buildDocumentGenerationPrompt(documentType, county, formData, templateContent);
+      
+      // Generate document using OpenAI
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a legal document generation assistant. Generate professional, legally-sound documents based on the provided template and form data. Use proper legal formatting and include all necessary clauses for the specified jurisdiction."
+          },
+          {
+            role: "user", 
+            content: prompt
+          }
+        ],
+        max_tokens: 3000,
+        temperature: 0.3 // Lower temperature for more consistent legal documents
+      });
+
+      const generatedContent = response.choices[0].message.content;
+
+      // Save generated document to database
+      const generatedDoc = await storage.saveGeneratedDocument({
+        firmId: DEMO_FIRM_ID,
+        userId: DEMO_USER_ID,
+        documentType,
+        county,
+        formData,
+        generatedContent,
+        aiPrompt: prompt
+      });
+
+      res.json({
+        document: generatedContent,
+        id: generatedDoc.id
+      });
+
+    } catch (error) {
+      console.error("Error generating document:", error);
+      res.status(500).json({ message: "Failed to generate document" });
+    }
+  });
+
   // Calendar Events API
   app.get("/api/calendar/events", async (req, res) => {
     try {
@@ -1677,4 +1746,69 @@ Provide triage assessment in JSON format:
       estimatedComplexity: "medium"
     };
   }
+}
+
+// Helper function to build AI prompts for document generation
+function buildDocumentGenerationPrompt(documentType: string, county: string, formData: any, templateContent?: string | null): string {
+  const basePrompt = `Generate a professional legal document for ${documentType} in ${county}, California.`;
+  
+  let prompt = basePrompt + "\n\n";
+  
+  if (templateContent) {
+    prompt += `Use this template as a formatting guide:\n${templateContent}\n\n`;
+  }
+  
+  prompt += "Document Details:\n";
+  
+  // Add form data to prompt
+  Object.entries(formData).forEach(([key, value]) => {
+    prompt += `- ${key}: ${value}\n`;
+  });
+  
+  prompt += "\n";
+  
+  // Document-specific instructions
+  switch (documentType) {
+    case 'eviction-notice':
+      prompt += `Generate a Notice to Pay Rent or Quit that complies with California Civil Code Section 1946 and local ${county} requirements. Include:
+- Proper legal language for the notice period
+- Clear payment instructions
+- Consequences of non-compliance
+- Required statutory disclosures for ${county}`;
+      break;
+      
+    case 'rent-demand':
+      prompt += `Generate a formal rent demand letter that includes:
+- Professional letterhead format
+- Clear statement of amount owed
+- Payment deadline with specific date
+- Late fee calculations if applicable
+- Next steps if payment is not received`;
+      break;
+      
+    case 'lease-agreement':
+      prompt += `Generate a residential lease agreement compliant with California landlord-tenant law including:
+- All required California disclosures
+- Security deposit terms per Civil Code 1950.5
+- Habitability warranties
+- Local ${county} specific requirements
+- Clear lease terms and conditions`;
+      break;
+      
+    case 'employment-contract':
+      prompt += `Generate an employment agreement that includes:
+- At-will employment language compliant with California Labor Code
+- Compensation and benefits details
+- Confidentiality and non-disclosure provisions
+- California-specific employment law compliance
+- Termination procedures`;
+      break;
+      
+    default:
+      prompt += `Generate the document with proper legal formatting and language appropriate for ${county}, California jurisdiction.`;
+  }
+  
+  prompt += `\n\nEnsure the document is professionally formatted, legally accurate, and includes all necessary dates, signatures lines, and contact information.`;
+  
+  return prompt;
 }
