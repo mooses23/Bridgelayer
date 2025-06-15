@@ -1,15 +1,29 @@
 
+
 import { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function LogoutPage() {
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Clear authentication and redirect
-    logout();
-  }, [logout]);
+    const performLogout = async () => {
+      try {
+        await logout();
+        // Redirect to login page after successful logout
+        navigate("/login", { replace: true });
+      } catch (error) {
+        console.error("Logout error:", error);
+        // Still redirect to login even if logout fails
+        navigate("/login", { replace: true });
+      }
+    };
+    
+    performLogout();
+  }, [logout, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -31,3 +45,4 @@ export default function LogoutPage() {
     </div>
   );
 }
+

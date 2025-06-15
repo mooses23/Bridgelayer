@@ -45,10 +45,11 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
     console.log('Session check:', { 
       sessionExists: !!req.session,
       userId: req.session?.userId,
-      cookies: req.headers.cookie 
+      cookies: req.headers.cookie,
+      sessionData: req.session
     });
     
-    if (!req.session?.userId) {
+    if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
@@ -155,7 +156,13 @@ export const logout = async (req: Request, res: Response) => {
 // Get current session
 export const getSession = async (req: Request, res: Response) => {
   try {
-    if (!req.session?.userId) {
+    console.log('getSession check:', {
+      sessionExists: !!req.session,
+      userId: req.session?.userId,
+      sessionData: req.session
+    });
+    
+    if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: "No active session" });
     }
 

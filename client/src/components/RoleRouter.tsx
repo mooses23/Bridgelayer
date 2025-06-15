@@ -54,6 +54,7 @@ export default function RoleRouter() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/tenants" element={<TenantsPage />} />
           <Route path="/admin/ghost" element={<GhostModePage />} />
+          <Route path="/logout" element={<LogoutPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </AdminLayout>
@@ -80,6 +81,7 @@ export default function RoleRouter() {
           <Route path="/client/login" element={<ClientLoginPage />} />
           <Route path="/client/dashboard" element={<ClientDashboard />} />
           <Route path="/client/invoices" element={<ClientInvoicesPage />} />
+          <Route path="/logout" element={<LogoutPage />} />
           <Route path="*" element={<Navigate to="/client/dashboard" replace />} />
         </Routes>
       </ClientLayout>
@@ -95,6 +97,7 @@ export default function RoleRouter() {
         <Route path="/intake" element={<IntakePage />} />
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/billing" element={<BillingPage />} />
+        <Route path="/logout" element={<LogoutPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </FirmDashboardLayout>

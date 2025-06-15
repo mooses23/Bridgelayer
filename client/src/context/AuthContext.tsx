@@ -19,7 +19,7 @@ interface AuthContextType {
   user: User | null;
   firm: Firm | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -93,13 +93,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    fetch('/api/auth/logout', { 
-      method: 'POST',
-      credentials: 'include'
-    });
-    setUser(null);
-    setFirm(null);
+  const logout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        console.error("Logout failed with status:", response.status);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Always clear local state regardless of API response
+      setUser(null);
+      setFirm(null);
+      setLoading(false);
+    }
   };
 
   return (
