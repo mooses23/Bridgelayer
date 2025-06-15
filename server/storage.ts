@@ -173,7 +173,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(folders)
       .where(and(eq(folders.id, id), eq(folders.firmId, firmId)));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // Document management with firm isolation
@@ -222,7 +222,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(documents)
       .where(and(eq(documents.id, id), eq(documents.firmId, firmId)));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // Analysis management
@@ -305,7 +305,7 @@ export class DatabaseStorage implements IStorage {
       .update(messages)
       .set({ isRead: true })
       .where(eq(messages.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // System admin management
