@@ -1,1586 +1,307 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { 
   Clock, 
   Plus, 
   FileText, 
   DollarSign, 
-  Settings, 
-  Upload,
-  Edit,
-  Trash2,
-  Lock,
-  GripVertical,
-  Download,
-  Eye,
-  Save,
-  Shield,
-  ChevronDown,
-  ChevronUp,
-  AlertTriangle,
-  BarChart3,
-  FileTextIcon,
   Calendar,
-  User
+  User,
+  BarChart3
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-
-// Form schemas
-const timeLogSchema = z.object({
-  clientId: z.string().optional(),
-  caseId: z.string().optional(),
-  description: z.string().min(1, "Description is required"),
-  hours: z.string().min(1, "Hours is required"),
-  customField: z.string().optional(),
-  loggedAt: z.string().min(1, "Date is required")
-});
-
-const clientSchema = z.object({
-  name: z.string().min(1, "Client name is required"),
-  email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().optional(),
-  address: z.string().optional()
-});
-
-const caseSchema = z.object({
-  clientId: z.string().min(1, "Client is required"),
-  name: z.string().min(1, "Case name is required"),
-  description: z.string().optional(),
-  caseNumber: z.string().optional(),
-  billingType: z.enum(["hourly", "flat", "contingency"]),
-  hourlyRate: z.string().optional(),
-  flatFee: z.string().optional(),
-  contingencyRate: z.string().optional()
-});
-
-const billingSettingsSchema = z.object({
-  defaultHourlyRate: z.string().min(1, "Default hourly rate is required"),
-  defaultFlatRate: z.string().optional(),
-  defaultContingencyRate: z.string().optional(),
-  invoiceTerms: z.string().optional(),
-  billingPlatform: z.string().optional(),
-  billingPlatformUrl: z.string().optional(),
-  lockTimeLogsAfterDays: z.string().optional(),
-  hideAnalyticsTab: z.boolean().optional(),
-  billingEnabled: z.boolean()
-});
 
 export default function Billing() {
-  const [activeTab, setActiveTab] = useState("time-tracking");
-  const [showTimeLogDialog, setShowTimeLogDialog] = useState(false);
-  const [showClientDialog, setShowClientDialog] = useState(false);
-  const [showCaseDialog, setShowCaseDialog] = useState(false);
-  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [editingTimeLog, setEditingTimeLog] = useState<any>(null);
-  const [selectedTimeLogs, setSelectedTimeLogs] = useState<number[]>([]);
-  const [showAuditLog, setShowAuditLog] = useState(false);
-  const [auditLogFilter, setAuditLogFilter] = useState({ type: "all", dateRange: "7d" });
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("time-tracking");
 
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Fetch billing data
-  const { data: billingSettings, isLoading: settingsLoading } = useQuery({
-    queryKey: ["/api/billing/settings"],
-    queryFn: () => fetch("/api/billing/settings").then(res => res.json())
-  });
-
-  const { data: clients, isLoading: clientsLoading } = useQuery({
-    queryKey: ["/api/billing/clients"],
-    queryFn: () => fetch("/api/billing/clients").then(res => res.json())
-  });
-
-  const { data: cases, isLoading: casesLoading } = useQuery({
-    queryKey: ["/api/billing/cases"],
-    queryFn: () => fetch("/api/billing/cases").then(res => res.json())
-  });
-
-  const { data: timeLogs, isLoading: timeLogsLoading } = useQuery({
-    queryKey: ["/api/billing/time-logs"],
-    queryFn: () => fetch("/api/billing/time-logs").then(res => res.json())
-  });
-
-  const { data: invoices, isLoading: invoicesLoading } = useQuery({
-    queryKey: ["/api/billing/invoices"],
-    queryFn: () => fetch("/api/billing/invoices").then(res => res.json())
-  });
-
-  const { data: auditLogs, isLoading: auditLogsLoading } = useQuery({
-    queryKey: ["/api/billing/audit-logs", auditLogFilter],
-    queryFn: () => fetch(`/api/billing/audit-logs?type=${auditLogFilter.type}&dateRange=${auditLogFilter.dateRange}`).then(res => res.json()),
-    enabled: showAuditLog
-  });
-
-  const { data: billingAlerts, isLoading: alertsLoading } = useQuery({
-    queryKey: ["/api/billing/alerts"],
-    queryFn: () => fetch("/api/billing/alerts").then(res => res.json())
-  });
-
-  // Mutations
-  const createTimeLogMutation = useMutation({
-    mutationFn: (data: any) => {
-      console.log("Creating time log:", data);
-      return apiRequest("POST", "/api/billing/time-logs", data);
+  // Sample data
+  const timeEntries = [
+    {
+      id: 1,
+      date: "2024-06-15",
+      client: "John Smith",
+      matter: "Employment Contract Review",
+      hours: 2.5,
+      rate: 350,
+      description: "Reviewed employment agreement and identified key terms"
     },
-    onSuccess: (response) => {
-      console.log("Time log created successfully:", response);
-      queryClient.invalidateQueries({ queryKey: ["/api/billing/time-logs"] });
-      setShowTimeLogDialog(false);
-      toast({ title: "Time log created successfully" });
+    {
+      id: 2,
+      date: "2024-06-15",
+      client: "Sarah Johnson", 
+      matter: "NDA Analysis",
+      hours: 1.5,
+      rate: 300,
+      description: "AI-assisted analysis of non-disclosure agreement"
     },
-    onError: (error) => {
-      console.error("Time log creation failed:", error);
+    {
+      id: 3,
+      date: "2024-06-14",
+      client: "Michael Brown",
+      matter: "Settlement Agreement",
+      hours: 3.0,
+      rate: 400,
+      description: "Draft settlement terms and legal review"
     }
-  });
+  ];
 
-  const createClientMutation = useMutation({
-    mutationFn: (data: any) => {
-      console.log("Creating client:", data);
-      return apiRequest("POST", "/api/billing/clients", data);
+  const invoices = [
+    {
+      id: "INV-001",
+      client: "John Smith",
+      amount: 875.00,
+      status: "paid",
+      dueDate: "2024-06-30",
+      items: 1
     },
-    onSuccess: (response) => {
-      console.log("Client created successfully:", response);
-      queryClient.invalidateQueries({ queryKey: ["/api/billing/clients"] });
-      setShowClientDialog(false);
-      toast({ title: "Client created successfully" });
+    {
+      id: "INV-002", 
+      client: "Sarah Johnson",
+      amount: 450.00,
+      status: "pending",
+      dueDate: "2024-07-15",
+      items: 2
     },
-    onError: (error) => {
-      console.error("Client creation failed:", error);
+    {
+      id: "INV-003",
+      client: "Michael Brown", 
+      amount: 1200.00,
+      status: "overdue",
+      dueDate: "2024-06-01",
+      items: 3
     }
-  });
+  ];
 
-  const createCaseMutation = useMutation({
-    mutationFn: (data: any) => {
-      console.log("Creating case:", data);
-      return apiRequest("POST", "/api/billing/cases", data);
-    },
-    onSuccess: (response) => {
-      console.log("Case created successfully:", response);
-      queryClient.invalidateQueries({ queryKey: ["/api/billing/cases"] });
-      setShowCaseDialog(false);
-      toast({ title: "Case created successfully" });
-    },
-    onError: (error) => {
-      console.error("Case creation failed:", error);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "paid": return "bg-green-100 text-green-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "overdue": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
     }
-  });
-
-  const updateSettingsMutation = useMutation({
-    mutationFn: (data: any) => {
-      console.log("Updating billing settings:", data);
-      return apiRequest("PATCH", "/api/billing/settings", data);
-    },
-    onSuccess: (response) => {
-      console.log("Settings updated successfully:", response);
-      queryClient.invalidateQueries({ queryKey: ["/api/billing/settings"] });
-      toast({ title: "Billing settings updated successfully" });
-    },
-    onError: (error) => {
-      console.error("Settings update failed:", error);
-    }
-  });
-
-  const createInvoiceMutation = useMutation({
-    mutationFn: (data: any) => {
-      console.log("Creating invoice:", data);
-      return apiRequest("POST", "/api/billing/invoices", data);
-    },
-    onSuccess: (response) => {
-      console.log("Invoice created successfully:", response);
-      queryClient.invalidateQueries({ queryKey: ["/api/billing/invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/billing/time-logs"] });
-      setSelectedTimeLogs([]);
-      toast({ title: "Invoice created successfully" });
-    },
-    onError: (error) => {
-      console.error("Invoice creation failed:", error);
-    }
-  });
-
-  const purgeAuditLogsMutation = useMutation({
-    mutationFn: () => {
-      console.log("Purging audit logs");
-      return apiRequest("DELETE", "/api/billing/audit-logs/purge", {});
-    },
-    onSuccess: (response) => {
-      console.log("Audit logs purged successfully:", response);
-      queryClient.invalidateQueries({ queryKey: ["/api/billing/audit-logs"] });
-      toast({ title: "Audit logs purged successfully" });
-    },
-    onError: (error) => {
-      console.error("Audit logs purge failed:", error);
-    }
-  });
-
-  const generateTaxFormMutation = useMutation({
-    mutationFn: (data: any) => {
-      console.log("Generating tax form:", data);
-      return apiRequest("POST", "/api/billing/generate-tax-form", data);
-    },
-    onSuccess: (response) => {
-      console.log("Tax form generated successfully:", response);
-      toast({ title: "Tax form generated successfully" });
-    },
-    onError: (error) => {
-      console.error("Tax form generation failed:", error);
-    }
-  });
-
-  // Forms
-  const timeLogForm = useForm({
-    resolver: zodResolver(timeLogSchema),
-    defaultValues: {
-      clientId: "",
-      caseId: "",
-      description: "",
-      hours: "",
-      customField: "",
-      loggedAt: new Date().toISOString().split('T')[0]
-    }
-  });
-
-  const clientForm = useForm({
-    resolver: zodResolver(clientSchema),
-    defaultValues: { name: "", email: "", phone: "", address: "" }
-  });
-
-  const caseForm = useForm({
-    resolver: zodResolver(caseSchema),
-    defaultValues: { 
-      clientId: "", 
-      name: "", 
-      description: "", 
-      caseNumber: "", 
-      billingType: "hourly" as const,
-      hourlyRate: "",
-      flatFee: "",
-      contingencyRate: ""
-    }
-  });
-
-  const settingsForm = useForm({
-    resolver: zodResolver(billingSettingsSchema),
-    defaultValues: {
-      defaultHourlyRate: billingSettings?.defaultHourlyRate ? (billingSettings.defaultHourlyRate / 100).toString() : "250",
-      defaultFlatRate: billingSettings?.defaultFlatRate ? (billingSettings.defaultFlatRate / 100).toString() : "5000",
-      defaultContingencyRate: billingSettings?.defaultContingencyRate ? (billingSettings.defaultContingencyRate / 100).toString() : "33",
-      invoiceTerms: billingSettings?.invoiceTerms || "Payment due within 30 days",
-      billingPlatform: billingSettings?.billingPlatform || "",
-      billingPlatformUrl: billingSettings?.billingPlatformUrl || "",
-      lockTimeLogsAfterDays: billingSettings?.lockTimeLogsAfterDays?.toString() || "30",
-      hideAnalyticsTab: billingSettings?.hideAnalyticsTab || false,
-      billingEnabled: billingSettings?.billingEnabled || false
-    }
-  });
-
-  // Helper functions
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(cents / 100);
   };
 
-  const formatHours = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}:${mins.toString().padStart(2, '0')}`;
-  };
-
-  const parseHours = (hoursStr: string) => {
-    const [hours, minutes = "0"] = hoursStr.split(':');
-    return parseInt(hours) * 60 + parseInt(minutes);
-  };
-
-  const handleCreateInvoice = () => {
-    if (selectedTimeLogs.length === 0) {
-      toast({ title: "Please select time logs to include in the invoice", variant: "destructive" });
-      return;
-    }
-
-    const selectedLogs = timeLogs?.filter((log: any) => selectedTimeLogs.includes(log.id));
-    const clientId = selectedLogs[0]?.clientId;
-    
-    if (!clientId) {
-      toast({ title: "Selected time logs must have a client assigned", variant: "destructive" });
-      return;
-    }
-
-    // Check if all selected logs are for the same client
-    const allSameClient = selectedLogs.every((log: any) => log.clientId === clientId);
-    if (!allSameClient) {
-      toast({ title: "All selected time logs must be for the same client", variant: "destructive" });
-      return;
-    }
-
-    const subtotal = selectedLogs.reduce((total: number, log: any) => {
-      const hours = log.hours / 60;
-      const rate = log.billableRate || billingSettings?.defaultHourlyRate || 25000;
-      return total + (hours * rate);
-    }, 0);
-
-    const invoiceData = {
-      clientId,
-      subtotal,
-      total: subtotal,
-      timeLogIds: selectedTimeLogs,
-      status: "draft"
-    };
-
-    createInvoiceMutation.mutate(invoiceData);
-  };
-
-  // Check if billing is enabled
-  if (!billingSettings?.billingEnabled && !settingsLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Billing & Time Tracking</h1>
-            <p className="text-gray-600">Manage time tracking, invoicing, and billing for your firm</p>
-          </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Setup Required</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-600">
-              Billing features are not enabled for your firm. Please configure your billing settings to get started.
-            </p>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="billingPlatform">Billing Platform</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose your billing platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stripe">Stripe</SelectItem>
-                    <SelectItem value="lawpay">LawPay</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="billingUrl">Billing Platform URL (Optional)</Label>
-                <Input 
-                  id="billingUrl"
-                  placeholder="https://your-billing-platform.com/embed"
-                  className="mt-1"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Enter an iframe or embed URL to display your existing billing interface
-                </p>
-              </div>
-
-              <Button 
-                onClick={() => setShowSettingsDialog(true)}
-                className="flex items-center gap-2"
-              >
-                <Settings className="w-4 h-4" />
-                Configure Billing Settings
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const totalBillableHours = timeEntries.reduce((sum, entry) => sum + entry.hours, 0);
+  const totalRevenue = timeEntries.reduce((sum, entry) => sum + (entry.hours * entry.rate), 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Billing & Time Tracking</h1>
-          <p className="text-gray-600">Manage time tracking, invoicing, and billing for your firm</p>
+          <h1 className="text-3xl font-bold">Billing & Time Tracking</h1>
+          <p className="text-gray-600">Manage time entries, invoices, and billing analytics</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowSettingsDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Settings className="w-4 h-4" />
-            Settings
-          </Button>
-          <Button 
-            onClick={() => setShowTimeLogDialog(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Log Time
-          </Button>
-        </div>
+        <Button className="flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          New Time Entry
+        </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalBillableHours.toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground">This month</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Billable amount</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Cases</CardTitle>
+            <FileText className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">Currently billing</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Rate</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$350</div>
+            <p className="text-xs text-muted-foreground">Per hour</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="time-tracking" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="time-tracking">Time Tracking</TabsTrigger>
-          <TabsTrigger value="invoicing">Invoicing</TabsTrigger>
-          <TabsTrigger value="clients-cases">Clients & Cases</TabsTrigger>
+          <TabsTrigger value="invoices">Invoices</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
-        {/* Time Tracking Tab */}
         <TabsContent value="time-tracking" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h3 className="text-lg font-semibold">Recent Time Entries</h3>
-              {selectedTimeLogs.length > 0 && (
-                <Badge variant="secondary">
-                  {selectedTimeLogs.length} selected
-                </Badge>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {selectedTimeLogs.length > 0 && (
-                <Button 
-                  onClick={handleCreateInvoice}
-                  className="flex items-center gap-2"
-                  disabled={createInvoiceMutation.isPending}
-                >
-                  <FileText className="w-4 h-4" />
-                  Create Invoice
-                </Button>
-              )}
-              <Button 
-                onClick={() => setShowTimeLogDialog(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Log Time
-              </Button>
-            </div>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <input
-                        type="checkbox"
-                        checked={selectedTimeLogs.length === timeLogs?.length}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedTimeLogs(timeLogs?.map((log: any) => log.id) || []);
-                          } else {
-                            setSelectedTimeLogs([]);
-                          }
-                        }}
-                      />
-                    </TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Client/Case</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Hours</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {timeLogs?.map((log: any) => {
-                    const client = clients?.find((c: any) => c.id === log.clientId);
-                    const case_ = cases?.find((c: any) => c.id === log.caseId);
-                    const hours = log.hours / 60;
-                    const rate = log.billableRate || billingSettings?.defaultHourlyRate || 25000;
-                    const amount = hours * rate;
-
-                    return (
-                      <TableRow key={log.id}>
-                        <TableCell>
-                          <input
-                            type="checkbox"
-                            checked={selectedTimeLogs.includes(log.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedTimeLogs([...selectedTimeLogs, log.id]);
-                              } else {
-                                setSelectedTimeLogs(selectedTimeLogs.filter(id => id !== log.id));
-                              }
-                            }}
-                            disabled={log.isLocked || log.invoiceId}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(log.loggedAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{client?.name || "No Client"}</div>
-                            {case_ && <div className="text-sm text-gray-500">{case_.name}</div>}
-                          </div>
-                        </TableCell>
-                        <TableCell>{log.description}</TableCell>
-                        <TableCell>{formatHours(log.hours)}</TableCell>
-                        <TableCell>{formatCurrency(rate)}</TableCell>
-                        <TableCell>{formatCurrency(amount)}</TableCell>
-                        <TableCell>
-                          {log.invoiceId ? (
-                            <Badge variant="default">Billed</Badge>
-                          ) : log.isLocked ? (
-                            <Badge variant="secondary">Locked</Badge>
-                          ) : (
-                            <Badge variant="outline">Unbilled</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditingTimeLog(log);
-                                setShowTimeLogDialog(true);
-                              }}
-                              disabled={log.isLocked}
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            {log.isLocked && (
-                              <Lock className="w-3 h-3 text-gray-400" />
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Audit Log Section */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  <CardTitle>Audit Trail</CardTitle>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAuditLog(!showAuditLog)}
-                  className="flex items-center gap-2"
-                >
-                  {showAuditLog ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  {showAuditLog ? "Hide" : "Show"} Audit Log
-                </Button>
-              </div>
+              <CardTitle>Recent Time Entries</CardTitle>
             </CardHeader>
-            {showAuditLog && (
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Label>Filter by:</Label>
-                    <Select value={auditLogFilter.type} onValueChange={(value) => setAuditLogFilter(prev => ({ ...prev, type: value }))}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Changes</SelectItem>
-                        <SelectItem value="time_log">Time Logs</SelectItem>
-                        <SelectItem value="invoice">Invoices</SelectItem>
-                        <SelectItem value="client">Clients</SelectItem>
-                        <SelectItem value="case">Cases</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label>Period:</Label>
-                    <Select value={auditLogFilter.dateRange} onValueChange={(value) => setAuditLogFilter(prev => ({ ...prev, dateRange: value }))}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1d">Last 24h</SelectItem>
-                        <SelectItem value="7d">Last 7 days</SelectItem>
-                        <SelectItem value="30d">Last 30 days</SelectItem>
-                        <SelectItem value="90d">Last 90 days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to purge all audit logs? This action cannot be undone.")) {
-                        purgeAuditLogsMutation.mutate();
-                      }
-                    }}
-                    disabled={purgeAuditLogsMutation.isPending}
-                    className="ml-auto"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Purge Logs
-                  </Button>
-                </div>
-
-                {auditLogsLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="animate-pulse bg-gray-200 h-12 rounded"></div>
-                    ))}
-                  </div>
-                ) : auditLogs?.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Shield className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>No audit logs found for the selected period</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-80 overflow-y-auto">
-                    {auditLogs?.map((log: any) => (
-                      <div key={log.id} className="border rounded-lg p-3">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-500" />
-                            <span className="font-medium">{log.userName || `User ${log.userId}`}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {log.action}
-                            </Badge>
-                          </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(log.timestamp).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{log.description}</p>
-                        {log.changes && (
-                          <div className="text-xs bg-gray-50 p-2 rounded">
-                            <strong>Changes:</strong> {JSON.stringify(log.changes, null, 2)}
-                          </div>
-                        )}
+            <CardContent>
+              <div className="space-y-4">
+                {timeEntries.map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-blue-600" />
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Billing Alerts */}
-          {billingAlerts && billingAlerts.length > 0 && (
-            <Card className="border-orange-200 bg-orange-50">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-orange-600" />
-                  <CardTitle className="text-orange-800">Billing Alerts</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {billingAlerts.map((alert: any) => (
-                    <div key={alert.id} className="flex items-start gap-3 p-3 bg-white rounded border">
-                      <AlertTriangle className="w-5 h-5 text-orange-500 mt-0.5" />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{alert.title}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
-                        <span className="text-xs text-gray-500">
-                          {new Date(alert.createdAt).toLocaleString()}
-                        </span>
+                      <div>
+                        <h4 className="font-semibold">{entry.matter}</h4>
+                        <p className="text-sm text-gray-600">{entry.client}</p>
+                        <p className="text-sm text-gray-500">{entry.description}</p>
                       </div>
-                      <Badge variant={alert.severity === "critical" ? "destructive" : "secondary"}>
-                        {alert.severity}
-                      </Badge>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Advanced Analytics Preview */}
-          {billingSettings?.enableAdvancedAnalytics && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
-                    <CardTitle>Analytics Preview</CardTitle>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open('/billing-analytics', '_blank')}
-                  >
-                    View Full Analytics
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
-                      ${((timeLogs?.reduce((sum: number, log: any) => sum + (log.hours / 60) * (log.billableRate || 25000), 0) || 0) / 100).toFixed(0)}
+                    <div className="text-right">
+                      <p className="font-semibold">{entry.hours}h</p>
+                      <p className="text-sm text-gray-600">${(entry.hours * entry.rate).toLocaleString()}</p>
+                      <p className="text-xs text-gray-500">{entry.date}</p>
                     </div>
-                    <div className="text-sm text-gray-600">Total Unbilled</div>
                   </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {((timeLogs?.reduce((sum: number, log: any) => sum + log.hours, 0) || 0) / 60).toFixed(1)}h
-                    </div>
-                    <div className="text-sm text-gray-600">Total Hours</div>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">
-                      ${(billingSettings?.defaultHourlyRate ? billingSettings.defaultHourlyRate / 100 : 250)}
-                    </div>
-                    <div className="text-sm text-gray-600">Avg Rate/Hour</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Invoicing Tab */}
-        <TabsContent value="invoicing" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Invoices</h3>
-            <Button 
-              onClick={handleCreateInvoice}
-              className="flex items-center gap-2"
-              disabled={selectedTimeLogs.length === 0}
-            >
-              <Plus className="w-4 h-4" />
-              Create Invoice
-            </Button>
-          </div>
-
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices?.map((invoice: any) => {
-                    const client = clients?.find((c: any) => c.id === invoice.clientId);
-                    return (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">
-                          {invoice.invoiceNumber || `INV-${invoice.id}`}
-                        </TableCell>
-                        <TableCell>{client?.name}</TableCell>
-                        <TableCell>
-                          {new Date(invoice.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>{formatCurrency(invoice.total)}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={
-                              invoice.status === 'paid' ? 'default' :
-                              invoice.status === 'sent' ? 'secondary' :
-                              invoice.status === 'overdue' ? 'destructive' : 'outline'
-                            }
-                          >
-                            {invoice.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Download className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Clients & Cases Tab */}
-        <TabsContent value="clients-cases" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Clients Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Clients</CardTitle>
-                  <Button 
-                    onClick={() => setShowClientDialog(true)}
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Client
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {clients?.map((client: any) => (
-                    <div key={client.id} className="flex items-center justify-between p-3 border rounded-lg">
+        <TabsContent value="invoices" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {invoices.map((invoice) => (
+                  <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-green-600" />
+                      </div>
                       <div>
-                        <div className="font-medium">{client.name}</div>
-                        {client.email && <div className="text-sm text-gray-500">{client.email}</div>}
+                        <h4 className="font-semibold">{invoice.id}</h4>
+                        <p className="text-sm text-gray-600">{invoice.client}</p>
+                        <p className="text-xs text-gray-500">Due: {invoice.dueDate}</p>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-3 h-3" />
-                      </Button>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Cases Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Cases</CardTitle>
-                  <Button 
-                    onClick={() => setShowCaseDialog(true)}
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Case
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {cases?.map((case_: any) => {
-                    const client = clients?.find((c: any) => c.id === case_.clientId);
-                    return (
-                      <div key={case_.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{case_.name}</div>
-                          <div className="text-sm text-gray-500">{client?.name}</div>
-                          <Badge variant="outline" className="mt-1">
-                            {case_.billingType}
-                          </Badge>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    <div className="text-right">
+                      <p className="font-semibold">${invoice.amount.toLocaleString()}</p>
+                      <Badge className={getStatusColor(invoice.status)}>
+                        {invoice.status}
+                      </Badge>
+                      <p className="text-xs text-gray-500">{invoice.items} items</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Total Billable Hours</CardTitle>
+                <CardTitle>Monthly Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {timeLogs ? formatHours(timeLogs.reduce((total: number, log: any) => total + log.hours, 0)) : "0:00"}
-                </div>
-                <p className="text-sm text-gray-500">This month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Outstanding Invoices</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {invoices ? 
-                    formatCurrency(
-                      invoices
-                        .filter((inv: any) => inv.status !== 'paid')
-                        .reduce((total: number, inv: any) => total + inv.total, 0)
-                    ) : "$0.00"
-                  }
-                </div>
-                <p className="text-sm text-gray-500">
-                  {invoices?.filter((inv: any) => inv.status !== 'paid').length || 0} invoices
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Unbilled Time</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {timeLogs ? 
-                    formatCurrency(
-                      timeLogs
-                        .filter((log: any) => !log.invoiceId)
-                        .reduce((total: number, log: any) => {
-                          const hours = log.hours / 60;
-                          const rate = log.billableRate || billingSettings?.defaultHourlyRate || 25000;
-                          return total + (hours * rate);
-                        }, 0)
-                    ) : "$0.00"
-                  }
-                </div>
-                <p className="text-sm text-gray-500">Ready to bill</p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Time Log Dialog */}
-      <Dialog open={showTimeLogDialog} onOpenChange={setShowTimeLogDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingTimeLog ? "Edit Time Log" : "Log Time"}</DialogTitle>
-          </DialogHeader>
-          <Form {...timeLogForm}>
-            <form onSubmit={timeLogForm.handleSubmit((data) => {
-              const hours = parseHours(data.hours);
-              const logData = {
-                ...data,
-                hours,
-                loggedAt: new Date(data.loggedAt),
-                clientId: data.clientId ? parseInt(data.clientId) : null,
-                caseId: data.caseId ? parseInt(data.caseId) : null
-              };
-              createTimeLogMutation.mutate(logData);
-            })} className="space-y-4">
-              <FormField
-                control={timeLogForm.control}
-                name="clientId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a client" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {clients?.map((client: any) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={timeLogForm.control}
-                name="caseId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Case (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a case" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {cases?.map((case_: any) => (
-                          <SelectItem key={case_.id} value={case_.id.toString()}>
-                            {case_.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={timeLogForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Describe the work performed..." />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={timeLogForm.control}
-                name="hours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hours (e.g., 2:30 for 2.5 hours)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="1:30" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={timeLogForm.control}
-                name="customField"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Custom Field (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Additional information..." />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={timeLogForm.control}
-                name="loggedAt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="date" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowTimeLogDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createTimeLogMutation.isPending}
-                >
-                  {createTimeLogMutation.isPending ? "Saving..." : "Save Time Log"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Client Dialog */}
-      <Dialog open={showClientDialog} onOpenChange={setShowClientDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Client</DialogTitle>
-          </DialogHeader>
-          <Form {...clientForm}>
-            <form onSubmit={clientForm.handleSubmit((data) => {
-              createClientMutation.mutate(data);
-            })} className="space-y-4">
-              <FormField
-                control={clientForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Client name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={clientForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" placeholder="client@example.com" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={clientForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Phone number" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={clientForm.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Client address" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowClientDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createClientMutation.isPending}
-                >
-                  {createClientMutation.isPending ? "Creating..." : "Create Client"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Case Dialog */}
-      <Dialog open={showCaseDialog} onOpenChange={setShowCaseDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Case</DialogTitle>
-          </DialogHeader>
-          <Form {...caseForm}>
-            <form onSubmit={caseForm.handleSubmit((data) => {
-              const caseData = {
-                ...data,
-                clientId: parseInt(data.clientId),
-                hourlyRate: data.hourlyRate ? Math.round(parseFloat(data.hourlyRate) * 100) : null,
-                flatFee: data.flatFee ? Math.round(parseFloat(data.flatFee) * 100) : null,
-                contingencyRate: data.contingencyRate ? Math.round(parseFloat(data.contingencyRate) * 100) : null
-              };
-              createCaseMutation.mutate(caseData);
-            })} className="space-y-4">
-              <FormField
-                control={caseForm.control}
-                name="clientId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Client</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a client" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {clients?.map((client: any) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={caseForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Case Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Case name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={caseForm.control}
-                name="caseNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Case Number (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Case number" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={caseForm.control}
-                name="billingType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Billing Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="hourly">Hourly</SelectItem>
-                        <SelectItem value="flat">Flat Fee</SelectItem>
-                        <SelectItem value="contingency">Contingency</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {caseForm.watch("billingType") === "hourly" && (
-                <FormField
-                  control={caseForm.control}
-                  name="hourlyRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hourly Rate</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="250.00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {caseForm.watch("billingType") === "flat" && (
-                <FormField
-                  control={caseForm.control}
-                  name="flatFee"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Flat Fee</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="5000.00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {caseForm.watch("billingType") === "contingency" && (
-                <FormField
-                  control={caseForm.control}
-                  name="contingencyRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contingency Rate (%)</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="33" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              <FormField
-                control={caseForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Case description" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowCaseDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createCaseMutation.isPending}
-                >
-                  {createCaseMutation.isPending ? "Creating..." : "Create Case"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Settings Dialog */}
-      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Billing Settings</DialogTitle>
-          </DialogHeader>
-          <Form {...settingsForm}>
-            <form onSubmit={settingsForm.handleSubmit((data) => {
-              const settingsData = {
-                ...data,
-                defaultHourlyRate: Math.round(parseFloat(data.defaultHourlyRate) * 100),
-                defaultFlatRate: data.defaultFlatRate ? Math.round(parseFloat(data.defaultFlatRate) * 100) : null,
-                defaultContingencyRate: data.defaultContingencyRate ? Math.round(parseFloat(data.defaultContingencyRate) * 100) : null,
-                lockTimeLogsAfterDays: data.lockTimeLogsAfterDays ? parseInt(data.lockTimeLogsAfterDays) : null
-              };
-              updateSettingsMutation.mutate(settingsData);
-            })} className="space-y-6">
-              <div className="space-y-4">
-                <h4 className="font-semibold">Rate Structure</h4>
-                
-                <FormField
-                  control={settingsForm.control}
-                  name="defaultHourlyRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Default Hourly Rate ($)</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="250.00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={settingsForm.control}
-                  name="defaultFlatRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Default Flat Fee ($)</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="5000.00" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={settingsForm.control}
-                  name="defaultContingencyRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Default Contingency Rate (%)</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="33" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="font-semibold">Invoice Settings</h4>
-                
-                <FormField
-                  control={settingsForm.control}
-                  name="invoiceTerms"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Default Invoice Terms</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} placeholder="Payment due within 30 days" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div>
-                  <Label>Firm Logo</Label>
-                  <div className="mt-2 flex items-center gap-4">
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <Upload className="w-4 h-4" />
-                      Upload Logo
-                    </Button>
-                    <span className="text-sm text-gray-500">
-                      Upload your firm logo for invoices
-                    </span>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Total Hours:</span>
+                    <span className="font-semibold">{totalBillableHours.toFixed(1)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Revenue:</span>
+                    <span className="font-semibold">${totalRevenue.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Cases Worked:</span>
+                    <span className="font-semibold">12</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Average Rate:</span>
+                    <span className="font-semibold">${Math.round(totalRevenue / totalBillableHours)}/hr</span>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Client Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>John Smith</span>
+                    <span>$875</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Sarah Johnson</span>
+                    <span>$450</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Michael Brown</span>
+                    <span>$1,200</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Billing Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="defaultRate">Default Hourly Rate</Label>
+                  <Input id="defaultRate" placeholder="$350" />
+                </div>
+                <div>
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input id="currency" placeholder="USD" />
+                </div>
               </div>
-
-              <div className="space-y-4">
-                <h4 className="font-semibold">Billing Platform</h4>
-                
-                <FormField
-                  control={settingsForm.control}
-                  name="billingPlatform"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Billing Platform</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select billing platform" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="stripe">Stripe</SelectItem>
-                          <SelectItem value="lawpay">LawPay</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={settingsForm.control}
-                  name="billingPlatformUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Billing Platform URL (Optional)</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="https://your-billing-platform.com/embed" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="invoicePrefix">Invoice Prefix</Label>
+                  <Input id="invoicePrefix" placeholder="INV-" />
+                </div>
+                <div>
+                  <Label htmlFor="paymentTerms">Payment Terms (days)</Label>
+                  <Input id="paymentTerms" placeholder="30" />
+                </div>
               </div>
-
-              <div className="space-y-4">
-                <h4 className="font-semibold">Access Controls</h4>
-                
-                <FormField
-                  control={settingsForm.control}
-                  name="lockTimeLogsAfterDays"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Lock Time Logs After (Days)</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" placeholder="30" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={settingsForm.control}
-                  name="hideAnalyticsTab"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Hide Analytics Tab</FormLabel>
-                        <div className="text-sm text-gray-500">
-                          Hide the analytics tab for non-admin users
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={settingsForm.control}
-                  name="billingEnabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Enable Billing Features</FormLabel>
-                        <div className="text-sm text-gray-500">
-                          Enable time tracking and billing for your firm
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowSettingsDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={updateSettingsMutation.isPending}
-                >
-                  {updateSettingsMutation.isPending ? "Saving..." : "Save Settings"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              <Button>Save Settings</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

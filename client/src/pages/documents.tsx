@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileText, 
@@ -13,285 +11,252 @@ import {
   Search,
   MoreVertical,
   Download,
-  Trash2,
   Eye,
-  Filter,
-  Settings
+  Filter
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import DocumentUpload from "@/components/DocumentUpload";
-import ReviewLogs from "@/components/ReviewLogs";
-import DocumentDashboard from "@/components/DocumentDashboard";
-import DocumentGenerator from "@/components/DocumentGenerator";
 
 export default function Documents() {
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
-  // Fetch folders
-  const { data: folders } = useQuery({
-    queryKey: ["/api/folders"],
-  });
-
-  // Fetch documents
-  const { data: documents } = useQuery({
-    queryKey: ["/api/documents", selectedFolder],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      if (selectedFolder) params.append('folderId', selectedFolder.toString());
-      return fetch(`/api/documents?${params}`).then(res => res.json());
-    }
-  });
-
-  // Filter documents based on search
-  const filteredDocuments = documents?.filter((doc: any) =>
-    doc.originalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.documentType?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
-
-  // Delete document mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (documentId: number) => {
-      const response = await fetch(`/api/documents/${documentId}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete document');
-      return response.json();
+  // Sample document data
+  const documents = [
+    {
+      id: 1,
+      name: "NDA_Template_v2.pdf",
+      type: "NDA",
+      size: "2.4 MB",
+      status: "analyzed",
+      uploadedBy: "John Smith",
+      uploadedAt: "2024-06-15",
+      analysisStatus: "Complete"
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
-      toast({
-        title: "Document Deleted",
-        description: "The document has been successfully deleted.",
-      });
+    {
+      id: 2,
+      name: "Employment_Contract_Draft.docx",
+      type: "Employment Agreement",
+      size: "1.8 MB",
+      status: "processing",
+      uploadedBy: "Sarah Johnson",
+      uploadedAt: "2024-06-15",
+      analysisStatus: "In Progress"
     },
-    onError: (error: any) => {
-      toast({
-        title: "Delete Failed",
-        description: error.message || "Failed to delete document",
-        variant: "destructive",
-      });
+    {
+      id: 3,
+      name: "Settlement_Agreement_Case123.pdf",
+      type: "Settlement",
+      size: "3.2 MB",
+      status: "reviewed",
+      uploadedBy: "Michael Brown",
+      uploadedAt: "2024-06-14",
+      analysisStatus: "Reviewed"
     }
-  });
+  ];
 
-  const handleDeleteDocument = (documentId: number) => {
-    if (confirm("Are you sure you want to delete this document?")) {
-      deleteMutation.mutate(documentId);
+  const folders = [
+    { id: 1, name: "NDAs", count: 15 },
+    { id: 2, name: "Employment Contracts", count: 8 },
+    { id: 3, name: "Settlement Agreements", count: 12 },
+    { id: 4, name: "Real Estate", count: 6 }
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "analyzed": return "bg-green-100 text-green-800";
+      case "processing": return "bg-blue-100 text-blue-800";
+      case "reviewed": return "bg-purple-100 text-purple-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  const filteredDocuments = documents.filter(doc =>
+    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-600">Manage and analyze your legal documents with AI-powered prompt routing</p>
+          <h1 className="text-3xl font-bold">Documents</h1>
+          <p className="text-gray-600">Manage and analyze your legal documents</p>
         </div>
-        <div className="mt-4 lg:mt-0 flex flex-col sm:flex-row gap-3">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Folder className="w-4 h-4" />
-            New Folder
-          </Button>
-          <Button className="flex items-center gap-2">
-            <Upload className="w-4 h-4" />
-            Upload Document
-          </Button>
-        </div>
+        <Button className="flex items-center gap-2">
+          <Upload className="w-4 h-4" />
+          Upload Document
+        </Button>
       </div>
 
-      <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="generator">Document Generator</TabsTrigger>
+      <Tabs defaultValue="documents" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="documents">All Documents</TabsTrigger>
           <TabsTrigger value="upload">Upload & Process</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="review-logs">Review Logs</TabsTrigger>
+          <TabsTrigger value="folders">Folders</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-4">
-          <DocumentDashboard firmId="firm_1" />
-        </TabsContent>
-
-        <TabsContent value="generator" className="space-y-4">
-          <DocumentGenerator />
-        </TabsContent>
-
-        <TabsContent value="upload" className="space-y-4">
-          <DocumentUpload
-            selectedDocument={selectedDocument}
-            onDocumentUploaded={(doc: any) => {
-              setSelectedDocument(doc);
-              queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
-            }}
-            onDocumentRemoved={() => setSelectedDocument(null)}
-          />
-        </TabsContent>
-
-        <TabsContent value="documents" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Sidebar - Folders */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Folders</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button
-                    variant={selectedFolder === null ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedFolder(null)}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    All Documents
-                    <Badge variant="secondary" className="ml-auto">
-                      {documents?.length || 0}
-                    </Badge>
-                  </Button>
-                  
-                  {(folders as any[])?.map((folder: any) => (
-                    <Button
-                      key={folder.id}
-                      variant={selectedFolder === folder.id ? "default" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => setSelectedFolder(folder.id)}
-                    >
-                      <Folder className="w-4 h-4 mr-2" />
-                      {folder.name}
-                    </Button>
-                  ))}
-                </CardContent>
-              </Card>
+        <TabsContent value="documents" className="space-y-6">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search documents..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              Filters
+            </Button>
+          </div>
 
-            {/* Main Content */}
-            <div className="lg:col-span-3 space-y-4">
-              {/* Search and Filters */}
-              <Card>
+          <div className="grid gap-4">
+            {filteredDocuments.map((doc) => (
+              <Card key={doc.id}>
                 <CardContent className="pt-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        placeholder="Search documents..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                      />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">{doc.name}</h3>
+                        <p className="text-gray-600">{doc.type}</p>
+                      </div>
                     </div>
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <Filter className="w-4 h-4" />
-                      Filter
-                    </Button>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <Badge className={getStatusColor(doc.status)}>
+                          {doc.analysisStatus}
+                        </Badge>
+                        <p className="text-sm text-gray-500 mt-1">{doc.size}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem>
+                            <Eye className="w-4 h-4 mr-2" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Uploaded by:</span>
+                      <p>{doc.uploadedBy}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Date:</span>
+                      <p>{doc.uploadedAt}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Document Type:</span>
+                      <p>{doc.type}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Documents List */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Documents</span>
-                    <Badge variant="outline">{filteredDocuments.length} documents</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {filteredDocuments.length > 0 ? (
-                    <div className="space-y-4">
-                      {filteredDocuments.map((doc: any) => (
-                        <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                          <div className="flex items-center space-x-4">
-                            <FileText className="w-8 h-8 text-blue-600" />
-                            <div>
-                              <h4 className="font-medium text-gray-900">{doc.originalName}</h4>
-                              <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                                <span>{formatFileSize(doc.fileSize)}</span>
-                                <span>{new Date(doc.uploadedAt).toLocaleDateString()}</span>
-                                {doc.documentType && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {doc.documentType}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <Badge variant={
-                              doc.status === 'analyzed' ? 'default' :
-                              doc.status === 'processing' ? 'secondary' :
-                              doc.status === 'error' ? 'destructive' : 'outline'
-                            }>
-                              {doc.status}
-                            </Badge>
-                            
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Download
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteDocument(doc.id)}
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        {searchQuery ? "No documents found" : "No documents yet"}
-                      </h3>
-                      <p className="text-gray-500 mb-6">
-                        {searchQuery 
-                          ? "Try adjusting your search terms or filters"
-                          : "Get started by uploading your first document"
-                        }
-                      </p>
-                      {!searchQuery && (
-                        <Button className="flex items-center gap-2">
-                          <Upload className="w-4 h-4" />
-                          Upload Document
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="review-logs" className="space-y-4">
-          <ReviewLogs firmId="firm_1" />
+        <TabsContent value="upload" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload New Document</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Upload your legal documents</h3>
+                <p className="text-gray-600 mb-4">
+                  Drag and drop files here, or click to browse. Supports PDF, DOC, DOCX, and TXT files.
+                </p>
+                <Button>Choose Files</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="folders" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {folders.map((folder) => (
+              <Card key={folder.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Folder className="w-8 h-8 text-blue-600" />
+                      <div>
+                        <h3 className="font-semibold">{folder.name}</h3>
+                        <p className="text-sm text-gray-600">{folder.count} documents</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">47</div>
+                <p className="text-xs text-muted-foreground">+12% from last month</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Analyzed</CardTitle>
+                <Eye className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">35</div>
+                <p className="text-xs text-muted-foreground">74% completion rate</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Processing</CardTitle>
+                <Upload className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">8</div>
+                <p className="text-xs text-muted-foreground">Currently in queue</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
+                <Folder className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">2.8 GB</div>
+                <p className="text-xs text-muted-foreground">28% of plan limit</p>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
