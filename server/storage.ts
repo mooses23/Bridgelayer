@@ -35,6 +35,10 @@ import {
   type InsertClientIntake,
   type AiTriageResult,
   type InsertAiTriageResult,
+  type CommunicationLog,
+  type InsertCommunicationLog,
+  type AdminGhostSession,
+  type InsertAdminGhostSession,
   type Client,
   type InsertClient,
   type Case,
@@ -74,6 +78,8 @@ import {
   calendarEvents,
   clientIntakes,
   aiTriageResults,
+  communicationLogs,
+  adminGhostSessions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
@@ -239,6 +245,22 @@ export interface IStorage {
   getTriageResultByDocument(documentId: number, firmId: number): Promise<AiTriageResult | undefined>;
   updateAiTriageResult(id: number, updates: Partial<AiTriageResult>): Promise<AiTriageResult | undefined>;
   getFirmTriageResults(firmId: number): Promise<AiTriageResult[]>;
+  
+  // CRM Communication Logs
+  createCommunicationLog(log: InsertCommunicationLog): Promise<CommunicationLog>;
+  getFirmCommunicationLogs(firmId: number): Promise<CommunicationLog[]>;
+  getClientCommunicationLogs(clientId: number, firmId: number): Promise<CommunicationLog[]>;
+  getCaseCommunicationLogs(caseId: number, firmId: number): Promise<CommunicationLog[]>;
+  getCommunicationLog(id: number, firmId: number): Promise<CommunicationLog | undefined>;
+  updateCommunicationLog(id: number, updates: Partial<CommunicationLog>): Promise<CommunicationLog | undefined>;
+  deleteCommunicationLog(id: number, firmId: number): Promise<boolean>;
+  
+  // Admin Ghost Mode
+  createAdminGhostSession(session: InsertAdminGhostSession): Promise<AdminGhostSession>;
+  getActiveGhostSessions(adminUserId: number): Promise<AdminGhostSession[]>;
+  getGhostSessionByToken(sessionToken: string): Promise<AdminGhostSession | undefined>;
+  endGhostSession(sessionToken: string): Promise<boolean>;
+  updateGhostSessionAuditTrail(sessionToken: string, auditTrail: any): Promise<AdminGhostSession | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1224,6 +1246,117 @@ export class DatabaseStorage implements IStorage {
       .from(aiTriageResults)
       .where(eq(aiTriageResults.firmId, firmId))
       .orderBy(desc(aiTriageResults.createdAt));
+  }
+
+  // CRM Communication Logs Implementation
+  async createCommunicationLog(log: InsertCommunicationLog): Promise<CommunicationLog> {
+    const [communicationLog] = await db
+      .insert(communicationLogs)
+      .values(log)
+      .returning();
+    return communicationLog;
+  }
+
+  async getFirmCommunicationLogs(firmId: number): Promise<CommunicationLog[]> {
+    return await db
+      .select()
+      .from(communicationLogs)
+      .where(eq(communicationLogs.firmId, firmId))
+      .orderBy(desc(communicationLogs.createdAt));
+  }
+
+  async getClientCommunicationLogs(clientId: number, firmId: number): Promise<CommunicationLog[]> {
+    return await db
+      .select()
+      .from(communicationLogs)
+      .where(and(
+        eq(communicationLogs.clientId, clientId),
+        eq(communicationLogs.firmId, firmId)
+      ))
+      .orderBy(desc(communicationLogs.createdAt));
+  }
+
+  async getCaseCommunicationLogs(caseId: number, firmId: number): Promise<CommunicationLog[]> {
+    return await db
+      .select()
+      .from(communicationLogs)
+      .where(and(
+        eq(communicationLogs.caseId, caseId),
+        eq(communicationLogs.firmId, firmId)
+      ))
+      .orderBy(desc(communicationLogs.createdAt));
+  }
+
+  async getCommunicationLog(id: number, firmId: number): Promise<CommunicationLog | undefined> {
+    const [log] = await db
+      .select()
+      .from(communicationLogs)
+      .where(and(eq(communicationLogs.id, id), eq(communicationLogs.firmId, firmId)));
+    return log || undefined;
+  }
+
+  async updateCommunicationLog(id: number, updates: Partial<CommunicationLog>): Promise<CommunicationLog | undefined> {
+    const [log] = await db
+      .update(communicationLogs)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(communicationLogs.id, id))
+      .returning();
+    return log || undefined;
+  }
+
+  async deleteCommunicationLog(id: number, firmId: number): Promise<boolean> {
+    const result = await db
+      .delete(communicationLogs)
+      .where(and(eq(communicationLogs.id, id), eq(communicationLogs.firmId, firmId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Admin Ghost Mode Implementation
+  async createAdminGhostSession(session: InsertAdminGhostSession): Promise<AdminGhostSession> {
+    const [ghostSession] = await db
+      .insert(adminGhostSessions)
+      .values(session)
+      .returning();
+    return ghostSession;
+  }
+
+  async getActiveGhostSessions(adminUserId: number): Promise<AdminGhostSession[]> {
+    return await db
+      .select()
+      .from(adminGhostSessions)
+      .where(and(
+        eq(adminGhostSessions.adminUserId, adminUserId),
+        eq(adminGhostSessions.isActive, true)
+      ))
+      .orderBy(desc(adminGhostSessions.startedAt));
+  }
+
+  async getGhostSessionByToken(sessionToken: string): Promise<AdminGhostSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(adminGhostSessions)
+      .where(eq(adminGhostSessions.sessionToken, sessionToken));
+    return session || undefined;
+  }
+
+  async endGhostSession(sessionToken: string): Promise<boolean> {
+    const result = await db
+      .update(adminGhostSessions)
+      .set({ 
+        isActive: false, 
+        endedAt: new Date() 
+      })
+      .where(eq(adminGhostSessions.sessionToken, sessionToken));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async updateGhostSessionAuditTrail(sessionToken: string, auditTrail: any): Promise<AdminGhostSession | undefined> {
+    const [session] = await db
+      .update(adminGhostSessions)
+      .set({ auditTrail })
+      .where(eq(adminGhostSessions.sessionToken, sessionToken))
+      .returning();
+    return session || undefined;
   }
 }
 
