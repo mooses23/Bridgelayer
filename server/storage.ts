@@ -1393,8 +1393,7 @@ export class DatabaseStorage implements IStorage {
         terms: invoices.terms,
         notes: invoices.notes,
         client: {
-          firstName: clients.firstName,
-          lastName: clients.lastName,
+          name: clients.name,
         },
         case: {
           name: cases.name,

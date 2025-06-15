@@ -32,6 +32,9 @@ export async function assemblePrompt(docType: string = 'contract'): Promise<stri
 }
 
 export function getDocumentTypeFromContent(content: string): string {
+  if (!content || typeof content !== 'string') {
+    return 'contract'; // Default fallback
+  }
   const lowerContent = content.toLowerCase();
   
   // Legal document type detection based on keywords and phrases

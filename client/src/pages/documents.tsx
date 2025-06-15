@@ -32,8 +32,8 @@ export default function Documents() {
   const filteredDocuments = useMemo(() => {
     if (!Array.isArray(documents)) return [];
     return documents.filter((doc: any) => 
-      doc.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.type?.toLowerCase().includes(searchTerm.toLowerCase())
+      (doc.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
+      (doc.type || '').toLowerCase().includes((searchTerm || '').toLowerCase())
     );
   }, [documents, searchTerm]);
 

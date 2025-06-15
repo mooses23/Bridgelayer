@@ -9,6 +9,10 @@ import { loadVerticalConfig, getVerticalDocumentTypes } from '@shared/verticalLo
  * Auto-detects document type based on content keywords with vertical support
  */
 export async function detectDocumentTypeWithVertical(content: string, verticalName: string = 'firmsync'): Promise<string | undefined> {
+  if (!content || typeof content !== 'string') {
+    return undefined;
+  }
+  
   const documentTypes = await getVerticalDocumentTypes(verticalName);
   const contentLower = content.toLowerCase();
   
