@@ -1,0 +1,75 @@
+BILLING + TIME MODULE
+
+Goal: Add full billing + time-tracking system, scoped per tenant (law firm), optional but deeply integrated if enabled.
+
+⸻
+
+🔧 CORE MODULES
+	1.	Time Tracking
+	•	Linked to case or client
+	•	Manual entry only (not AI-suggested)
+	•	Editable logs with permission control
+	•	Firms can choose to hide, edit, or lock time periods
+	2.	Billing + Invoicing
+	•	Manual invoice trigger (not auto)
+	•	Drag-and-drop invoice line items
+	•	Custom fields per line (e.g. “Court travel,” “Consult”)
+	•	Custom invoice templates: logo, terms, etc.
+	•	Stored invoice copies from Stripe/LawPay or other integrations
+	•	Invoices marked “Partially Paid” if not full
+	•	Locked after payment or admin-defined cutoff
+	3.	Payment Collection
+	•	Stripe/LawPay integration
+	•	Webhook-based confirmation before “Paid” status
+	•	Client logins OR one-click invoice links
+	•	System checks if billing is disabled; retains history and alerts admin
+
+⸻
+
+⚙️ FIRM CONFIGURATION
+	•	Billing wizard appears in onboarding
+	•	Optional activation per tenant
+	•	Firms set:
+	•	Rate structure (flat/hourly/contingency)
+	•	Invoice template
+	•	Permission for staff vs admin
+	•	Graphs & analytics visibility (on/off in settings)
+	•	If disabled: firm can still input external billing provider and host sandboxed iframe if possible
+
+⸻
+
+📊 INSIGHT + REPORTING
+	•	Built-in graphs (hidden under advanced settings):
+	•	Most profitable cases
+	•	Hours per employee
+	•	Billed vs collected
+	•	IRS/1099 generation using same logic as document analyzer
+	•	“Most used forms” uploaded during onboarding
+	•	Admin can later upload templates that become accessible in billing flow
+
+⸻
+
+🛠️ TECH STRATEGY
+	•	Use best-fit hybrid between server + Stripe SDK
+	•	Store minimal billing config locally, pull live data regularly
+	•	Admin panel shows usage stats if storage load is high
+	•	Logs edits, submissions, and changes for audit trail
+
+⸻
+
+👥 CLIENT EXPERIENCE
+	•	Login-based access to:
+	•	Invoice history
+	•	Payment portal
+	•	Case view (optional tie-in with case dashboard)
+	•	Intake forms prefill email data with “override” button available
+
+⸻
+
+🚨 ADMIN OVERSIGHT
+	•	Admin controls:
+	•	Permissions
+	•	Locked periods
+	•	Invoice audit log
+	•	Alerts on payment status changes
+	•	Optional firm deactivation triggers
