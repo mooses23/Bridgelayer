@@ -364,6 +364,8 @@ export const clientIntakes = pgTable("client_intakes", {
   clientName: text("client_name").notNull(),
   clientEmail: text("client_email").notNull(),
   clientPhone: text("client_phone"),
+  region: text("region").notNull(), // Region/County dropdown
+  matterType: text("matter_type").notNull(), // Matter Type (Eviction, Rent Increase, etc.)
   caseType: text("case_type").notNull(), // dropdown selection
   urgencyLevel: text("urgency_level").notNull(), // low, medium, high, urgent
   caseDescription: text("case_description").notNull(),
