@@ -3,7 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
-import SimpleRouter from "@/components/SimpleRouter";
+import AppRouter from "@/router/AppRouter";
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <SimpleRouter />
+          <AppRouter />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
