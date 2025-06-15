@@ -26,7 +26,10 @@ import {
   RefreshCw,
   Globe,
   Database,
-  Zap
+  Zap,
+  History,
+  Clock,
+  User
 } from "lucide-react";
 import type { 
   Firm, 
@@ -59,6 +62,11 @@ export default function Admin() {
 
   const { data: verticals = [] } = useQuery({
     queryKey: ['/api/admin/verticals'],
+  });
+
+  const { data: auditLogs = [], isLoading: auditLoading } = useQuery({
+    queryKey: ['/api/audit-logs'],
+    enabled: activeTab === 'audit',
   });
 
   // Header Component
@@ -841,7 +849,7 @@ export default function Admin() {
       
       <div className="container mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="firms" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               Firms
@@ -853,6 +861,10 @@ export default function Admin() {
             <TabsTrigger value="document-types" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Document Types
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              Audit Log
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -870,6 +882,10 @@ export default function Admin() {
 
           <TabsContent value="document-types">
             <DocumentTypesTab />
+          </TabsContent>
+
+          <TabsContent value="audit">
+            <AuditLogTab />
           </TabsContent>
 
           <TabsContent value="settings">
