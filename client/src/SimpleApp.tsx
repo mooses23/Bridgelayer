@@ -745,12 +745,14 @@ function SimpleApp() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Layout currentView={currentView} onNavigate={setCurrentView}>
-          {renderView()}
-        </Layout>
-      </TooltipProvider>
+      <TenantProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Layout currentView={currentView} onNavigate={setCurrentView}>
+            {renderView()}
+          </Layout>
+        </TooltipProvider>
+      </TenantProvider>
     </QueryClientProvider>
   );
 }
