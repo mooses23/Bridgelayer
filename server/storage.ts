@@ -29,6 +29,12 @@ import {
   type InsertAuditLog,
   type Notification,
   type InsertNotification,
+  type CalendarEvent,
+  type InsertCalendarEvent,
+  type ClientIntake,
+  type InsertClientIntake,
+  type AiTriageResult,
+  type InsertAiTriageResult,
   type Client,
   type InsertClient,
   type Case,
@@ -65,6 +71,9 @@ import {
   availableIntegrations,
   auditLogs,
   notifications,
+  calendarEvents,
+  clientIntakes,
+  aiTriageResults,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
@@ -206,6 +215,30 @@ export interface IStorage {
   getBillingPermissions(userId: number, firmId: number): Promise<BillingPermission | undefined>;
   updateBillingPermissions(userId: number, firmId: number, permissions: Partial<BillingPermission>): Promise<BillingPermission>;
   createBillingPermissions(permissions: InsertBillingPermission): Promise<BillingPermission>;
+  
+  // Calendar Events
+  createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
+  getFirmCalendarEvents(firmId: number): Promise<CalendarEvent[]>;
+  getCalendarEvent(id: number, firmId: number): Promise<CalendarEvent | undefined>;
+  updateCalendarEvent(id: number, updates: Partial<CalendarEvent>): Promise<CalendarEvent | undefined>;
+  deleteCalendarEvent(id: number, firmId: number): Promise<boolean>;
+  getUpcomingEvents(firmId: number, days: number): Promise<CalendarEvent[]>;
+  
+  // Client Intakes
+  createClientIntake(intake: InsertClientIntake): Promise<ClientIntake>;
+  getFirmClientIntakes(firmId: number): Promise<ClientIntake[]>;
+  getClientIntake(id: number, firmId: number): Promise<ClientIntake | undefined>;
+  updateClientIntake(id: number, updates: Partial<ClientIntake>): Promise<ClientIntake | undefined>;
+  deleteClientIntake(id: number, firmId: number): Promise<boolean>;
+  getIntakesByStatus(firmId: number, status: string): Promise<ClientIntake[]>;
+  
+  // AI Triage Results
+  createAiTriageResult(result: InsertAiTriageResult): Promise<AiTriageResult>;
+  getAiTriageResult(id: number, firmId: number): Promise<AiTriageResult | undefined>;
+  getTriageResultByIntake(intakeId: number, firmId: number): Promise<AiTriageResult | undefined>;
+  getTriageResultByDocument(documentId: number, firmId: number): Promise<AiTriageResult | undefined>;
+  updateAiTriageResult(id: number, updates: Partial<AiTriageResult>): Promise<AiTriageResult | undefined>;
+  getFirmTriageResults(firmId: number): Promise<AiTriageResult[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1029,6 +1062,168 @@ export class DatabaseStorage implements IStorage {
       .where(eq(systemAlerts.id, alertId))
       .returning();
     return alert;
+  }
+
+  // Calendar Events Implementation
+  async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
+    const [calendarEvent] = await db
+      .insert(calendarEvents)
+      .values(event)
+      .returning();
+    return calendarEvent;
+  }
+
+  async getFirmCalendarEvents(firmId: number): Promise<CalendarEvent[]> {
+    return await db
+      .select()
+      .from(calendarEvents)
+      .where(eq(calendarEvents.firmId, firmId))
+      .orderBy(asc(calendarEvents.startTime));
+  }
+
+  async getCalendarEvent(id: number, firmId: number): Promise<CalendarEvent | undefined> {
+    const [event] = await db
+      .select()
+      .from(calendarEvents)
+      .where(and(eq(calendarEvents.id, id), eq(calendarEvents.firmId, firmId)));
+    return event || undefined;
+  }
+
+  async updateCalendarEvent(id: number, updates: Partial<CalendarEvent>): Promise<CalendarEvent | undefined> {
+    const [event] = await db
+      .update(calendarEvents)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(calendarEvents.id, id))
+      .returning();
+    return event || undefined;
+  }
+
+  async deleteCalendarEvent(id: number, firmId: number): Promise<boolean> {
+    const result = await db
+      .delete(calendarEvents)
+      .where(and(eq(calendarEvents.id, id), eq(calendarEvents.firmId, firmId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getUpcomingEvents(firmId: number, days: number): Promise<CalendarEvent[]> {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + days);
+    
+    return await db
+      .select()
+      .from(calendarEvents)
+      .where(and(
+        eq(calendarEvents.firmId, firmId),
+        sql`${calendarEvents.startTime} >= ${startDate}`,
+        sql`${calendarEvents.startTime} <= ${endDate}`
+      ))
+      .orderBy(asc(calendarEvents.startTime));
+  }
+
+  // Client Intakes Implementation
+  async createClientIntake(intake: InsertClientIntake): Promise<ClientIntake> {
+    const [clientIntake] = await db
+      .insert(clientIntakes)
+      .values(intake)
+      .returning();
+    return clientIntake;
+  }
+
+  async getFirmClientIntakes(firmId: number): Promise<ClientIntake[]> {
+    return await db
+      .select()
+      .from(clientIntakes)
+      .where(eq(clientIntakes.firmId, firmId))
+      .orderBy(desc(clientIntakes.submittedAt));
+  }
+
+  async getClientIntake(id: number, firmId: number): Promise<ClientIntake | undefined> {
+    const [intake] = await db
+      .select()
+      .from(clientIntakes)
+      .where(and(eq(clientIntakes.id, id), eq(clientIntakes.firmId, firmId)));
+    return intake || undefined;
+  }
+
+  async updateClientIntake(id: number, updates: Partial<ClientIntake>): Promise<ClientIntake | undefined> {
+    const [intake] = await db
+      .update(clientIntakes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(clientIntakes.id, id))
+      .returning();
+    return intake || undefined;
+  }
+
+  async deleteClientIntake(id: number, firmId: number): Promise<boolean> {
+    const result = await db
+      .delete(clientIntakes)
+      .where(and(eq(clientIntakes.id, id), eq(clientIntakes.firmId, firmId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getIntakesByStatus(firmId: number, status: string): Promise<ClientIntake[]> {
+    return await db
+      .select()
+      .from(clientIntakes)
+      .where(and(eq(clientIntakes.firmId, firmId), eq(clientIntakes.status, status)))
+      .orderBy(desc(clientIntakes.submittedAt));
+  }
+
+  // AI Triage Results Implementation
+  async createAiTriageResult(result: InsertAiTriageResult): Promise<AiTriageResult> {
+    const [triageResult] = await db
+      .insert(aiTriageResults)
+      .values(result)
+      .returning();
+    return triageResult;
+  }
+
+  async getAiTriageResult(id: number, firmId: number): Promise<AiTriageResult | undefined> {
+    const [result] = await db
+      .select()
+      .from(aiTriageResults)
+      .where(and(eq(aiTriageResults.id, id), eq(aiTriageResults.firmId, firmId)));
+    return result || undefined;
+  }
+
+  async getTriageResultByIntake(intakeId: number, firmId: number): Promise<AiTriageResult | undefined> {
+    const [result] = await db
+      .select()
+      .from(aiTriageResults)
+      .where(and(
+        eq(aiTriageResults.intakeId, intakeId),
+        eq(aiTriageResults.firmId, firmId)
+      ));
+    return result || undefined;
+  }
+
+  async getTriageResultByDocument(documentId: number, firmId: number): Promise<AiTriageResult | undefined> {
+    const [result] = await db
+      .select()
+      .from(aiTriageResults)
+      .where(and(
+        eq(aiTriageResults.documentId, documentId),
+        eq(aiTriageResults.firmId, firmId)
+      ));
+    return result || undefined;
+  }
+
+  async updateAiTriageResult(id: number, updates: Partial<AiTriageResult>): Promise<AiTriageResult | undefined> {
+    const [result] = await db
+      .update(aiTriageResults)
+      .set(updates)
+      .where(eq(aiTriageResults.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async getFirmTriageResults(firmId: number): Promise<AiTriageResult[]> {
+    return await db
+      .select()
+      .from(aiTriageResults)
+      .where(eq(aiTriageResults.firmId, firmId))
+      .orderBy(desc(aiTriageResults.createdAt));
   }
 }
 

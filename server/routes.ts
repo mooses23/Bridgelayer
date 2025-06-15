@@ -1387,7 +1387,284 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar Events API
+  app.get("/api/calendar/events", async (req, res) => {
+    try {
+      const events = await storage.getFirmCalendarEvents(DEMO_FIRM_ID);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching calendar events:", error);
+      res.status(500).json({ message: "Failed to fetch calendar events" });
+    }
+  });
+
+  app.post("/api/calendar/events", async (req, res) => {
+    try {
+      const eventData = {
+        ...req.body,
+        firmId: DEMO_FIRM_ID,
+        createdBy: 1 // Demo user ID
+      };
+      const event = await storage.createCalendarEvent(eventData);
+      res.json(event);
+    } catch (error) {
+      console.error("Error creating calendar event:", error);
+      res.status(500).json({ message: "Failed to create calendar event" });
+    }
+  });
+
+  app.put("/api/calendar/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.updateCalendarEvent(id, req.body);
+      res.json(event);
+    } catch (error) {
+      console.error("Error updating calendar event:", error);
+      res.status(500).json({ message: "Failed to update calendar event" });
+    }
+  });
+
+  app.delete("/api/calendar/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCalendarEvent(id, DEMO_FIRM_ID);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting calendar event:", error);
+      res.status(500).json({ message: "Failed to delete calendar event" });
+    }
+  });
+
+  // Client Intake API
+  app.get("/api/client-intakes", async (req, res) => {
+    try {
+      const intakes = await storage.getFirmClientIntakes(DEMO_FIRM_ID);
+      res.json(intakes);
+    } catch (error) {
+      console.error("Error fetching client intakes:", error);
+      res.status(500).json({ message: "Failed to fetch client intakes" });
+    }
+  });
+
+  app.post("/api/client-intakes", async (req, res) => {
+    try {
+      const intakeNumber = `INT-${Date.now()}`;
+      const intakeData = {
+        ...req.body,
+        firmId: DEMO_FIRM_ID,
+        intakeNumber
+      };
+      
+      const intake = await storage.createClientIntake(intakeData);
+      
+      // Trigger AI triage
+      if (intake) {
+        try {
+          const triageResult = await performAiTriage(intake, DEMO_FIRM_ID);
+          await storage.createAiTriageResult(triageResult);
+        } catch (triageError) {
+          console.error("AI triage failed:", triageError);
+          // Continue without triage if AI fails
+        }
+      }
+      
+      res.json(intake);
+    } catch (error) {
+      console.error("Error creating client intake:", error);
+      res.status(500).json({ message: "Failed to create client intake" });
+    }
+  });
+
+  app.put("/api/client-intakes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const intake = await storage.updateClientIntake(id, req.body);
+      res.json(intake);
+    } catch (error) {
+      console.error("Error updating client intake:", error);
+      res.status(500).json({ message: "Failed to update client intake" });
+    }
+  });
+
+  // AI Triage API
+  app.get("/api/ai-triage", async (req, res) => {
+    try {
+      const results = await storage.getFirmTriageResults(DEMO_FIRM_ID);
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching triage results:", error);
+      res.status(500).json({ message: "Failed to fetch triage results" });
+    }
+  });
+
+  app.post("/api/ai-triage/document/:documentId", async (req, res) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      const document = await storage.getDocument(documentId, DEMO_FIRM_ID);
+      
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      
+      const triageResult = await performDocumentTriage(document, DEMO_FIRM_ID);
+      const result = await storage.createAiTriageResult(triageResult);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error performing document triage:", error);
+      res.status(500).json({ message: "Failed to perform document triage" });
+    }
+  });
+
+  app.put("/api/ai-triage/:id/review", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = {
+        isHumanReviewed: true,
+        humanOverride: req.body.overrides,
+        reviewedAt: new Date()
+      };
+      const result = await storage.updateAiTriageResult(id, updates);
+      res.json(result);
+    } catch (error) {
+      console.error("Error updating triage review:", error);
+      res.status(500).json({ message: "Failed to update triage review" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
+}
+
+// AI Triage Functions
+async function performAiTriage(intake: any, firmId: number): Promise<any> {
+  try {
+    const prompt = `
+Analyze this client intake and provide triage assessment:
+
+Client: ${intake.clientName}
+Case Type: ${intake.caseType}
+Urgency: ${intake.urgencyLevel}
+Description: ${intake.caseDescription}
+
+Provide assessment in JSON format:
+{
+  "aiCaseType": "detected category",
+  "aiUrgencyLevel": "low/medium/high/urgent",
+  "aiRecommendedActions": ["action1", "action2"],
+  "aiSummary": "brief summary",
+  "aiConfidenceScore": 85,
+  "flaggedIssues": ["issue1", "issue2"],
+  "estimatedComplexity": "low/medium/high"
+}`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        max_tokens: 1000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const analysis = JSON.parse(data.choices[0].message.content);
+
+    return {
+      firmId,
+      intakeId: intake.id,
+      resourceType: "intake",
+      ...analysis
+    };
+  } catch (error) {
+    console.error("AI triage error:", error);
+    // Return basic triage result if AI fails
+    return {
+      firmId,
+      intakeId: intake.id,
+      resourceType: "intake",
+      aiCaseType: intake.caseType,
+      aiUrgencyLevel: intake.urgencyLevel,
+      aiRecommendedActions: ["Review intake", "Assign to appropriate attorney"],
+      aiSummary: `New ${intake.caseType} case from ${intake.clientName}`,
+      aiConfidenceScore: 50,
+      flaggedIssues: [],
+      estimatedComplexity: "medium"
+    };
+  }
+}
+
+async function performDocumentTriage(document: any, firmId: number): Promise<any> {
+  try {
+    const prompt = `
+Analyze this legal document for triage:
+
+Document: ${document.filename}
+Type: ${document.documentType || 'Unknown'}
+Content Preview: ${document.content?.substring(0, 1000) || 'No content available'}
+
+Provide triage assessment in JSON format:
+{
+  "aiCaseType": "detected document category",
+  "aiUrgencyLevel": "low/medium/high/urgent",
+  "aiRecommendedActions": ["action1", "action2"],
+  "aiSummary": "brief document summary",
+  "aiConfidenceScore": 85,
+  "flaggedIssues": ["issue1", "issue2"],
+  "estimatedComplexity": "low/medium/high"
+}`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        max_tokens: 1000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const analysis = JSON.parse(data.choices[0].message.content);
+
+    return {
+      firmId,
+      documentId: document.id,
+      resourceType: "document",
+      ...analysis
+    };
+  } catch (error) {
+    console.error("Document triage error:", error);
+    // Return basic triage result if AI fails
+    return {
+      firmId,
+      documentId: document.id,
+      resourceType: "document",
+      aiCaseType: document.documentType || "Unknown",
+      aiUrgencyLevel: "medium",
+      aiRecommendedActions: ["Review document", "Classify document type"],
+      aiSummary: `Document: ${document.filename}`,
+      aiConfidenceScore: 50,
+      flaggedIssues: [],
+      estimatedComplexity: "medium"
+    };
+  }
 }
