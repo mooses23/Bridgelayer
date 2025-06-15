@@ -9,6 +9,7 @@ import Documents from "@/pages/documents";
 import Messages from "@/pages/messages";
 import Team from "@/pages/team";
 import Settings from "@/pages/settings";
+import Onboarding from "@/pages/Onboarding";
 import NotFound from "@/pages/not-found";
 
 function Router() {

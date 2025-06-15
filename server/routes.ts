@@ -328,6 +328,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Onboarding endpoints
+  app.post("/api/onboarding/start", async (req, res) => {
+    try {
+      const { firmName, adminEmail } = req.body;
+      
+      // Create slug from firm name
+      const slug = firmName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      
+      // Create the firm
+      const firmData = {
+        name: firmName,
+        slug,
+        plan: "starter" as const,
+        adminEmail
+      };
+      
+      const firm = await storage.createFirm(firmData);
+      
+      // Create admin user
+      const userData = {
+        firmId: firm.id,
+        email: adminEmail,
+        username: adminEmail,
+        password: "temp_password_123", // In production, this would be handled by proper auth
+        firstName: "Admin",
+        lastName: "User",
+        role: "firm_admin" as const
+      };
+      
+      const user = await storage.createUser(userData);
+      
+      res.json({ 
+        firm, 
+        user,
+        message: "Firm setup started successfully" 
+      });
+    } catch (error) {
+      console.error("Error starting onboarding:", error);
+      res.status(500).json({ message: "Failed to start onboarding" });
+    }
+  });
+
+  app.post("/api/onboarding/configure", async (req, res) => {
+    try {
+      const { firmName, adminEmail, selectedDocTypes, customConfigs } = req.body;
+      
+      // Create config files for each selected document type
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      const firmSlug = firmName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const firmDir = path.join(process.cwd(), 'firms', firmSlug);
+      const configDir = path.join(firmDir, 'config');
+      
+      // Ensure directories exist
+      await fs.mkdir(configDir, { recursive: true });
+      
+      // Generate config files for each document type
+      for (const docType of selectedDocTypes) {
+        const config = customConfigs[docType];
+        if (config) {
+          const configData = {
+            docType: config.docType,
+            displayName: config.displayName,
+            enabled: config.enabled,
+            features: {
+              summarize: config.summarize,
+              risk: config.riskAnalysis,
+              clauses: config.clauseMode !== 'disabled',
+              crossref: false,
+              formatting: true
+            },
+            riskLevel: config.riskLevel || 'medium',
+            reviewer: config.reviewer,
+            customInstructions: config.customInstructions || ''
+          };
+          
+          const configPath = path.join(configDir, `${docType}.json`);
+          await fs.writeFile(configPath, JSON.stringify(configData, null, 2));
+        }
+      }
+      
+      // Create summary file
+      const summaryData = {
+        firmName,
+        adminEmail,
+        setupDate: new Date().toISOString(),
+        documentTypes: selectedDocTypes,
+        configurations: customConfigs
+      };
+      
+      const summaryPath = path.join(firmDir, 'onboarding-summary.json');
+      await fs.writeFile(summaryPath, JSON.stringify(summaryData, null, 2));
+      
+      res.json({ 
+        message: "Onboarding completed successfully",
+        configPath: configDir,
+        documentTypes: selectedDocTypes.length
+      });
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      res.status(500).json({ message: "Failed to complete onboarding" });
+    }
+  });
+
   // Messages endpoints
   app.get("/api/messages", async (req, res) => {
     try {
