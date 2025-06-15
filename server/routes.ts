@@ -178,16 +178,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const content = req.file.buffer.toString('utf-8');
+      const selectedDocType = req.body.documentType || undefined;
+      const firmId = `firm_${DEMO_FIRM_ID}`;
+      
+      // Process document upload with prompt routing
+      const { processDocumentUpload } = await import('./services/documentUploadProcessor.js');
+      const processedDoc = await processDocumentUpload(
+        firmId,
+        `${Date.now()}_${req.file.originalname}`,
+        content,
+        req.file.size,
+        `user_${DEMO_USER_ID}`,
+        selectedDocType
+      );
       
       const documentData = {
         firmId: DEMO_FIRM_ID,
         folderId: req.body.folderId ? parseInt(req.body.folderId) : null,
         userId: DEMO_USER_ID,
-        filename: `${Date.now()}_${req.file.originalname}`,
+        filename: processedDoc.metadata.filename,
         originalName: req.file.originalname,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
         content: content,
+        documentType: processedDoc.metadata.doc_type,
         status: "uploaded" as const
       };
 
@@ -199,7 +213,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Document analysis failed:", error);
       });
 
-      res.status(201).json(document);
+      res.status(201).json({
+        ...document,
+        promptGenerated: true,
+        promptPath: processedDoc.promptPath,
+        reviewLogPath: processedDoc.metaPath,
+        autoDetected: processedDoc.metadata.auto_detected
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid document data", errors: error.errors });
