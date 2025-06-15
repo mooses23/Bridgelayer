@@ -67,7 +67,7 @@ import {
   notifications,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // Firm management

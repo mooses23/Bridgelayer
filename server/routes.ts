@@ -919,6 +919,233 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerAdminRoutes(app);
 
   const { createServer } = await import('http');
+  // Billing API endpoints
+  const DEMO_FIRM_ID = 1; // Using same firm ID as other endpoints
+
+  // Billing settings endpoints
+  app.get("/api/billing/settings", async (req, res) => {
+    try {
+      let settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
+      if (!settings) {
+        // Create default billing settings
+        const defaultSettings = {
+          firmId: DEMO_FIRM_ID,
+          billingEnabled: false,
+          defaultHourlyRate: 25000, // $250.00
+          defaultFlatRate: 500000, // $5000.00
+          defaultContingencyRate: 3300, // 33%
+          invoiceTerms: "Payment due within 30 days",
+          lockTimeLogsAfterDays: 30,
+          hideAnalyticsTab: false
+        };
+        settings = await storage.createFirmBillingSettings(defaultSettings);
+      }
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching billing settings:", error);
+      res.status(500).json({ message: "Failed to fetch billing settings" });
+    }
+  });
+
+  app.patch("/api/billing/settings", async (req, res) => {
+    try {
+      const updates = req.body;
+      const settings = await storage.updateFirmBillingSettings(DEMO_FIRM_ID, updates);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating billing settings:", error);
+      res.status(500).json({ message: "Failed to update billing settings" });
+    }
+  });
+
+  // Client endpoints
+  app.get("/api/billing/clients", async (req, res) => {
+    try {
+      const clients = await storage.getFirmClients(DEMO_FIRM_ID);
+      res.json(clients);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      res.status(500).json({ message: "Failed to fetch clients" });
+    }
+  });
+
+  app.post("/api/billing/clients", async (req, res) => {
+    try {
+      const clientData = {
+        ...req.body,
+        firmId: DEMO_FIRM_ID,
+        createdBy: 1 // Demo user ID
+      };
+      const client = await storage.createClient(clientData);
+      res.json(client);
+    } catch (error) {
+      console.error("Error creating client:", error);
+      res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+
+  // Case endpoints
+  app.get("/api/billing/cases", async (req, res) => {
+    try {
+      const cases = await storage.getFirmCases(DEMO_FIRM_ID);
+      res.json(cases);
+    } catch (error) {
+      console.error("Error fetching cases:", error);
+      res.status(500).json({ message: "Failed to fetch cases" });
+    }
+  });
+
+  app.post("/api/billing/cases", async (req, res) => {
+    try {
+      const caseData = {
+        ...req.body,
+        firmId: DEMO_FIRM_ID,
+        createdBy: 1 // Demo user ID
+      };
+      const case_ = await storage.createCase(caseData);
+      res.json(case_);
+    } catch (error) {
+      console.error("Error creating case:", error);
+      res.status(500).json({ message: "Failed to create case" });
+    }
+  });
+
+  // Time log endpoints
+  app.get("/api/billing/time-logs", async (req, res) => {
+    try {
+      const timeLogs = await storage.getFirmTimeLogs(DEMO_FIRM_ID);
+      res.json(timeLogs);
+    } catch (error) {
+      console.error("Error fetching time logs:", error);
+      res.status(500).json({ message: "Failed to fetch time logs" });
+    }
+  });
+
+  app.post("/api/billing/time-logs", async (req, res) => {
+    try {
+      const timeLogData = {
+        ...req.body,
+        firmId: DEMO_FIRM_ID,
+        userId: 1 // Demo user ID
+      };
+      const timeLog = await storage.createTimeLog(timeLogData);
+      res.json(timeLog);
+    } catch (error) {
+      console.error("Error creating time log:", error);
+      res.status(500).json({ message: "Failed to create time log" });
+    }
+  });
+
+  app.patch("/api/billing/time-logs/:id", async (req, res) => {
+    try {
+      const timeLogId = parseInt(req.params.id);
+      const updates = req.body;
+      const timeLog = await storage.updateTimeLog(timeLogId, updates);
+      if (!timeLog) {
+        return res.status(404).json({ message: "Time log not found" });
+      }
+      res.json(timeLog);
+    } catch (error) {
+      console.error("Error updating time log:", error);
+      res.status(500).json({ message: "Failed to update time log" });
+    }
+  });
+
+  app.delete("/api/billing/time-logs/:id", async (req, res) => {
+    try {
+      const timeLogId = parseInt(req.params.id);
+      const success = await storage.deleteTimeLog(timeLogId, DEMO_FIRM_ID);
+      if (!success) {
+        return res.status(404).json({ message: "Time log not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting time log:", error);
+      res.status(500).json({ message: "Failed to delete time log" });
+    }
+  });
+
+  // Invoice endpoints
+  app.get("/api/billing/invoices", async (req, res) => {
+    try {
+      const invoices = await storage.getFirmInvoices(DEMO_FIRM_ID);
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  app.post("/api/billing/invoices", async (req, res) => {
+    try {
+      const { timeLogIds, ...invoiceData } = req.body;
+      
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now()}`;
+      
+      const invoice = await storage.createInvoice({
+        ...invoiceData,
+        firmId: DEMO_FIRM_ID,
+        invoiceNumber,
+        createdBy: 1 // Demo user ID
+      });
+
+      // Create line items from time logs
+      if (timeLogIds && timeLogIds.length > 0) {
+        const timeLogs = await storage.getFirmTimeLogs(DEMO_FIRM_ID);
+        const selectedLogs = timeLogs.filter(log => timeLogIds.includes(log.id));
+        
+        for (let i = 0; i < selectedLogs.length; i++) {
+          const log = selectedLogs[i];
+          const hours = log.hours / 60;
+          const rate = log.billableRate || 25000; // Default rate
+          const amount = Math.round(hours * rate);
+          
+          await storage.createInvoiceLineItem({
+            invoiceId: invoice.id,
+            timeLogId: log.id,
+            description: log.description,
+            quantity: log.hours, // Store in minutes
+            rate,
+            amount,
+            sortOrder: i
+          });
+
+          // Mark time log as billed
+          await storage.updateTimeLog(log.id, { invoiceId: invoice.id });
+        }
+      }
+
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      res.status(500).json({ message: "Failed to create invoice" });
+    }
+  });
+
+  app.get("/api/billing/invoices/:id/line-items", async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const lineItems = await storage.getInvoiceLineItems(invoiceId);
+      res.json(lineItems);
+    } catch (error) {
+      console.error("Error fetching invoice line items:", error);
+      res.status(500).json({ message: "Failed to fetch invoice line items" });
+    }
+  });
+
+  app.patch("/api/billing/invoices/:id/line-items/reorder", async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.id);
+      const { itemIds } = req.body;
+      const success = await storage.reorderInvoiceLineItems(invoiceId, itemIds);
+      res.json({ success });
+    } catch (error) {
+      console.error("Error reordering invoice line items:", error);
+      res.status(500).json({ message: "Failed to reorder invoice line items" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   Search,
-  BarChart3
+  BarChart3,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Documents", href: "/documents", icon: FileText },
     { name: "Messages", href: "/messages", icon: MessageSquare, badge: unreadCount > 0 ? unreadCount : undefined },
+    { name: "Billing", href: "/billing", icon: CreditCard },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Team", href: "/team", icon: Users },
     { name: "Settings", href: "/settings", icon: Settings },
