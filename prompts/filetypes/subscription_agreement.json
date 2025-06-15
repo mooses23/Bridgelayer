@@ -1,0 +1,12 @@
+{
+  "document_type": "Subscription Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on subscription terms, payment schedules, auto-renewal provisions, and cancellation rights. Review service level commitments, usage limitations, and data protection obligations. Pay attention to price change notifications, termination procedures, and refund policies."
+}
