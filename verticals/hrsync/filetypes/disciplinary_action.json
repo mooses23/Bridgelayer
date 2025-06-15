@@ -1,0 +1,9 @@
+{
+  "summarize": true,
+  "bias": true,
+  "compliance": true,
+  "crossref": true,
+  "formatting": true,
+  "riskLevel": "high",
+  "customInstructions": "Analyze for fairness, consistency with policy, documentation adequacy, and potential legal exposure."
+}

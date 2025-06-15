@@ -1,0 +1,9 @@
+{
+  "summarize": true,
+  "bias": true,
+  "compliance": true,
+  "crossref": false,
+  "formatting": true,
+  "riskLevel": "low",
+  "customInstructions": "Check for inclusive language, EEOC compliance, and clear qualification requirements without discriminatory elements."
+}

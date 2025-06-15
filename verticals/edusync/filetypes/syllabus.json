@@ -1,0 +1,9 @@
+{
+  "summarize": true,
+  "standards": true,
+  "compliance": true,
+  "crossref": false,
+  "formatting": true,
+  "riskLevel": "low",
+  "customInstructions": "Verify learning objectives alignment, assessment methods clarity, and academic policy compliance."
+}

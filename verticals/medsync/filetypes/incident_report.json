@@ -1,0 +1,9 @@
+{
+  "summarize": true,
+  "risk": true,
+  "compliance": true,
+  "crossref": true,
+  "formatting": true,
+  "riskLevel": "high",
+  "customInstructions": "Analyze for patient safety implications, liability exposure, and regulatory reporting requirements. Flag any potential malpractice indicators."
+}

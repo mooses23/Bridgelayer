@@ -1,0 +1,47 @@
+{
+  "verticalName": "edusync",
+  "displayName": "EDUSYNC - Educational Document Analysis",
+  "industry": "education",
+  "description": "Academic document analysis for educational institutions, administrators, and academic professionals",
+  
+  "documentCategories": [
+    "academic_policies",
+    "student_records", 
+    "curriculum_documents",
+    "accreditation",
+    "research_proposals",
+    "compliance_reports",
+    "faculty_agreements"
+  ],
+
+  "defaultAnalysisFeatures": {
+    "summarization": true,
+    "complianceCheck": true,
+    "standardsAlignment": true,
+    "crossReference": true,
+    "formatting": true,
+    "autoAnalysis": false
+  },
+
+  "riskLevels": {
+    "low": ["syllabus", "course_outline", "academic_calendar"],
+    "medium": ["student_handbook", "faculty_policy", "curriculum_proposal", "assessment_plan"],
+    "high": ["accreditation_report", "title_ix_policy", "research_ethics_protocol", "compliance_audit"]
+  },
+
+  "defaultReviewerAssignment": {
+    "academic_policy": "dean",
+    "curriculum_document": "curriculum_committee", 
+    "student_record": "registrar",
+    "research_proposal": "research_director",
+    "compliance_report": "compliance_officer",
+    "accreditation_document": "provost"
+  },
+
+  "complianceSettings": {
+    "ferpaRequired": true,
+    "accreditationTracking": true,
+    "standardsAlignment": true,
+    "policyCompliance": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "verticalName": "hrsync",
+  "displayName": "HRSYNC - HR Document Analysis",
+  "industry": "human_resources",
+  "description": "Human resources document analysis for HR professionals, recruiters, and people operations teams",
+  
+  "documentCategories": [
+    "recruitment",
+    "employee_onboarding", 
+    "performance_management",
+    "benefits_administration",
+    "policy_compliance",
+    "employee_relations",
+    "compensation_planning"
+  ],
+
+  "defaultAnalysisFeatures": {
+    "summarization": true,
+    "complianceCheck": true,
+    "biasDetection": true,
+    "crossReference": true,
+    "formatting": true,
+    "autoAnalysis": false
+  },
+
+  "riskLevels": {
+    "low": ["job_description", "welcome_letter", "benefits_summary"],
+    "medium": ["employment_contract", "performance_review", "policy_document", "offer_letter"],
+    "high": ["disciplinary_action", "termination_document", "discrimination_complaint", "workers_comp_claim"]
+  },
+
+  "defaultReviewerAssignment": {
+    "job_description": "recruiter",
+    "employment_contract": "hr_manager", 
+    "performance_review": "hr_manager",
+    "policy_document": "hr_director",
+    "disciplinary_action": "hr_director",
+    "discrimination_complaint": "legal_counsel"
+  },
+
+  "complianceSettings": {
+    "eeocCompliance": true,
+    "laborLawTracking": true,
+    "biasDetection": true,
+    "diversityTracking": true
+  }
+}

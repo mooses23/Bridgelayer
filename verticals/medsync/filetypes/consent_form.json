@@ -1,0 +1,9 @@
+{
+  "summarize": true,
+  "risk": true,
+  "compliance": true,
+  "crossref": false,
+  "formatting": true,
+  "riskLevel": "medium",
+  "customInstructions": "Verify informed consent elements, risk disclosure adequacy, and patient understanding documentation."
+}

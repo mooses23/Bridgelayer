@@ -1,0 +1,47 @@
+{
+  "verticalName": "medsync",
+  "displayName": "MEDSYNC - Medical Document Analysis",
+  "industry": "healthcare",
+  "description": "Clinical document analysis for healthcare providers, medical practices, and healthcare administrators",
+  
+  "documentCategories": [
+    "patient_records",
+    "clinical_protocols", 
+    "insurance_claims",
+    "medical_compliance",
+    "research_documentation",
+    "pharmaceutical",
+    "medical_legal"
+  ],
+
+  "defaultAnalysisFeatures": {
+    "summarization": true,
+    "riskAnalysis": true,
+    "complianceCheck": true,
+    "crossReference": true,
+    "formatting": true,
+    "autoAnalysis": false
+  },
+
+  "riskLevels": {
+    "low": ["discharge_summary", "referral_letter", "lab_report"],
+    "medium": ["treatment_plan", "consent_form", "insurance_claim", "clinical_protocol"],
+    "high": ["incident_report", "malpractice_claim", "research_protocol", "regulatory_filing"]
+  },
+
+  "defaultReviewerAssignment": {
+    "patient_record": "nurse_manager",
+    "treatment_plan": "physician", 
+    "consent_form": "compliance_officer",
+    "insurance_claim": "billing_specialist",
+    "incident_report": "risk_manager",
+    "research_protocol": "clinical_director"
+  },
+
+  "complianceSettings": {
+    "hipaaRequired": true,
+    "regulatoryTracking": true,
+    "auditTrail": true,
+    "confidentialityFlags": true
+  }
+}

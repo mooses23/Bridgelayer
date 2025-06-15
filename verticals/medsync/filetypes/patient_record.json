@@ -1,0 +1,9 @@
+{
+  "summarize": true,
+  "risk": true,
+  "compliance": true,
+  "crossref": true,
+  "formatting": true,
+  "riskLevel": "medium",
+  "customInstructions": "Focus on patient safety, treatment accuracy, and HIPAA compliance. Identify any inconsistencies in medical history or treatment plans."
+}

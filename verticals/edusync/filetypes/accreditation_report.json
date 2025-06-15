@@ -1,0 +1,9 @@
+{
+  "summarize": true,
+  "standards": true,
+  "compliance": true,
+  "crossref": true,
+  "formatting": true,
+  "riskLevel": "high",
+  "customInstructions": "Analyze accreditation standards compliance, identify gaps, and verify supporting evidence documentation."
+}
