@@ -38,7 +38,7 @@ function DashboardTab() {
                 <p className="text-3xl font-bold text-blue-600">24</p>
                 <p className="text-sm text-gray-600 mt-2">↑ 3 new this week</p>
               </div>
-              
+
               <div 
                 className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => handleAction('Review Pending Documents')}
@@ -47,7 +47,7 @@ function DashboardTab() {
                 <p className="text-3xl font-bold text-orange-600">7</p>
                 <p className="text-sm text-gray-600 mt-2">Requires attention</p>
               </div>
-              
+
               <div 
                 className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => handleAction('Check Billable Hours')}
@@ -81,7 +81,7 @@ function DashboardTab() {
             </div>
           </div>
         );
-      
+
       case 'ai-triage':
         return (
           <div className="bg-white rounded-lg shadow p-6">
@@ -101,7 +101,7 @@ function DashboardTab() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -119,7 +119,7 @@ function DashboardTab() {
             </div>
           </div>
         );
-      
+
       default:
         return <div>Select a section</div>;
     }
@@ -201,7 +201,7 @@ function AppRouter() {
     const handlePopState = () => {
       setCurrentPath(window.location.pathname || '/');
     };
-    
+
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -266,7 +266,7 @@ function AppRouter() {
   if (currentPath === '/login') {
     return <Login />;
   }
-  
+
   if (currentPath === '/logout') {
     return <Logout />;
   }

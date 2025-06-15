@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,15 +12,24 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login } = useAuth();
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+    setError("");
+
     try {
-      await login(email, password);
+      const success = await login(email, password);
+      if (success) {
+        router.push('/dashboard');
+      } else {
+        setError('Invalid email or password');
+      }
     } catch (error) {
       console.error("Login failed:", error);
+      setError('Login failed');
     } finally {
       setLoading(false);
     }
@@ -28,7 +37,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    
+
     try {
       // Open Google OAuth popup
       const authUrl = '/api/auth/google';
@@ -44,19 +53,20 @@ export default function LoginPage() {
       // Listen for messages from the popup
       const handleMessage = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
-        
+
         if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
           popup?.close();
           // The AuthContext will automatically update from the server response
-          window.location.reload();
+          router.push('/dashboard');
         } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
           popup?.close();
           console.error('Google authentication failed:', event.data.error);
+          setError('Google authentication failed');
         }
       };
 
       window.addEventListener('message', handleMessage);
-      
+
       // Check if popup was closed manually
       const checkClosed = setInterval(() => {
         if (popup?.closed) {
@@ -69,6 +79,7 @@ export default function LoginPage() {
     } catch (error) {
       console.error("Google login failed:", error);
       setGoogleLoading(false);
+      setError("Google login failed");
     }
   };
 
@@ -85,7 +96,7 @@ export default function LoginPage() {
               start your 14-day free trial
             </a>
           </p>
-          
+
           {/* Demo Credentials */}
           <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Accounts</h3>
@@ -96,7 +107,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Welcome back</CardTitle>
@@ -116,7 +127,7 @@ export default function LoginPage() {
                   className="mt-1"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -150,6 +161,10 @@ export default function LoginPage() {
                   </a>
                 </div>
               </div>
+
+               {error && (
+                <div className="text-red-500">{error}</div>
+              )}
 
               <Button
                 type="submit"

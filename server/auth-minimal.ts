@@ -42,6 +42,12 @@ export interface AuthenticatedRequest extends Request {
 // Middleware to check if user is authenticated
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    console.log('Session check:', { 
+      sessionExists: !!req.session,
+      userId: req.session?.userId,
+      cookies: req.headers.cookie 
+    });
+    
     if (!req.session?.userId) {
       return res.status(401).json({ message: "Authentication required" });
     }
