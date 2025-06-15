@@ -1,0 +1,12 @@
+{
+  "document_type": "Supply Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on product specifications, delivery schedules, quality standards, and pricing terms. Review force majeure provisions, warranty obligations, and defect remedies. Pay attention to minimum order quantities, payment terms, and supply chain security requirements."
+}

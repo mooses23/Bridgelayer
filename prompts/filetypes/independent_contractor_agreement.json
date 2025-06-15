@@ -1,0 +1,12 @@
+{
+  "document_type": "Independent Contractor Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on contractor classification, scope of work, payment terms, and deliverables. Review intellectual property ownership, confidentiality obligations, and termination provisions. Pay attention to liability limitations, tax responsibilities, and compliance with independent contractor requirements."
+}

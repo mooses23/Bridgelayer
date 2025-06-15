@@ -1,0 +1,12 @@
+{
+  "document_type": "Asset Purchase Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on asset descriptions, purchase price allocation, assumed liabilities, and excluded assets. Review bulk sales law compliance, employee matters, and contract assignments. Pay attention to environmental liabilities, title warranties, and post-closing adjustments."
+}

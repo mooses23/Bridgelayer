@@ -1,0 +1,12 @@
+{
+  "document_type": "Non-Solicitation Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on customer definitions, employee restrictions, time limitations, and geographic scope. Review consideration adequacy, enforcement mechanisms, and severability provisions. Pay attention to customer contact restrictions, business opportunity limitations, and confidential information protections."
+}

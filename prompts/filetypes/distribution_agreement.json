@@ -1,0 +1,12 @@
+{
+  "document_type": "Distribution Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on territory rights, product pricing, minimum purchase requirements, and performance standards. Review exclusivity provisions, marketing obligations, and termination conditions. Pay attention to inventory management, payment terms, and intellectual property protections."
+}
