@@ -110,6 +110,59 @@ export const systemAdmins = pgTable("system_admins", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Firm integrations (third-party services)
+export const firmIntegrations = pgTable("firm_integrations", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  integrationName: text("integration_name").notNull(), // google_drive, dropbox, sharepoint, etc.
+  isEnabled: boolean("is_enabled").default(false),
+  oauthData: jsonb("oauth_data"), // OAuth tokens and configuration
+  settings: jsonb("settings"), // Integration-specific settings
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Global platform settings (admin controls)
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(), // ai_features_enabled, max_documents_per_firm, etc.
+  value: jsonb("value").notNull(),
+  description: text("description"),
+  category: text("category").notNull(), // ai, limits, billing, features
+  updatedBy: integer("updated_by").references(() => systemAdmins.id),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Document type templates (admin-managed)
+export const documentTypeTemplates = pgTable("document_type_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // nda, lease, employment, etc.
+  displayName: text("display_name").notNull(),
+  category: text("category").notNull(), // corporate, real_estate, employment, etc.
+  vertical: text("vertical").notNull().default("firmsync"), // firmsync, medsync, edusync, hrsync
+  defaultConfig: jsonb("default_config").notNull(), // Default analysis configuration
+  promptOverride: text("prompt_override"), // Custom prompt module override
+  keywords: text("keywords").array(), // Detection keywords
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => systemAdmins.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Available integrations (admin-defined)
+export const availableIntegrations = pgTable("available_integrations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // google_drive, dropbox, sharepoint
+  displayName: text("display_name").notNull(),
+  description: text("description"),
+  oauthConfig: jsonb("oauth_config"), // OAuth endpoints and configuration
+  isActive: boolean("is_active").default(true),
+  requiresSetup: boolean("requires_setup").default(true),
+  iconUrl: text("icon_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,
@@ -157,6 +210,28 @@ export const insertSystemAdminSchema = createInsertSchema(systemAdmins).omit({
   createdAt: true,
 });
 
+export const insertFirmIntegrationSchema = createInsertSchema(firmIntegrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPlatformSettingSchema = createInsertSchema(platformSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertDocumentTypeTemplateSchema = createInsertSchema(documentTypeTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAvailableIntegrationSchema = createInsertSchema(availableIntegrations).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertFirm = z.infer<typeof insertFirmSchema>;
 export type Firm = typeof firms.$inferSelect;
@@ -174,6 +249,14 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertSystemAdmin = z.infer<typeof insertSystemAdminSchema>;
 export type SystemAdmin = typeof systemAdmins.$inferSelect;
+export type InsertFirmIntegration = z.infer<typeof insertFirmIntegrationSchema>;
+export type FirmIntegration = typeof firmIntegrations.$inferSelect;
+export type InsertPlatformSetting = z.infer<typeof insertPlatformSettingSchema>;
+export type PlatformSetting = typeof platformSettings.$inferSelect;
+export type InsertDocumentTypeTemplate = z.infer<typeof insertDocumentTypeTemplateSchema>;
+export type DocumentTypeTemplate = typeof documentTypeTemplates.$inferSelect;
+export type InsertAvailableIntegration = z.infer<typeof insertAvailableIntegrationSchema>;
+export type AvailableIntegration = typeof availableIntegrations.$inferSelect;
 
 // Role enums for type safety
 export const UserRole = z.enum(["admin", "firm_admin", "paralegal", "viewer"]);

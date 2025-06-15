@@ -15,6 +15,14 @@ import {
   type InsertMessage,
   type SystemAdmin,
   type InsertSystemAdmin,
+  type FirmIntegration,
+  type InsertFirmIntegration,
+  type PlatformSetting,
+  type InsertPlatformSetting,
+  type DocumentTypeTemplate,
+  type InsertDocumentTypeTemplate,
+  type AvailableIntegration,
+  type InsertAvailableIntegration,
   users,
   firms,
   documents,
@@ -23,9 +31,13 @@ import {
   folders,
   messages,
   systemAdmins,
+  firmIntegrations,
+  platformSettings,
+  documentTypeTemplates,
+  availableIntegrations,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Firm management
@@ -76,6 +88,28 @@ export interface IStorage {
   createSystemAdmin(admin: InsertSystemAdmin): Promise<SystemAdmin>;
   getSystemAdmin(id: number): Promise<SystemAdmin | undefined>;
   getSystemAdminByEmail(email: string): Promise<SystemAdmin | undefined>;
+  
+  // Admin panel operations - Firm management
+  getAllFirms(): Promise<Firm[]>;
+  updateFirmVertical(firmId: number, vertical: string): Promise<Firm | undefined>;
+  
+  // Admin panel operations - Integration management
+  getAvailableIntegrations(): Promise<AvailableIntegration[]>;
+  createAvailableIntegration(integration: InsertAvailableIntegration): Promise<AvailableIntegration>;
+  updateAvailableIntegration(id: number, updates: Partial<AvailableIntegration>): Promise<AvailableIntegration | undefined>;
+  getFirmIntegrations(firmId: number): Promise<FirmIntegration[]>;
+  updateFirmIntegration(firmId: number, integrationName: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined>;
+  
+  // Admin panel operations - Document type templates
+  getDocumentTypeTemplates(): Promise<DocumentTypeTemplate[]>;
+  createDocumentTypeTemplate(template: InsertDocumentTypeTemplate): Promise<DocumentTypeTemplate>;
+  updateDocumentTypeTemplate(id: number, updates: Partial<DocumentTypeTemplate>): Promise<DocumentTypeTemplate | undefined>;
+  deleteDocumentTypeTemplate(id: number): Promise<boolean>;
+  
+  // Admin panel operations - Platform settings
+  getPlatformSettings(): Promise<PlatformSetting[]>;
+  updatePlatformSetting(key: string, value: any, adminId: number): Promise<PlatformSetting | undefined>;
+  createPlatformSetting(setting: InsertPlatformSetting): Promise<PlatformSetting>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -325,6 +359,111 @@ export class DatabaseStorage implements IStorage {
   async getSystemAdminByEmail(email: string): Promise<SystemAdmin | undefined> {
     const [admin] = await db.select().from(systemAdmins).where(eq(systemAdmins.email, email));
     return admin || undefined;
+  }
+
+  // Admin panel operations - Firm management
+  async getAllFirms(): Promise<Firm[]> {
+    return await db.select().from(firms).orderBy(firms.name);
+  }
+
+  async updateFirmVertical(firmId: number, vertical: string): Promise<Firm | undefined> {
+    const [firm] = await db
+      .update(firms)
+      .set({ 
+        settings: sql`COALESCE(settings, '{}') || '{"vertical": "${vertical}"}'`,
+        updatedAt: new Date() 
+      })
+      .where(eq(firms.id, firmId))
+      .returning();
+    return firm;
+  }
+
+  // Admin panel operations - Integration management
+  async getAvailableIntegrations(): Promise<AvailableIntegration[]> {
+    return await db.select().from(availableIntegrations).orderBy(availableIntegrations.displayName);
+  }
+
+  async createAvailableIntegration(insertIntegration: InsertAvailableIntegration): Promise<AvailableIntegration> {
+    const [integration] = await db
+      .insert(availableIntegrations)
+      .values(insertIntegration)
+      .returning();
+    return integration;
+  }
+
+  async updateAvailableIntegration(id: number, updates: Partial<AvailableIntegration>): Promise<AvailableIntegration | undefined> {
+    const [integration] = await db
+      .update(availableIntegrations)
+      .set(updates)
+      .where(eq(availableIntegrations.id, id))
+      .returning();
+    return integration;
+  }
+
+  async getFirmIntegrations(firmId: number): Promise<FirmIntegration[]> {
+    return await db.select().from(firmIntegrations).where(eq(firmIntegrations.firmId, firmId));
+  }
+
+  async updateFirmIntegration(firmId: number, integrationName: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined> {
+    const [integration] = await db
+      .update(firmIntegrations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(firmIntegrations.firmId, firmId), eq(firmIntegrations.integrationName, integrationName)))
+      .returning();
+    return integration;
+  }
+
+  // Admin panel operations - Document type templates
+  async getDocumentTypeTemplates(): Promise<DocumentTypeTemplate[]> {
+    return await db.select().from(documentTypeTemplates).orderBy(documentTypeTemplates.vertical, documentTypeTemplates.category, documentTypeTemplates.displayName);
+  }
+
+  async createDocumentTypeTemplate(insertTemplate: InsertDocumentTypeTemplate): Promise<DocumentTypeTemplate> {
+    const [template] = await db
+      .insert(documentTypeTemplates)
+      .values(insertTemplate)
+      .returning();
+    return template;
+  }
+
+  async updateDocumentTypeTemplate(id: number, updates: Partial<DocumentTypeTemplate>): Promise<DocumentTypeTemplate | undefined> {
+    const [template] = await db
+      .update(documentTypeTemplates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(documentTypeTemplates.id, id))
+      .returning();
+    return template;
+  }
+
+  async deleteDocumentTypeTemplate(id: number): Promise<boolean> {
+    const result = await db.delete(documentTypeTemplates).where(eq(documentTypeTemplates.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Admin panel operations - Platform settings
+  async getPlatformSettings(): Promise<PlatformSetting[]> {
+    return await db.select().from(platformSettings).orderBy(platformSettings.category, platformSettings.key);
+  }
+
+  async updatePlatformSetting(key: string, value: any, adminId: number): Promise<PlatformSetting | undefined> {
+    const [setting] = await db
+      .update(platformSettings)
+      .set({ 
+        value: value,
+        updatedBy: adminId,
+        updatedAt: new Date() 
+      })
+      .where(eq(platformSettings.key, key))
+      .returning();
+    return setting;
+  }
+
+  async createPlatformSetting(insertSetting: InsertPlatformSetting): Promise<PlatformSetting> {
+    const [setting] = await db
+      .insert(platformSettings)
+      .values(insertSetting)
+      .returning();
+    return setting;
   }
 }
 
