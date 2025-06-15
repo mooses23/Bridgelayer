@@ -103,6 +103,18 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 15, 2025**: Document Review Dashboard Complete
+  - Built comprehensive DocumentDashboard component with table layout for file management
+  - Implemented table columns: File Name, Document Type, Uploaded By, Date, AI Review Status, Assigned Reviewer, Actions
+  - Created review status tracking: Pending (no metadata), Ready (prompt exists), Reviewed (analysis complete)
+  - Added reviewer assignment functionality with dropdown selection from firm users
+  - Built "Run Review" button preparation for future AI processing integration
+  - Implemented document filtering by status (pending/ready/reviewed) and search functionality
+  - Created reviewer reassignment dialog with user selection from firm database
+  - Added comprehensive document metadata display combining database records with review logs
+  - Integrated DocumentDashboard as primary tab in Documents page interface
+  - Successfully tested with real document data: NDA auto-detected, metadata tracked, prompt generated
+
 - **June 15, 2025**: File Upload and Prompt Routing System Complete
   - Built comprehensive document type detection with auto-detection and manual selection
   - Created modular upload processor that routes files to correct prompt assembly flow
