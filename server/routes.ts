@@ -919,7 +919,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NotificationService } = await import('./services/notificationService.js');
       await NotificationService.createNotification({
         firmId: DEMO_FIRM_ID,
-        userId: req.body.userId || DEMO_USER_ID,
+        userId: req.body.userId || req.user!.id,
         type: req.body.type,
         title: req.body.title,
         message: req.body.message,
