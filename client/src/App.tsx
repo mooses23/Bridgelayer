@@ -3,7 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SessionProvider } from "@/contexts/SessionContext";
-import AppRouter from "@/components/AppRouter";
+import SimpleRouter from "@/components/SimpleRouter";
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
       <SessionProvider>
         <TooltipProvider>
           <Toaster />
-          <AppRouter />
+          <SimpleRouter />
         </TooltipProvider>
       </SessionProvider>
     </QueryClientProvider>
