@@ -441,47 +441,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Messages endpoints
-  app.get("/api/messages", async (req, res) => {
+  // Message threads endpoints
+  app.get("/api/message-threads", async (req, res) => {
     try {
-      const { type } = req.query;
-      let messages;
-      
-      if (type === 'user') {
-        messages = await storage.getUserMessages(DEMO_USER_ID);
-      } else {
-        messages = await storage.getFirmMessages(DEMO_FIRM_ID);
-      }
-      
-      res.json(messages);
+      const threads = await storage.getFirmMessageThreads(DEMO_FIRM_ID);
+      res.json(threads);
     } catch (error) {
-      console.error("Error fetching messages:", error);
-      res.status(500).json({ message: "Failed to fetch messages" });
+      console.error("Error fetching message threads:", error);
+      res.status(500).json({ message: "Failed to fetch message threads" });
     }
   });
 
-  app.post("/api/messages", async (req, res) => {
+  app.post("/api/message-threads", async (req, res) => {
     try {
-      const validatedData = insertMessageSchema.parse({
-        ...req.body,
+      const { title, filename, documentId } = req.body;
+      const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const threadData = {
         firmId: DEMO_FIRM_ID,
-        fromUserId: DEMO_USER_ID
-      });
-      const message = await storage.createMessage(validatedData);
+        threadId,
+        title,
+        filename: filename || null,
+        documentId: documentId || null,
+        createdBy: DEMO_USER_ID
+      };
+      
+      const thread = await storage.createMessageThread(threadData);
+      res.status(201).json(thread);
+    } catch (error) {
+      console.error("Error creating message thread:", error);
+      res.status(500).json({ message: "Failed to create message thread" });
+    }
+  });
+
+  app.get("/api/message-threads/:threadId/messages", async (req, res) => {
+    try {
+      const { threadId } = req.params;
+      const messages = await storage.getThreadMessages(threadId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching thread messages:", error);
+      res.status(500).json({ message: "Failed to fetch thread messages" });
+    }
+  });
+
+  app.post("/api/messages/send", async (req, res) => {
+    try {
+      const { threadId, content, recipientRole, senderRole } = req.body;
+      
+      if (!threadId || !content || !senderRole) {
+        return res.status(400).json({ message: "Missing required fields: threadId, content, senderRole" });
+      }
+
+      // Get current user info for sender details
+      const currentUser = await storage.getUser(DEMO_USER_ID);
+      const senderName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Unknown User";
+
+      const messageData = {
+        threadId,
+        firmId: DEMO_FIRM_ID,
+        senderId: DEMO_USER_ID,
+        senderRole,
+        senderName,
+        recipientRole: recipientRole || null,
+        content,
+        isSystemMessage: false,
+        readBy: [DEMO_USER_ID] // Mark as read by sender
+      };
+      
+      const message = await storage.createMessage(messageData);
       res.status(201).json(message);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid message data", errors: error.errors });
-      }
-      console.error("Error creating message:", error);
-      res.status(500).json({ message: "Failed to create message" });
+      console.error("Error sending message:", error);
+      res.status(500).json({ message: "Failed to send message" });
     }
   });
 
   app.put("/api/messages/:id/read", async (req, res) => {
     try {
       const messageId = parseInt(req.params.id);
-      const success = await storage.markMessageAsRead(messageId);
+      const success = await storage.markMessageAsRead(messageId, DEMO_USER_ID);
       if (!success) {
         return res.status(404).json({ message: "Message not found" });
       }
@@ -489,6 +528,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking message as read:", error);
       res.status(500).json({ message: "Failed to mark message as read" });
+    }
+  });
+
+  app.put("/api/message-threads/:threadId/resolve", async (req, res) => {
+    try {
+      const { threadId } = req.params;
+      const success = await storage.resolveMessageThread(threadId, DEMO_USER_ID);
+      if (!success) {
+        return res.status(404).json({ message: "Thread not found" });
+      }
+      res.json({ message: "Thread marked as resolved" });
+    } catch (error) {
+      console.error("Error resolving thread:", error);
+      res.status(500).json({ message: "Failed to resolve thread" });
     }
   });
 

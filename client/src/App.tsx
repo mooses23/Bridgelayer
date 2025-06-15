@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/dashboard";
 import Documents from "@/pages/documents";
-import Messages from "@/pages/messages";
+import Messaging from "@/pages/Messaging";
 import Team from "@/pages/team";
 import Settings from "@/pages/settings";
 import Onboarding from "@/pages/Onboarding";
@@ -23,7 +23,7 @@ function Router() {
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/documents" component={Documents} />
-            <Route path="/messages" component={Messages} />
+            <Route path="/messages" component={Messaging} />
             <Route path="/team" component={Team} />
             <Route path="/settings" component={Settings} />
             <Route component={NotFound} />

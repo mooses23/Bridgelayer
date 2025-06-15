@@ -31,13 +31,14 @@ export default function Layout({ children }: LayoutProps) {
     queryFn: () => fetch("/api/firm").then(res => res.json())
   });
 
-  // Fetch unread messages count
-  const { data: messages } = useQuery({
-    queryKey: ["/api/messages"],
-    queryFn: () => fetch("/api/messages?type=user").then(res => res.json())
+  // Fetch message threads for unread count
+  const { data: threads } = useQuery({
+    queryKey: ["/api/message-threads"],
+    queryFn: () => fetch("/api/message-threads").then(res => res.json()),
+    retry: false
   });
 
-  const unreadCount = messages?.filter((msg: any) => !msg.isRead).length || 0;
+  const unreadCount = threads?.filter((thread: any) => !thread.isResolved).length || 0;
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: Home },
