@@ -135,62 +135,111 @@ export default function Billing() {
 
   // Mutations
   const createTimeLogMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/billing/time-logs", data),
-    onSuccess: () => {
+    mutationFn: (data: any) => {
+      console.log("Creating time log:", data);
+      return apiRequest("POST", "/api/billing/time-logs", data);
+    },
+    onSuccess: (response) => {
+      console.log("Time log created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/billing/time-logs"] });
       setShowTimeLogDialog(false);
       toast({ title: "Time log created successfully" });
+    },
+    onError: (error) => {
+      console.error("Time log creation failed:", error);
     }
   });
 
   const createClientMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/billing/clients", data),
-    onSuccess: () => {
+    mutationFn: (data: any) => {
+      console.log("Creating client:", data);
+      return apiRequest("POST", "/api/billing/clients", data);
+    },
+    onSuccess: (response) => {
+      console.log("Client created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/billing/clients"] });
       setShowClientDialog(false);
       toast({ title: "Client created successfully" });
+    },
+    onError: (error) => {
+      console.error("Client creation failed:", error);
     }
   });
 
   const createCaseMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/billing/cases", data),
-    onSuccess: () => {
+    mutationFn: (data: any) => {
+      console.log("Creating case:", data);
+      return apiRequest("POST", "/api/billing/cases", data);
+    },
+    onSuccess: (response) => {
+      console.log("Case created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/billing/cases"] });
       setShowCaseDialog(false);
       toast({ title: "Case created successfully" });
+    },
+    onError: (error) => {
+      console.error("Case creation failed:", error);
     }
   });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("PATCH", "/api/billing/settings", data),
-    onSuccess: () => {
+    mutationFn: (data: any) => {
+      console.log("Updating billing settings:", data);
+      return apiRequest("PATCH", "/api/billing/settings", data);
+    },
+    onSuccess: (response) => {
+      console.log("Settings updated successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/billing/settings"] });
       toast({ title: "Billing settings updated successfully" });
+    },
+    onError: (error) => {
+      console.error("Settings update failed:", error);
     }
   });
 
   const createInvoiceMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/billing/invoices", data),
-    onSuccess: () => {
+    mutationFn: (data: any) => {
+      console.log("Creating invoice:", data);
+      return apiRequest("POST", "/api/billing/invoices", data);
+    },
+    onSuccess: (response) => {
+      console.log("Invoice created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/billing/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/billing/time-logs"] });
       setSelectedTimeLogs([]);
       toast({ title: "Invoice created successfully" });
+    },
+    onError: (error) => {
+      console.error("Invoice creation failed:", error);
     }
   });
 
   const purgeAuditLogsMutation = useMutation({
-    mutationFn: () => apiRequest("DELETE", "/api/billing/audit-logs/purge", {}),
-    onSuccess: () => {
+    mutationFn: () => {
+      console.log("Purging audit logs");
+      return apiRequest("DELETE", "/api/billing/audit-logs/purge", {});
+    },
+    onSuccess: (response) => {
+      console.log("Audit logs purged successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/billing/audit-logs"] });
       toast({ title: "Audit logs purged successfully" });
+    },
+    onError: (error) => {
+      console.error("Audit logs purge failed:", error);
     }
   });
 
   const generateTaxFormMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/billing/generate-tax-form", data),
-    onSuccess: () => {
+    mutationFn: (data: any) => {
+      console.log("Generating tax form:", data);
+      return apiRequest("POST", "/api/billing/generate-tax-form", data);
+    },
+    onSuccess: (response) => {
+      console.log("Tax form generated successfully:", response);
       toast({ title: "Tax form generated successfully" });
+    },
+    onError: (error) => {
+      console.error("Tax form generation failed:", error);
     }
   });
 
