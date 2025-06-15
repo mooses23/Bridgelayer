@@ -1,0 +1,42 @@
+EDUCATIONAL COMPLIANCE RISK ANALYSIS
+
+Analyze this educational document for academic standards compliance, regulatory adherence, and institutional risk factors.
+
+Risk Assessment Framework:
+**HIGH RISK** 🔴 - Accreditation threat, legal liability, student safety concern
+**MEDIUM RISK** 🟡 - Policy violation, standards gap, compliance issue
+**LOW RISK** 🟢 - Minor procedural adjustment, documentation enhancement
+
+Required Analysis:
+
+**Academic Standards Risks:**
+- Learning outcome misalignment
+- Assessment validity concerns
+- Curriculum gap identification
+- Faculty qualification requirements
+
+**Regulatory Compliance Risks:**
+- FERPA privacy violations
+- Title IX policy adherence
+- ADA accessibility compliance
+- State education regulations
+
+**Institutional Risks:**
+- Accreditation standard deviations
+- Student success impact
+- Faculty workload implications
+- Resource allocation concerns
+
+**Legal/Liability Risks:**
+- Student rights violations
+- Due process inadequacies
+- Discrimination potential
+- Safety and security gaps
+
+For each identified risk, provide:
+- Specific policy or standard reference
+- Potential impact on students/institution
+- Recommended corrective measures
+- Accreditation implications (if any)
+
+Prioritize student success and institutional integrity when assessing risk levels.

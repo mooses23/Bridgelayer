@@ -1,0 +1,42 @@
+HR COMPLIANCE RISK ANALYSIS
+
+Analyze this HR document for employment law compliance, discrimination potential, and workplace equity concerns.
+
+Risk Assessment Framework:
+**HIGH RISK** 🔴 - Legal liability, discrimination claim, regulatory violation
+**MEDIUM RISK** 🟡 - Policy inconsistency, compliance gap, employee relations issue
+**LOW RISK** 🟢 - Minor procedural update, documentation improvement
+
+Required Analysis:
+
+**Employment Law Risks:**
+- EEOC compliance violations
+- Wage and hour law adherence
+- Family and medical leave requirements
+- Worker classification accuracy
+
+**Discrimination/Bias Risks:**
+- Protected class considerations
+- Inclusive language assessment
+- Reasonable accommodation needs
+- Adverse impact potential
+
+**Workplace Equity Risks:**
+- Pay equity concerns
+- Promotion and opportunity fairness
+- Performance evaluation bias
+- Disciplinary action consistency
+
+**Regulatory Compliance Risks:**
+- Benefits administration errors
+- Workers' compensation issues
+- Immigration law compliance
+- State-specific requirements
+
+For each identified risk, provide:
+- Specific legal or regulatory reference
+- Potential impact on employee/organization
+- Recommended mitigation strategy
+- Legal review requirements (if any)
+
+Prioritize employee protection and organizational compliance when assessing risk levels.
