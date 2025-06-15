@@ -36,62 +36,62 @@ export default function RoleRouter() {
 
   if (!user) {
     return (
-      <PublicLayout>
-        <Routes>
+      <Routes>
+        <Route element={<PublicLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/logout" element={<LogoutPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </PublicLayout>
+        </Route>
+      </Routes>
     );
   }
 
   // Platform admin routes
   if (['platform_admin', 'admin', 'super_admin'].includes(user.role)) {
     return (
-      <AdminLayout>
-        <Routes>
+      <Routes>
+        <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/tenants" element={<TenantsPage />} />
           <Route path="/admin/ghost" element={<GhostModePage />} />
           <Route path="/logout" element={<LogoutPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
-        </Routes>
-      </AdminLayout>
+        </Route>
+      </Routes>
     );
   }
 
   // Check if firm needs onboarding
   if (!firm?.onboarded) {
     return (
-      <OnboardingLayout>
-        <Routes>
+      <Routes>
+        <Route element={<OnboardingLayout />}>
           <Route path="/onboarding/*" element={<OnboardingWizard />} />
           <Route path="*" element={<Navigate to="/onboarding" replace />} />
-        </Routes>
-      </OnboardingLayout>
+        </Route>
+      </Routes>
     );
   }
 
   // Client portal routes
   if (user.role === 'client') {
     return (
-      <ClientLayout>
-        <Routes>
+      <Routes>
+        <Route element={<ClientLayout />}>
           <Route path="/client/login" element={<ClientLoginPage />} />
           <Route path="/client/dashboard" element={<ClientDashboard />} />
           <Route path="/client/invoices" element={<ClientInvoicesPage />} />
           <Route path="/logout" element={<LogoutPage />} />
           <Route path="*" element={<Navigate to="/client/dashboard" replace />} />
-        </Routes>
-      </ClientLayout>
+        </Route>
+      </Routes>
     );
   }
 
   // Firm user routes (default)
   return (
-    <FirmDashboardLayout>
-      <Routes>
+    <Routes>
+      <Route element={<FirmDashboardLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/cases" element={<CasesPage />} />
         <Route path="/intake" element={<IntakePage />} />
@@ -99,7 +99,7 @@ export default function RoleRouter() {
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </FirmDashboardLayout>
+      </Route>
+    </Routes>
   );
 }
