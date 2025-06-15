@@ -2,8 +2,10 @@ import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CloudUpload, FileUp, FolderOpen, File, X } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { CloudUpload, FileUp, FolderOpen, File, X, CheckCircle, AlertCircle } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Document } from "@shared/schema";
@@ -14,16 +16,34 @@ interface DocumentUploadProps {
   onDocumentRemoved: () => void;
 }
 
+interface DocumentType {
+  value: string;
+  label: string;
+  category: string;
+}
+
 export default function DocumentUpload({ selectedDocument, onDocumentUploaded, onDocumentRemoved }: DocumentUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [urlInput, setUrlInput] = useState("");
+  const [selectedDocType, setSelectedDocType] = useState<string>("");
+  const [useAutoDetection, setUseAutoDetection] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Fetch available document types
+  const { data: documentTypes = [], isLoading: isLoadingTypes } = useQuery<DocumentType[]>({
+    queryKey: ['/api/document-types'],
+  });
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('document', file);
+      
+      // Add document type if manually selected
+      if (!useAutoDetection && selectedDocType) {
+        formData.append('documentType', selectedDocType);
+      }
       
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
@@ -37,11 +57,16 @@ export default function DocumentUpload({ selectedDocument, onDocumentUploaded, o
       
       return response.json();
     },
-    onSuccess: (document: Document) => {
-      onDocumentUploaded(document);
+    onSuccess: (response: any) => {
+      onDocumentUploaded(response);
+      
+      const detectionMessage = response.autoDetected 
+        ? `Auto-detected as ${response.documentType}`
+        : `Processed as ${response.documentType}`;
+      
       toast({
-        title: "Document Uploaded",
-        description: `${document.originalName} has been uploaded and is being analyzed.`,
+        title: "Document Uploaded & Processed",
+        description: `${response.originalName} uploaded successfully. ${detectionMessage}. Prompt generated for review.`,
       });
     },
     onError: (error: Error) => {
@@ -116,8 +141,49 @@ export default function DocumentUpload({ selectedDocument, onDocumentUploaded, o
       <CardContent>
         {!selectedDocument ? (
           <>
+            {/* Document Type Selection */}
+            <div className="mb-6 space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="auto-detect"
+                  checked={useAutoDetection}
+                  onChange={(e) => setUseAutoDetection(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="auto-detect" className="text-sm font-medium text-gray-700">
+                  Auto-detect document type
+                </label>
+              </div>
+              
+              {!useAutoDetection && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Document Type</label>
+                  <Select value={selectedDocType} onValueChange={setSelectedDocType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select document type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {documentTypes.map((docType) => (
+                        <SelectItem key={docType.value} value={docType.value}>
+                          <div className="flex items-center space-x-2">
+                            <span>{docType.label}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {docType.category}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+            
             <div 
-              className={`document-dropzone rounded-lg p-8 text-center ${isDragging ? 'border-legal-blue bg-blue-50' : ''}`}
+              className={`document-dropzone rounded-lg p-8 text-center border-2 border-dashed transition-colors ${
+                isDragging ? 'border-legal-blue bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -163,17 +229,32 @@ export default function DocumentUpload({ selectedDocument, onDocumentUploaded, o
                 <File className="legal-emerald" size={24} />
                 <div>
                   <p className="font-medium text-gray-900">{selectedDocument.originalName}</p>
-                  <p className="text-sm legal-slate">
-                    {selectedDocument.documentType ? `Identified as: ${selectedDocument.documentType}` : 'Analyzing document type...'} • 
+                  <div className="flex items-center space-x-2 text-sm legal-slate">
+                    <span>
+                      {selectedDocument.documentType ? `Document Type: ${selectedDocument.documentType}` : 'Analyzing document type...'}
+                    </span>
+                    {(selectedDocument as any).autoDetected && (
+                      <Badge variant="outline" className="text-xs">
+                        Auto-detected
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm legal-slate mt-1">
                     {formatFileSize(selectedDocument.fileSize)} • 
                     Uploaded {getTimeAgo(selectedDocument.uploadedAt!)}
+                    {(selectedDocument as any).promptGenerated && (
+                      <span className="inline-flex items-center ml-2">
+                        <CheckCircle className="w-3 h-3 text-green-600 mr-1" />
+                        Prompt Ready
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="px-3 py-1 bg-legal-emerald text-white text-sm font-medium rounded-full">
-                  {selectedDocument.analyzedAt ? 'Analyzed' : 'Processing...'}
-                </span>
+                <Badge variant={selectedDocument.status === 'analyzed' ? 'default' : 'secondary'}>
+                  {selectedDocument.status === 'analyzed' ? 'Analyzed' : 'Processing'}
+                </Badge>
                 <Button
                   variant="ghost"
                   size="sm"

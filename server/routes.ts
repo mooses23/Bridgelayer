@@ -261,6 +261,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document type management endpoints
+  app.get("/api/document-types", async (req, res) => {
+    try {
+      const { getDocumentTypeOptions } = await import('./services/documentTypeDetection.js');
+      const documentTypes = getDocumentTypeOptions();
+      res.json(documentTypes);
+    } catch (error) {
+      console.error("Error fetching document types:", error);
+      res.status(500).json({ message: "Failed to fetch document types" });
+    }
+  });
+
+  // Firm review logs endpoint
+  app.get("/api/firms/:firmId/review-logs", async (req, res) => {
+    try {
+      const firmId = req.params.firmId;
+      const { getFirmProcessedDocuments } = await import('./services/documentUploadProcessor.js');
+      const processedDocs = await getFirmProcessedDocuments(firmId);
+      res.json(processedDocs);
+    } catch (error) {
+      console.error("Error fetching review logs:", error);
+      res.status(500).json({ message: "Failed to fetch review logs" });
+    }
+  });
+
   // Firm analysis settings endpoints
   app.get("/api/firm/analysis-settings", async (req, res) => {
     try {
