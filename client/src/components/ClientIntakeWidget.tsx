@@ -131,8 +131,9 @@ export default function ClientIntakeWidget() {
 
   const getAssigneeName = (assignedTo?: number) => {
     if (!assignedTo) return "Unassigned";
-    const user = usersArray.find((u: any) => u.id === assignedTo);
-    return user ? `${user.firstName} ${user.lastName}` : "Unknown";
+    if (!usersArray || usersArray.length === 0) return "Unknown";
+    const user = usersArray.find((u: any) => u && u.id === assignedTo);
+    return user && user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : "Unknown";
   };
 
   if (isLoading) {

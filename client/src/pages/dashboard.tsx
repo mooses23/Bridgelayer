@@ -86,7 +86,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <CalendarWidget />
+        <Card>
+          <CardHeader>
+            <CardTitle>Calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500 text-center py-4">Calendar temporarily disabled for debugging</p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
