@@ -1,0 +1,12 @@
+{
+  "document_type": "Mortgage",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on loan amount, property description, payment terms, and foreclosure procedures. Review insurance requirements, escrow provisions, and prepayment penalties. Pay attention to default triggers, acceleration clauses, and borrower obligations."
+}

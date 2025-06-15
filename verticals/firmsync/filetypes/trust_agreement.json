@@ -1,0 +1,12 @@
+{
+  "document_type": "Trust Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on trust purposes, beneficiary rights, trustee powers, and distribution standards. Review investment authority, successor trustee provisions, and termination conditions. Pay attention to spendthrift clauses, tax elections, and administrative provisions."
+}

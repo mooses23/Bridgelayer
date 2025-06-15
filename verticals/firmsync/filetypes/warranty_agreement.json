@@ -1,0 +1,12 @@
+{
+  "document_type": "Warranty Agreement",
+  "risk_level": "low",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on warranty scope, coverage period, exclusions, and remedy procedures. Review warranty registration requirements, transferability provisions, and limitation of liability clauses. Pay attention to implied warranty disclaimers, damage exclusions, and repair/replacement procedures."
+}

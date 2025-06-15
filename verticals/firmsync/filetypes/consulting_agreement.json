@@ -1,0 +1,12 @@
+{
+  "document_type": "Consulting Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on scope of services, deliverables, compensation structure, and timeline. Review independent contractor status, intellectual property ownership, and confidentiality obligations. Pay attention to termination provisions, expense reimbursement, and liability limitations."
+}

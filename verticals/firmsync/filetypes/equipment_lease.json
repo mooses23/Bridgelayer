@@ -1,0 +1,12 @@
+{
+  "document_type": "Equipment Lease",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on equipment descriptions, lease payments, maintenance responsibilities, and return conditions. Review insurance requirements, default provisions, and early termination options. Pay attention to purchase options, damage liability, and equipment modifications."
+}

@@ -1,0 +1,12 @@
+{
+  "document_type": "Confidentiality Agreement",
+  "risk_level": "low",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on confidential information definitions, permitted uses, return obligations, and duration of confidentiality. Review exclusions from confidentiality, remedies for breach, and survival provisions. Pay attention to standard of care requirements, third-party disclosures, and judicial proceedings exceptions."
+}

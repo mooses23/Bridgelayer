@@ -1,0 +1,12 @@
+{
+  "document_type": "Severance Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on severance payments, benefit continuation, release provisions, and post-employment restrictions. Review consideration adequacy, return of company property, and confidentiality obligations. Pay attention to non-disparagement clauses, cooperation requirements, and revocation periods."
+}

@@ -1,0 +1,12 @@
+{
+  "document_type": "Service Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on scope of work, payment schedules, performance standards, and termination clauses. Review intellectual property ownership, liability limitations, and indemnification provisions. Pay attention to deliverables, timelines, and change order procedures."
+}

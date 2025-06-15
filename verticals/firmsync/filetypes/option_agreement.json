@@ -1,0 +1,12 @@
+{
+  "document_type": "Option Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on option terms, exercise conditions, consideration, and expiration dates. Review vesting schedules, anti-dilution provisions, and transfer restrictions. Pay attention to acceleration triggers, tax implications, and exercise procedures."
+}

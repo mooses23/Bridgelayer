@@ -1,0 +1,12 @@
+{
+  "document_type": "Loan Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on loan amount, interest rates, repayment terms, and default provisions. Review collateral requirements, personal guarantees, and acceleration clauses. Pay attention to covenants, prepayment penalties, and enforcement mechanisms."
+}

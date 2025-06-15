@@ -1,0 +1,12 @@
+{
+  "document_type": "Merger Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on merger structure, exchange ratios, closing conditions, and representations/warranties. Review material adverse change clauses, termination rights, and break-up fees. Pay attention to regulatory approvals, due diligence requirements, and post-closing integration terms."
+}

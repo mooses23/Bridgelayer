@@ -1,0 +1,28 @@
+DOCUMENT SUMMARIZATION MODULE:
+If Summarization is enabled, analyze and summarize the document following these protocols:
+
+1. PURPOSE IDENTIFICATION:
+   - Identify and summarize the purpose of the document in 1–3 sentences
+   - Use legal tone and refer to clause numbers when summarizing
+   - Do not assume or invent terms - only summarize what is verifiable
+
+2. PARTY AND DOCUMENT DETAILS:
+   - List the involved parties (if stated) with their roles and legal status
+   - Identify document type and effective date
+   - Note any missing party information requiring clarification
+
+3. KEY CLAUSES EXTRACTION:
+   - Highlight key clauses such as obligations, timeframes, and terminations
+   - Extract critical terms, definitions, and provisions
+   - Include specific section references for each key term
+   - Note any unusual or non-standard terms
+
+4. EXAMPLE FORMAT:
+   "This lease agreement establishes a 12-month rental contract between [Landlord] and [Tenant], effective March 1, 2024. Section 4 outlines payment terms due monthly. Section 7 allows termination with 30 days' notice."
+
+5. UNCERTAINTIES AND REVIEW FLAGS:
+   - Flag any ambiguous language requiring clarification
+   - Identify sections needing attorney review
+   - Note incomplete information (dates, names, amounts)
+
+Output as JSON with confidence scores and section citations.

@@ -1,0 +1,48 @@
+{
+  "verticalName": "firmsync",
+  "displayName": "FIRMSYNC - Legal Document Analysis",
+  "industry": "legal",
+  "description": "Comprehensive legal document analysis for law firms, paralegals, and legal professionals",
+  
+  "documentCategories": [
+    "corporate",
+    "real_estate", 
+    "employment",
+    "intellectual_property",
+    "estate_planning",
+    "finance",
+    "dispute_resolution"
+  ],
+
+  "defaultAnalysisFeatures": {
+    "summarization": true,
+    "riskAnalysis": true,
+    "clauseExtraction": true,
+    "crossReference": false,
+    "formatting": true,
+    "autoAnalysis": false
+  },
+
+  "riskLevels": {
+    "low": ["nda", "contract", "confidentiality_agreement"],
+    "medium": ["lease", "employment", "commercial_lease", "service_agreement"],
+    "high": ["settlement", "discovery", "litigation", "acquisition_agreement", "merger_agreement"]
+  },
+
+  "defaultReviewerAssignment": {
+    "nda": "paralegal",
+    "contract": "associate", 
+    "lease": "associate",
+    "employment": "associate",
+    "settlement": "admin",
+    "litigation": "admin",
+    "discovery": "admin"
+  },
+
+  "trustLayerSettings": {
+    "evidenceRequired": true,
+    "uncertaintyTracking": true,
+    "attorneyReviewFlags": true,
+    "professionalLanguage": true
+  }
+}

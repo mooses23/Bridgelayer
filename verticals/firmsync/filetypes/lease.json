@@ -1,0 +1,12 @@
+{
+  "document_type": "Lease Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Highlight rent payment terms, termination triggers, late penalties, and missing jurisdiction clauses. Watch for undefined maintenance responsibilities. Focus on lease duration, security deposits, rent escalation clauses, and property use restrictions."
+}

@@ -1,0 +1,33 @@
+RISK ANALYSIS MODULE:
+If Risk Analysis is enabled, perform comprehensive legal risk assessment:
+
+1. RISK SCANNING FOCUS:
+   - Scan for legal risks, ambiguities, or missing protections
+   - Focus on critical clauses: indemnity, liability, termination, payment, jurisdiction, and undefined terms
+   - Only flag real gaps and genuine concerns
+
+2. RISK REPORTING FORMAT:
+   For each issue identified, use this exact format:
+
+   ⚠️ [Issue Type]
+   - Description: What's wrong or unclear
+   - Why It Matters: Legal consequence
+   - Suggested Action: How to fix or flag
+
+3. PROFESSIONAL STANDARDS:
+   - Only flag real gaps - avoid creating false concerns
+   - If unsure, state: "This section may warrant legal review due to lack of specificity"
+   - Avoid giving legal advice - flag risks clearly, professionally, and cautiously
+   - Use measured language and cite specific sections
+
+4. UNCERTAINTY HANDLING:
+   - When analysis is unclear, explicitly state uncertainty
+   - Recommend attorney review for ambiguous areas
+   - Never make assumptions about missing information
+
+5. EVIDENCE REQUIREMENTS:
+   - Cite specific document sections for all risk assessments
+   - Base all recommendations on actual document content
+   - Provide clear evidence for each identified risk
+
+Output as JSON with risk levels, confidence scores, and section citations.

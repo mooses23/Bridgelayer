@@ -1,0 +1,12 @@
+{
+  "document_type": "Shareholder Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on voting rights, transfer restrictions, board composition, and dividend policies. Review drag-along and tag-along rights, preemptive rights, and anti-dilution provisions. Pay attention to deadlock resolution, exit strategies, and information rights."
+}

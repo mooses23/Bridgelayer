@@ -1,0 +1,12 @@
+{
+  "document_type": "Non-Compete Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on geographic scope, time limitations, restricted activities, and consideration. Review reasonableness of restrictions, enforcement mechanisms, and severability provisions. Pay attention to customer non-solicitation, employee non-solicitation, and confidentiality obligations."
+}

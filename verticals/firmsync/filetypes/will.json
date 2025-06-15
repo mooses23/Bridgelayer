@@ -1,0 +1,12 @@
+{
+  "document_type": "Will",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on beneficiary designations, asset distributions, executor appointments, and guardianship provisions. Review residuary clauses, specific bequests, and contingent beneficiaries. Pay attention to witnessing requirements, self-proving affidavits, and revocation of prior wills."
+}

@@ -1,0 +1,12 @@
+{
+  "document_type": "Stock Purchase Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on share price, number of shares, closing conditions, and representations/warranties. Review due diligence requirements, indemnification provisions, and escrow arrangements. Pay attention to material adverse change definitions, regulatory approvals, and post-closing covenants."
+}

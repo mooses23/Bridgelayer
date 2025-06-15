@@ -1,0 +1,12 @@
+{
+  "document_type": "Living Will",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on life-sustaining treatment preferences, specific medical scenarios, and decision-making authority. Review state law compliance, witnessing requirements, and healthcare proxy designations. Pay attention to pain management directives, artificial nutrition provisions, and revocation procedures."
+}

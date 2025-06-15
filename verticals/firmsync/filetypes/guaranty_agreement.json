@@ -1,0 +1,12 @@
+{
+  "document_type": "Guaranty Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on guaranteed obligations, guarantor liability limits, and release conditions. Review continuing guaranty provisions, waiver of defenses, and notice requirements. Pay attention to personal vs. corporate guarantees, acceleration clauses, and enforcement mechanisms."
+}

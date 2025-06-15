@@ -1,0 +1,12 @@
+{
+  "document_type": "Patent License",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on licensed patents, field of use restrictions, royalty calculations, and sublicensing rights. Review performance milestones, improvement provisions, and termination conditions. Pay attention to prosecution responsibilities, enforcement obligations, and patent validity risks."
+}

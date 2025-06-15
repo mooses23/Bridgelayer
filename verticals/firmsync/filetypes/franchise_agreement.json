@@ -1,0 +1,12 @@
+{
+  "document_type": "Franchise Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on franchise fees, territory rights, operational standards, and renewal terms. Review trademark usage, training requirements, and termination conditions. Pay attention to non-compete clauses, transfer restrictions, and franchisor support obligations."
+}

@@ -1,0 +1,12 @@
+{
+  "document_type": "Buy-Sell Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on triggering events, valuation methods, payment terms, and transfer restrictions. Review right of first refusal, tag-along rights, and funding mechanisms. Pay attention to life insurance requirements, disability provisions, and dispute resolution procedures."
+}

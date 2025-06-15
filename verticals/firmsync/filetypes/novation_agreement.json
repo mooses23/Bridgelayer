@@ -1,0 +1,12 @@
+{
+  "document_type": "Novation Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on original contract terms, substituted party obligations, and release provisions. Review consent requirements, assumption of liabilities, and effective dates. Pay attention to continuing obligations, notice requirements, and third-party rights."
+}

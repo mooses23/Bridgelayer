@@ -1,0 +1,12 @@
+{
+  "document_type": "Assignment Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on assigned rights/obligations, consideration, and assumption of liabilities. Review assignor warranties, consent requirements, and notice provisions. Pay attention to partial vs. complete assignments, effective dates, and third-party beneficiary rights."
+}

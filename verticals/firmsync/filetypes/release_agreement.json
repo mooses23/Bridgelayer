@@ -1,0 +1,12 @@
+{
+  "document_type": "Release Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on released claims, consideration, and scope of release. Review mutual vs. unilateral releases, unknown claims provisions, and survival clauses. Pay attention to carve-outs, future claims restrictions, and enforceability requirements."
+}

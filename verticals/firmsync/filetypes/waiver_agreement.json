@@ -1,0 +1,12 @@
+{
+  "document_type": "Waiver Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on waived rights, consideration, and scope of waiver. Review voluntariness requirements, future claims provisions, and revocation restrictions. Pay attention to statutory compliance, knowledge requirements, and enforceability standards."
+}

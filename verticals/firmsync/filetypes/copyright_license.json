@@ -1,0 +1,12 @@
+{
+  "document_type": "Copyright License",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on licensed works, usage rights, attribution requirements, and royalty terms. Review derivative work permissions, distribution restrictions, and termination conditions. Pay attention to moral rights, indemnification provisions, and copyright notice requirements."
+}
