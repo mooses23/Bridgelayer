@@ -1,0 +1,2 @@
+CLAUSE EXTRACTION PROTOCOL:
+Scan for standard legal clauses including indemnification, liability limitations, termination provisions, payment terms, and jurisdiction clauses. Flag missing critical protections with 🧠 Suggested Draft Language where appropriate. Assess clause completeness and enforceability concerns with specific section references. Mark AI-generated suggestions clearly and recommend professional review before adoption. Provide confidence levels for each extracted element.

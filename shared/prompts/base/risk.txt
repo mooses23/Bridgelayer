@@ -1,0 +1,2 @@
+RISK ASSESSMENT PROTOCOL:
+Identify potential legal exposures using ⚠️ [Issue Type] format. Categorize risks by severity (high/medium/low) with specific impact descriptions and evidence citations. Focus on enforceability concerns, missing protections, and ambiguous language that could lead to disputes. Suggest practical remedial actions while flagging items requiring immediate attorney review. Assess overall document risk category and provide escalation recommendations.

@@ -1,0 +1,2 @@
+RISK PROFILE BALANCER:
+Adjust analysis tone based on document risk level. LOW-RISK documents (NDAs, standard contracts): Focus on clarity and completeness with light review tone. MEDIUM-RISK documents (leases, employment agreements): Apply balanced scrutiny emphasizing enforceability concerns. HIGH-RISK documents (settlements, litigation, discovery): Use heightened conservative analysis with immediate escalation flags for attorney review. Always match analytical depth to document complexity and potential legal exposure.

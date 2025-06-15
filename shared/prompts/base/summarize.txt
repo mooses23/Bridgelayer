@@ -1,0 +1,2 @@
+DOCUMENT SUMMARIZATION PROTOCOL:
+Extract document type, primary purpose, and key parties with specific roles. Identify critical terms, obligations, and deadlines with section references. Present information in structured format prioritizing legal significance over technical detail. Note any ambiguous language or undefined terms that may require clarification. Provide confidence assessment and flag areas needing professional interpretation.

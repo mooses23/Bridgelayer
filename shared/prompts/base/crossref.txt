@@ -1,0 +1,2 @@
+CROSS-REFERENCE VERIFICATION PROTOCOL:
+Verify internal document references, defined terms consistency, and section numbering accuracy. Check that all referenced exhibits, schedules, and appendices are properly identified. Flag broken references, inconsistent term usage, and missing definitions with specific location citations. Assess document structural integrity and provide evidence-based correction suggestions. Note any references requiring external document verification.
