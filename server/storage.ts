@@ -25,6 +25,10 @@ import {
   type InsertDocumentTypeTemplate,
   type AvailableIntegration,
   type InsertAvailableIntegration,
+  type AuditLog,
+  type InsertAuditLog,
+  type Notification,
+  type InsertNotification,
   users,
   firms,
   documents,
@@ -38,6 +42,8 @@ import {
   platformSettings,
   documentTypeTemplates,
   availableIntegrations,
+  auditLogs,
+  notifications,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql } from "drizzle-orm";
@@ -121,6 +127,20 @@ export interface IStorage {
   getPlatformSettings(): Promise<PlatformSetting[]>;
   updatePlatformSetting(key: string, value: any, adminId: number): Promise<PlatformSetting | undefined>;
   createPlatformSetting(setting: InsertPlatformSetting): Promise<PlatformSetting>;
+  
+  // Audit logging operations
+  createAuditLog(auditLog: InsertAuditLog): Promise<AuditLog>;
+  getFirmAuditLogs(firmId: number, limit?: number): Promise<AuditLog[]>;
+  getAuditLogsByAction(firmId: number, action: string): Promise<AuditLog[]>;
+  getAuditLogsByDateRange(firmId: number, startDate: Date, endDate: Date): Promise<AuditLog[]>;
+  
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getUserNotifications(userId: number, firmId: number): Promise<Notification[]>;
+  markNotificationAsRead(notificationId: number, userId: number): Promise<boolean>;
+  getUnreadNotificationCount(userId: number, firmId: number): Promise<number>;
+  getFirmNotifications(firmId: number): Promise<Notification[]>;
+  deleteNotification(notificationId: number, userId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {

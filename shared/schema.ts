@@ -180,6 +180,38 @@ export const availableIntegrations = pgTable("available_integrations", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Audit logging table for compliance firewall
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  actorId: integer("actor_id").references(() => users.id).notNull(),
+  actorName: text("actor_name").notNull(), // Store name for immutable record
+  action: text("action").notNull(), // DOC_UPLOAD, DOC_REVIEW_COMPLETED, CONFIG_CHANGE, etc.
+  resourceType: text("resource_type").notNull(), // 'document', 'user', 'firm', 'settings'
+  resourceId: text("resource_id"), // ID of the affected resource
+  details: jsonb("details"), // Additional context about the action
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
+// Notifications table for awareness engine
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type").notNull(), // 'ai_review_ready', 'reviewer_assigned', 'message_received', 'high_risk_detected'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  resourceType: text("resource_type"), // 'document', 'message', 'review'
+  resourceId: text("resource_id"), // ID of related resource
+  isRead: boolean("is_read").default(false),
+  isEmailSent: boolean("is_email_sent").default(false),
+  priority: text("priority").notNull().default("normal"), // 'low', 'normal', 'high', 'urgent'
+  createdAt: timestamp("created_at").defaultNow(),
+  readAt: timestamp("read_at"),
+});
+
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,
@@ -255,6 +287,17 @@ export const insertAvailableIntegrationSchema = createInsertSchema(availableInte
   createdAt: true,
 });
 
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+  readAt: true,
+});
+
 // Types
 export type InsertFirm = z.infer<typeof insertFirmSchema>;
 export type Firm = typeof firms.$inferSelect;
@@ -282,6 +325,10 @@ export type InsertDocumentTypeTemplate = z.infer<typeof insertDocumentTypeTempla
 export type DocumentTypeTemplate = typeof documentTypeTemplates.$inferSelect;
 export type InsertAvailableIntegration = z.infer<typeof insertAvailableIntegrationSchema>;
 export type AvailableIntegration = typeof availableIntegrations.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
 
 // Role enums for type safety
 export const UserRole = z.enum(["admin", "firm_admin", "paralegal", "viewer"]);
