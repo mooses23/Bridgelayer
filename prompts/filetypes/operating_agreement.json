@@ -1,0 +1,12 @@
+{
+  "document_type": "Operating Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on member rights, management structure, capital contributions, and profit distributions. Review voting procedures, transfer restrictions, and dissolution provisions. Pay attention to fiduciary duties, buy-sell provisions, and dispute resolution mechanisms."
+}

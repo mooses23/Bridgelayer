@@ -1,0 +1,12 @@
+{
+  "document_type": "Purchase Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on purchase price, payment terms, closing conditions, and warranties. Review financing contingencies, inspection periods, and default provisions. Pay attention to property descriptions, title requirements, and disclosure obligations."
+}

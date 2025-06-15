@@ -1,0 +1,12 @@
+{
+  "document_type": "Partnership Agreement",
+  "risk_level": "high",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on capital contributions, profit/loss distribution, management responsibilities, and dissolution procedures. Review decision-making authority, withdrawal provisions, and non-compete clauses. Pay attention to fiduciary duties, dispute resolution, and succession planning."
+}

@@ -1,0 +1,12 @@
+{
+  "document_type": "Licensing Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on licensed rights, royalty terms, territory restrictions, and duration. Review quality control provisions, termination rights, and infringement procedures. Pay attention to exclusivity clauses, sublicensing rights, and performance milestones."
+}
