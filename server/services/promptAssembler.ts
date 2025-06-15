@@ -35,7 +35,13 @@ export function getDocumentTypeFromContent(content: string): string {
   if (!content || typeof content !== 'string') {
     return 'contract'; // Default fallback
   }
+  
   const lowerContent = content.toLowerCase();
+  
+  // Additional safety check
+  if (!lowerContent || typeof lowerContent !== 'string') {
+    return 'contract'; // Default fallback
+  }
   
   // Legal document type detection based on keywords and phrases
   if (lowerContent.includes('acquisition') || lowerContent.includes('acquire') || lowerContent.includes('purchase of assets')) {

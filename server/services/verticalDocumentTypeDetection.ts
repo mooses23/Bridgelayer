@@ -16,6 +16,11 @@ export async function detectDocumentTypeWithVertical(content: string, verticalNa
   const documentTypes = await getVerticalDocumentTypes(verticalName);
   const contentLower = content.toLowerCase();
   
+  // Additional safety check
+  if (!contentLower || typeof contentLower !== 'string') {
+    return undefined;
+  }
+  
   // Score each document type based on keyword matches
   const scores: Record<string, number> = {};
   
@@ -27,15 +32,23 @@ export async function detectDocumentTypeWithVertical(content: string, verticalNa
       for (const keyword of info.keywords) {
         if (keyword && typeof keyword === 'string') {
           const keywordLower = keyword.toLowerCase();
-          const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
-          score += matches;
+          try {
+            const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
+            score += matches;
+          } catch (error) {
+            console.warn(`Error matching keyword "${keyword}" for document type "${docType}":`, error);
+          }
         }
       }
     }
     
     // Bonus for exact document type name matches
-    if (contentLower.includes(docType.replace('_', ' ').toLowerCase())) {
-      score += 5;
+    try {
+      if (contentLower.includes(docType.replace('_', ' ').toLowerCase())) {
+        score += 5;
+      }
+    } catch (error) {
+      console.warn(`Error processing document type name "${docType}":`, error);
     }
     
     if (score > 0) {

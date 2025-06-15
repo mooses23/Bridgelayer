@@ -39,6 +39,11 @@ export function detectDocumentType(content: string): string | undefined {
   const documentTypes = getAvailableDocumentTypes();
   const contentLower = content.toLowerCase();
   
+  // Additional safety check
+  if (!contentLower || typeof contentLower !== 'string') {
+    return undefined;
+  }
+  
   // Score each document type based on keyword matches
   const scores: Record<string, number> = {};
   
@@ -50,8 +55,12 @@ export function detectDocumentType(content: string): string | undefined {
       for (const keyword of config.keywords) {
         if (keyword && typeof keyword === 'string') {
           const keywordLower = keyword.toLowerCase();
-          const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
-          scores[docType] += matches;
+          try {
+            const matches = (contentLower.match(new RegExp(keywordLower, 'g')) || []).length;
+            scores[docType] += matches;
+          } catch (error) {
+            console.warn(`Error matching keyword "${keyword}" for document type "${docType}":`, error);
+          }
         }
       }
     }
