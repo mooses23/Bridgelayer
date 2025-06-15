@@ -1,84 +1,82 @@
-import { db } from './db';
-import { users, firms } from '../shared/schema';
-import bcrypt from 'bcrypt';
-import { eq } from 'drizzle-orm';
+import bcrypt from "bcrypt";
+import { storage } from "./storage";
 
 export async function seedAuthData() {
   try {
-    // Check if any firms exist - if so, skip seeding
-    const existingFirms = await db.select().from(firms).limit(1);
-    if (existingFirms.length > 0) {
-      console.log('⏭️ Firms already exist, skipping auth data seeding');
-      return false;
-    }
+    console.log("Seeding authentication data...");
 
-    console.log('🌱 Seeding authentication data...');
+    // Create test firms
+    const testFirm = await storage.createFirm({
+      name: "Test Legal Firm",
+      address: "123 Main Street, Suite 100",
+      city: "New York",
+      state: "NY",
+      zipCode: "10001",
+      phone: "(555) 123-4567",
+      email: "contact@testfirm.com",
+      plan: "professional",
+      status: "active"
+    });
 
-    // Create Superadmin User
-    const adminPasswordHash = await bcrypt.hash('admin123', 10);
-    await db.insert(users).values({
-      id: 'admin_1',
-      email: 'admin@firmsync.com',
+    const legalEdgeFirm = await storage.createFirm({
+      name: "LegalEdge Partners",
+      address: "456 Business Ave, Floor 20",
+      city: "Chicago",
+      state: "IL",
+      zipCode: "60601",
+      phone: "(312) 555-7890",
+      email: "info@legaledge.com",
+      plan: "enterprise",
+      status: "active"
+    });
+
+    // Create test users with hashed passwords
+    const adminPasswordHash = await bcrypt.hash("admin123", 10);
+    const ownerPasswordHash = await bcrypt.hash("test123", 10);
+    const staffPasswordHash = await bcrypt.hash("staff123", 10);
+
+    // System admin user (no firm association)
+    const adminUser = await storage.createUser({
+      email: "admin@firmsync.com",
       passwordHash: adminPasswordHash,
-      firstName: 'System',
-      lastName: 'Administrator',
-      role: 'admin',
-      firmId: null
+      firstName: "System",
+      lastName: "Admin",
+      role: "admin",
+      status: "active"
     });
 
-    // Create Dummy Firm A (Needs Onboarding)
-    const [firmA] = await db.insert(firms).values({
-      id: 'test_firm_1',
-      name: 'Test & Co LLP',
-      onboarded: false,
-      jurisdiction: 'NJ',
-      billingEnabled: true,
-      ownerEmail: 'owner@testfirm.com'
-    }).returning();
-
-    // Create Firm A Owner
-    const ownerPasswordHash = await bcrypt.hash('test123', 10);
-    await db.insert(users).values({
-      id: 'user_1',
-      email: 'owner@testfirm.com',
+    // Firm owner for Test Legal Firm
+    const ownerUser = await storage.createUser({
+      email: "owner@testfirm.com",
       passwordHash: ownerPasswordHash,
-      firstName: 'Test',
-      lastName: 'Owner',
-      role: 'firm_owner',
-      firmId: firmA.id
+      firstName: "John",
+      lastName: "Owner",
+      role: "firm_admin",
+      firmId: testFirm.id,
+      status: "active"
     });
 
-    // Create Dummy Firm B (Fully Onboarded)
-    const [firmB] = await db.insert(firms).values({
-      id: 'firm_b_2',
-      name: 'LegalEdge PC',
-      onboarded: true,
-      jurisdiction: 'NY',
-      billingEnabled: false,
-      ownerEmail: 'staff@legaledge.com'
-    }).returning();
-
-    // Create Firm B User
-    const staffPasswordHash = await bcrypt.hash('staff123', 10);
-    await db.insert(users).values({
-      id: 'user_2',
-      email: 'staff@legaledge.com',
+    // Staff user for LegalEdge Partners
+    const staffUser = await storage.createUser({
+      email: "staff@legaledge.com",
       passwordHash: staffPasswordHash,
-      firstName: 'Legal',
-      lastName: 'Staff',
-      role: 'firm_user',
-      firmId: firmB.id
+      firstName: "Jane",
+      lastName: "Paralegal",
+      role: "paralegal",
+      firmId: legalEdgeFirm.id,
+      status: "active"
     });
 
-    console.log('✅ Dummy firms created');
-    console.log('🔑 Use /login to test as:');
-    console.log('   • admin@firmsync.com / admin123 (Superadmin)');
-    console.log('   • owner@testfirm.com / test123 (Firm Owner - needs onboarding)');
-    console.log('   • staff@legaledge.com / staff123 (Firm User - onboarded)');
-
-    return true;
+    console.log("Authentication data seeded successfully!");
+    console.log(`Created firms: ${testFirm.id} (${testFirm.name}), ${legalEdgeFirm.id} (${legalEdgeFirm.name})`);
+    console.log(`Created users: ${adminUser.id} (admin), ${ownerUser.id} (owner), ${staffUser.id} (staff)`);
+    
+    return {
+      firms: [testFirm, legalEdgeFirm],
+      users: [adminUser, ownerUser, staffUser]
+    };
   } catch (error) {
-    console.error('❌ Error seeding auth data:', error);
+    console.error("Error seeding authentication data:", error);
     throw error;
   }
 }

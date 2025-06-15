@@ -27,32 +27,9 @@ const upload = multer({
   },
 });
 
-// Demo data for development - in production this would come from authentication
-const DEMO_FIRM_ID = 1;
-const DEMO_USER_ID = 1;
-
-// Authentication middleware
-const requireAuth = (req: any, res: any, next: any) => {
-  // For demo purposes, we'll use mock user data
-  req.user = {
-    id: DEMO_USER_ID,
-    firmId: DEMO_FIRM_ID,
-    username: "demo_user",
-    role: "firm_admin"
-  };
-  next();
-};
-
-const requireSystemAdmin = (req: any, res: any, next: any) => {
-  // For demo purposes, allow access
-  req.user = {
-    id: DEMO_USER_ID,
-    firmId: DEMO_FIRM_ID,
-    username: "admin",
-    role: "admin"
-  };
-  next();
-};
+// Use minimal authentication system
+const requireAuth = authRequireAuth;
+const requireSystemAdmin = requireAdmin;
 
 // Import Stripe for payment processing
 import Stripe from "stripe";
@@ -64,6 +41,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_demo", {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.post("/api/auth/login", login);
+  app.post("/api/auth/logout", logout);
+  app.get("/api/auth/session", getSession);
+
   // Firm management endpoints
   app.get("/api/firm", async (req, res) => {
     try {
