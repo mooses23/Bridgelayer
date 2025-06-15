@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Users, Upload, Activity } from "lucide-react";
+import CalendarWidget from "@/components/CalendarWidget";
 
 export default function Dashboard() {
   return (
@@ -85,27 +86,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <FileText className="w-4 h-4 mr-2" />
-                Upload New Document
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="w-4 h-4 mr-2" />
-                Add Team Member
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Activity className="w-4 h-4 mr-2" />
-                View Analytics
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <CalendarWidget />
       </div>
     </div>
   );

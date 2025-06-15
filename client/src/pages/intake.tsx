@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserCheck, Send, AlertCircle } from "lucide-react";
+import AiTriageWidget from "@/components/AiTriageWidget";
 
 export default function Intake() {
   const [formData, setFormData] = useState({
@@ -166,43 +167,7 @@ export default function Intake() {
         </div>
 
         <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>AI Pre-Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-2">
-                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Smart Intake Processing</p>
-                    <p className="text-sm text-gray-600">
-                      Our AI will analyze the intake information to determine priority, assign the appropriate attorney, and prepare initial case assessment.
-                    </p>
-                  </div>
-                </div>
-
-                {formData.region && formData.matterType && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900">Preliminary Assessment</h4>
-                    <p className="text-sm text-blue-800 mt-1">
-                      Based on {formData.region} jurisdiction and {formData.matterType} practice area, this case will be routed to our specialized team for initial review.
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <h4 className="font-medium">Next Steps:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Initial review within 24 hours</li>
-                    <li>• Attorney assignment based on expertise</li>
-                    <li>• Conflict check and case evaluation</li>
-                    <li>• Client consultation scheduling</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AiTriageWidget />
 
           <Card className="mt-6">
             <CardHeader>
