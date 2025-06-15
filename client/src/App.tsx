@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Switch, Route } from "wouter";
+import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -392,59 +391,39 @@ function CalendarTab() {
 }
 
 function Router() {
-  return (
-    <Switch>
-      <Route path="/onboarding">
-        <Onboarding />
-      </Route>
-      <Route path="/admin">
-        <Admin />
-      </Route>
-      <Route path="/client-portal">
-        <ClientPortal />
-      </Route>
-      <Route path="/clients">
-        <Layout>
-          <ClientsTab />
-        </Layout>
-      </Route>
-      <Route path="/intake">
-        <Layout>
-          <IntakeTab />
-        </Layout>
-      </Route>
-      <Route path="/documents">
-        <Layout>
-          <DocumentsTab />
-        </Layout>
-      </Route>
-      <Route path="/billing">
-        <Layout>
-          <BillingTab />
-        </Layout>
-      </Route>
-      <Route path="/settings">
-        <Layout>
-          <SettingsTab />
-        </Layout>
-      </Route>
-      <Route path="/calendar">
-        <Layout>
-          <CalendarTab />
-        </Layout>
-      </Route>
-      <Route path="/">
-        <Layout>
-          <DashboardTab />
-        </Layout>
-      </Route>
-      <Route>
-        <Layout>
-          <NotFound />
-        </Layout>
-      </Route>
-    </Switch>
-  );
+  const [currentPath, setCurrentPath] = useState(window.location.pathname || '/');
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname || '/');
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const renderRoute = () => {
+    // Special routes (outside Layout)
+    if (currentPath === '/onboarding') return <Onboarding />;
+    if (currentPath === '/admin') return <Admin />;
+    if (currentPath === '/client-portal') return <ClientPortal />;
+    
+    // Main application routes (inside Layout)
+    return (
+      <Layout>
+        {currentPath === '/' && <DashboardTab />}
+        {currentPath === '/clients' && <ClientsTab />}
+        {currentPath === '/intake' && <IntakeTab />}
+        {currentPath === '/documents' && <DocumentsTab />}
+        {currentPath === '/billing' && <BillingTab />}
+        {currentPath === '/settings' && <SettingsTab />}
+        {currentPath === '/calendar' && <CalendarTab />}
+        {!['/clients', '/intake', '/documents', '/billing', '/settings', '/calendar'].includes(currentPath) && currentPath !== '/' && <NotFound />}
+      </Layout>
+    );
+  };
+
+  return renderRoute();
 }
 
 function App() {
