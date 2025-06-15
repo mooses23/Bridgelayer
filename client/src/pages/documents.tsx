@@ -16,65 +16,13 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+import DocumentUpload from "@/components/DocumentUpload";
+import DocumentDashboard from "@/components/DocumentDashboard";
+import ReviewLogs from "@/components/ReviewLogs";
+import AIResponseDebug from "@/components/AIResponseDebug";
+
 export default function Documents() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
-
-  // Sample document data
-  const documents = [
-    {
-      id: 1,
-      name: "NDA_Template_v2.pdf",
-      type: "NDA",
-      size: "2.4 MB",
-      status: "analyzed",
-      uploadedBy: "John Smith",
-      uploadedAt: "2024-06-15",
-      analysisStatus: "Complete"
-    },
-    {
-      id: 2,
-      name: "Employment_Contract_Draft.docx",
-      type: "Employment Agreement",
-      size: "1.8 MB",
-      status: "processing",
-      uploadedBy: "Sarah Johnson",
-      uploadedAt: "2024-06-15",
-      analysisStatus: "In Progress"
-    },
-    {
-      id: 3,
-      name: "Settlement_Agreement_Case123.pdf",
-      type: "Settlement",
-      size: "3.2 MB",
-      status: "reviewed",
-      uploadedBy: "Michael Brown",
-      uploadedAt: "2024-06-14",
-      analysisStatus: "Reviewed"
-    }
-  ];
-
-  const folders = [
-    { id: 1, name: "NDAs", count: 15 },
-    { id: 2, name: "Employment Contracts", count: 8 },
-    { id: 3, name: "Settlement Agreements", count: 12 },
-    { id: 4, name: "Real Estate", count: 6 }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "analyzed": return "bg-green-100 text-green-800";
-      case "processing": return "bg-blue-100 text-blue-800";
-      case "reviewed": return "bg-purple-100 text-purple-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const filteredDocuments = documents.filter(doc =>
-    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  console.log("Documents page: AIResponseDebug component mounted");
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -256,6 +204,33 @@ export default function Documents() {
                 <p className="text-xs text-muted-foreground">28% of plan limit</p>
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="upload">
+          <DocumentUpload />
+        </TabsContent>
+        <TabsContent value="dashboard">
+          <DocumentDashboard />
+        </TabsContent>
+        <TabsList>
+          <TabsTrigger value="upload">Upload</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="review-logs">Review Logs</TabsTrigger>
+          <TabsTrigger value="debug">AI Debug</TabsTrigger>
+        </TabsList>
+        <TabsContent value="review-logs">
+          <ReviewLogs />
+        </TabsContent>
+
+        <TabsContent value="debug">
+          <div className="space-y-4">
+            <div className="text-xs text-green-600 font-medium">[AIResponseDebug] is live</div>
+            <AIResponseDebug 
+              response={{
+                text: "Sample AI response for debugging purposes",
+                metadata: { model: "gpt-4", timestamp: new Date().toISOString() }
+              }}
+            />
           </div>
         </TabsContent>
       </Tabs>

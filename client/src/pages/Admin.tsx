@@ -29,8 +29,10 @@ import {
   Zap,
   History,
   Clock,
-  User
+  User,
+  Eye
 } from "lucide-react";
+import AdminGhostMode from "@/components/AdminGhostMode";
 import type { 
   Firm, 
   AvailableIntegration, 
@@ -39,6 +41,7 @@ import type {
 } from "@shared/schema";
 
 export default function Admin() {
+  console.log("Admin page: AdminGhostMode component mounted");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("firms");
@@ -977,7 +980,7 @@ export default function Admin() {
       
       <div className="container mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="firms" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               Firms
@@ -989,6 +992,10 @@ export default function Admin() {
             <TabsTrigger value="document-types" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Document Types
+            </TabsTrigger>
+            <TabsTrigger value="ghost-mode" className="flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              Ghost Mode
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex items-center gap-2">
               <History className="w-4 h-4" />
@@ -1010,6 +1017,13 @@ export default function Admin() {
 
           <TabsContent value="document-types">
             <DocumentTypesTab />
+          </TabsContent>
+
+          <TabsContent value="ghost-mode">
+            <div className="space-y-6">
+              <div className="text-xs text-green-600 font-medium mb-2">[AdminGhostMode] is live</div>
+              <AdminGhostMode />
+            </div>
           </TabsContent>
 
           <TabsContent value="audit">

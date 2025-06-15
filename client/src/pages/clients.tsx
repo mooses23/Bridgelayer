@@ -7,6 +7,7 @@ import { Search, Plus, Mail, Phone, User } from "lucide-react";
 import CommunicationsLog from "@/components/CommunicationsLog";
 
 export default function Clients() {
+  console.log("Clients page: CommunicationsLog component mounted");
   const [searchTerm, setSearchTerm] = useState("");
 
   // Sample client data
