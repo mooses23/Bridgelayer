@@ -1,14 +1,16 @@
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { Home, FileText, DollarSign, LogOut } from "lucide-react";
 
 export default function ClientLayout() {
-  const [location] = useLocation();
+  const location = useLocation();
+
+  console.log("Navigated to", location.pathname);
 
   const navigation = [
-    { name: "Dashboard", href: "/client/dashboard", icon: Home, current: location === "/client/dashboard" },
-    { name: "Invoices", href: "/client/invoices", icon: DollarSign, current: location === "/client/invoices" },
-    { name: "Documents", href: "/client/documents", icon: FileText, current: location === "/client/documents" },
+    { name: "Dashboard", href: "/client/dashboard", icon: Home, current: location.pathname === "/client/dashboard" },
+    { name: "Invoices", href: "/client/invoices", icon: DollarSign, current: location.pathname === "/client/invoices" },
+    { name: "Documents", href: "/client/documents", icon: FileText, current: location.pathname === "/client/documents" },
   ];
 
   return (
@@ -26,30 +28,30 @@ export default function ClientLayout() {
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <a className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      item.current
+                  <NavLink 
+                    key={item.name} 
+                    to={item.href}
+                    className={({ isActive }) => `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      isActive
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}>
-                      <Icon className={`mr-2 h-4 w-4 ${
-                        item.current ? 'text-blue-500' : 'text-gray-400'
-                      }`} />
-                      {item.name}
-                    </a>
-                  </Link>
+                    }`}
+                  >
+                    <Icon className={({ isActive }) => `mr-2 h-4 w-4 ${
+                      isActive ? 'text-blue-500' : 'text-gray-400'
+                    }`} />
+                    {item.name}
+                  </NavLink>
                 );
               })}
             </nav>
 
             {/* Logout */}
             <div className="flex items-center">
-              <Link href="/client/logout">
-                <a className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </a>
-              </Link>
+              <NavLink to="/client/logout" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </NavLink>
             </div>
           </div>
         </div>

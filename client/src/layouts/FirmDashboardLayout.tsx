@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { 
   Home, 
@@ -18,17 +18,19 @@ import { useTenant } from "@/context/TenantContext";
 
 export default function FirmLayout() {
   const { user, firm, logout } = useAuth();
-  const [location] = useLocation();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { hasFeature } = useTenant();
 
+  console.log("Navigated to", location.pathname);
+
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: Home, current: location === "/dashboard" },
-    ...(hasFeature('cases') ? [{ name: "Cases", href: "/cases", icon: Users, current: location === "/cases" }] : []),
-    ...(hasFeature('intake') ? [{ name: "Intake", href: "/intake", icon: Inbox, current: location === "/intake" }] : []),
-    ...(hasFeature('documents') ? [{ name: "Documents", href: "/documents", icon: FileText, current: location === "/documents" }] : []),
-    ...(hasFeature('billing') ? [{ name: "Billing", href: "/billing", icon: DollarSign, current: location === "/billing" }] : []),
-    { name: "Settings", href: "/settings", icon: Settings, current: location === "/settings" },
+    { name: "Dashboard", href: "/dashboard", icon: Home, current: location.pathname === "/dashboard" },
+    ...(hasFeature('cases') ? [{ name: "Cases", href: "/cases", icon: Users, current: location.pathname === "/cases" }] : []),
+    ...(hasFeature('intake') ? [{ name: "Intake", href: "/intake", icon: Inbox, current: location.pathname === "/intake" }] : []),
+    ...(hasFeature('documents') ? [{ name: "Documents", href: "/documents", icon: FileText, current: location.pathname === "/documents" }] : []),
+    ...(hasFeature('billing') ? [{ name: "Billing", href: "/billing", icon: DollarSign, current: location.pathname === "/billing" }] : []),
+    { name: "Settings", href: "/settings", icon: Settings, current: location.pathname === "/settings" },
   ];
 
   return (
@@ -69,18 +71,20 @@ export default function FirmLayout() {
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.name} href={item.href}>
-                  <a className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    item.current
+                <NavLink 
+                  key={item.name} 
+                  to={item.href}
+                  className={({ isActive }) => `group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive
                       ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}>
-                    <Icon className={`mr-3 h-5 w-5 ${
-                      item.current ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
-                    }`} />
-                    {item.name}
-                  </a>
-                </Link>
+                  }`}
+                >
+                  <Icon className={({ isActive }) => `mr-3 h-5 w-5 ${
+                    isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                  }`} />
+                  {item.name}
+                </NavLink>
               );
             })}
           </nav>

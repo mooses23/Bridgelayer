@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
 import { 
   Building2, 
@@ -14,15 +14,17 @@ import {
 } from "lucide-react";
 
 export default function AdminLayout() {
-  const [location] = useLocation();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  console.log("Navigated to", location.pathname);
+
   const navigation = [
-    { name: "Dashboard", href: "/admin", icon: Home, current: location === "/admin" },
-    { name: "Firms", href: "/admin/firms", icon: Building2, current: location === "/admin/firms" },
-    { name: "Usage Analytics", href: "/admin/usage", icon: BarChart3, current: location === "/admin/usage" },
-    { name: "Ghost Mode", href: "/admin/ghost", icon: Eye, current: location === "/admin/ghost" },
-    { name: "System Settings", href: "/admin/settings", icon: Settings, current: location === "/admin/settings" },
+    { name: "Dashboard", href: "/admin", icon: Home, current: location.pathname === "/admin" },
+    { name: "Firms", href: "/admin/firms", icon: Building2, current: location.pathname === "/admin/firms" },
+    { name: "Usage Analytics", href: "/admin/usage", icon: BarChart3, current: location.pathname === "/admin/usage" },
+    { name: "Ghost Mode", href: "/admin/ghost", icon: Eye, current: location.pathname === "/admin/ghost" },
+    { name: "System Settings", href: "/admin/settings", icon: Settings, current: location.pathname === "/admin/settings" },
   ];
 
   return (
@@ -58,18 +60,20 @@ export default function AdminLayout() {
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
-                <Link key={item.name} href={item.href}>
-                  <a className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    item.current
+                <NavLink 
+                  key={item.name} 
+                  to={item.href}
+                  className={({ isActive }) => `group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive
                       ? 'bg-red-50 text-red-700 border-r-2 border-red-700'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}>
-                    <Icon className={`mr-3 h-5 w-5 ${
-                      item.current ? 'text-red-500' : 'text-gray-400 group-hover:text-gray-500'
-                    }`} />
-                    {item.name}
-                  </a>
-                </Link>
+                  }`}
+                >
+                  <Icon className={({ isActive }) => `mr-3 h-5 w-5 ${
+                    isActive ? 'text-red-500' : 'text-gray-400 group-hover:text-gray-500'
+                  }`} />
+                  {item.name}
+                </NavLink>
               );
             })}
           </nav>
@@ -86,11 +90,9 @@ export default function AdminLayout() {
                 <p className="text-sm font-medium text-gray-900 truncate">System Admin</p>
                 <p className="text-xs text-gray-500 truncate">admin@firmsync.com</p>
               </div>
-              <Link href="/logout">
-                <a className="ml-3 p-2 text-gray-400 hover:text-gray-500" title="Sign out">
-                  <LogOut className="w-4 h-4" />
-                </a>
-              </Link>
+              <NavLink to="/logout" className="ml-3 p-2 text-gray-400 hover:text-gray-500" title="Sign out">
+                <LogOut className="w-4 h-4" />
+              </NavLink>
             </div>
           </div>
         </div>
