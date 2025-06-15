@@ -1277,7 +1277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         event = stripe.webhooks.constructEvent(req.body, sig, settings.stripeWebhookSecret);
       } catch (err) {
         console.error('Webhook signature verification failed:', err);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
 
       // Handle successful payment

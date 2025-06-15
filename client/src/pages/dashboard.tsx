@@ -85,7 +85,7 @@ export default function Dashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{documents.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(documents) ? documents.length : 0}</div>
             <p className="text-xs text-muted-foreground">
               +12% from last month
             </p>
@@ -98,7 +98,7 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clients.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(clients) ? clients.length : 0}</div>
             <p className="text-xs text-muted-foreground">
               +8% from last month
             </p>

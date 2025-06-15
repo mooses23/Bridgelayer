@@ -30,6 +30,7 @@ export default function Documents() {
   });
 
   const filteredDocuments = useMemo(() => {
+    if (!Array.isArray(documents)) return [];
     return documents.filter((doc: any) => 
       doc.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.type?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -91,7 +92,7 @@ export default function Documents() {
           </div>
 
           <div className="grid gap-4">
-            {filteredDocuments.map((doc) => (
+            {filteredDocuments.map((doc: any) => (
               <Card key={doc.id}>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -236,7 +237,10 @@ export default function Documents() {
           </div>
         </TabsContent>
         <TabsContent value="upload">
-          <DocumentUpload />
+          <DocumentUpload 
+            onDocumentUploaded={() => {}} 
+            onDocumentRemoved={() => {}} 
+          />
         </TabsContent>
         <TabsContent value="dashboard">
           <DocumentDashboard />

@@ -42,7 +42,7 @@ export default function AIReasoning({ reasoning }: AIReasoningProps) {
             <div className="mt-4 pt-4 border-t border-blue-200">
               <p className="text-xs text-blue-700 font-medium flex items-center">
                 <Shield className="mr-1" size={12} />
-                FIRMSYNC AI Assistant powered by BridgeLayer • Processing Time: 2.3 seconds • Document ID: DOC-{document.id}
+                FIRMSYNC AI Assistant powered by BridgeLayer • Processing Time: 2.3 seconds
               </p>
             </div>
           </div>

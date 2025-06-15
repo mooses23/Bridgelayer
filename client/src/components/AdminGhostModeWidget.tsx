@@ -119,7 +119,7 @@ export function AdminGhostModeWidget() {
     }
   };
 
-  const currentSession = Array.isArray(sessions) ? sessions.find((s: AdminGhostSession) => s.isActive) : null || activeSession;
+  const currentSession = (Array.isArray(sessions) ? sessions.find((s: AdminGhostSession) => s.isActive) : null) || activeSession;
 
   return (
     <Card className="h-full">
