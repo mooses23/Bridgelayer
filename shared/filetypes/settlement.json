@@ -1,0 +1,13 @@
+{
+  "doc_type": "settlement",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": false,
+    "formatting": true
+  },
+  "riskLevel": "high",
+  "customInstructions": "Examine release scope, payment terms, and confidentiality provisions. Flag any overly broad releases or unusual terms requiring attorney review.",
+  "reviewerRole": "admin"
+}

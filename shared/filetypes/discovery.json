@@ -1,0 +1,13 @@
+{
+  "doc_type": "discovery",
+  "enabled_features": {
+    "summarize": false,
+    "risk": true,
+    "clauses": false,
+    "crossref": false,
+    "formatting": true
+  },
+  "riskLevel": "high",
+  "customInstructions": "Focus on privilege assertions, objection validity, and response completeness. Check for potential waiver issues and escalate privilege concerns immediately.",
+  "reviewerRole": "admin"
+}

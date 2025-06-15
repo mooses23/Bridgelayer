@@ -1,0 +1,13 @@
+{
+  "doc_type": "contract",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": false
+  },
+  "riskLevel": "medium",
+  "customInstructions": "Focus on payment terms, performance obligations, and termination clauses. Verify compliance with applicable commercial law standards.",
+  "reviewerRole": "paralegal"
+}

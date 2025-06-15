@@ -1,0 +1,13 @@
+{
+  "doc_type": "litigation",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "riskLevel": "high",
+  "customInstructions": "Analyze procedural compliance, statute of limitations issues, and strategic positioning. Flag any deadlines or procedural requirements requiring immediate attention.",
+  "reviewerRole": "admin"
+}

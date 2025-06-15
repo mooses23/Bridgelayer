@@ -54,8 +54,11 @@ export default function Documents() {
 
   // Delete document mutation
   const deleteMutation = useMutation({
-    mutationFn: (documentId: number) => 
-      apiRequest(`/api/documents/${documentId}`, { method: 'DELETE' }),
+    mutationFn: async (documentId: number) => {
+      const response = await fetch(`/api/documents/${documentId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete document');
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
       toast({
@@ -116,7 +119,7 @@ export default function Documents() {
         <TabsContent value="upload" className="space-y-4">
           <DocumentUpload
             selectedDocument={selectedDocument}
-            onDocumentUploaded={(doc) => {
+            onDocumentUploaded={(doc: any) => {
               setSelectedDocument(doc);
               queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
             }}
@@ -145,7 +148,7 @@ export default function Documents() {
                     </Badge>
                   </Button>
                   
-                  {folders?.map((folder: any) => (
+                  {(folders as any[])?.map((folder: any) => (
                     <Button
                       key={folder.id}
                       variant={selectedFolder === folder.id ? "default" : "ghost"}
