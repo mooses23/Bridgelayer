@@ -1370,35 +1370,46 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return session || undefined;
   }
+
+  // Document Generation Storage Methods
+  async getFirmTemplates(firmId: number): Promise<any[]> {
+    // Return empty array for now - templates can be added later
+    return [];
+  }
+
+  async saveGeneratedDocument(data: {
+    firmId: number;
+    userId: number;
+    documentType: string;
+    county: string;
+    formData: any;
+    generatedContent: string;
+    aiPrompt: string;
+  }): Promise<any> {
+    // Create a document record in the documents table
+    const [document] = await db
+      .insert(documents)
+      .values({
+        firmId: data.firmId,
+        userId: data.userId,
+        filename: `${data.documentType}_${Date.now()}.txt`,
+        originalName: `Generated ${data.documentType}`,
+        content: data.generatedContent,
+        fileSize: data.generatedContent.length,
+        mimeType: 'text/plain',
+        status: 'completed',
+        documentType: data.documentType,
+        metadata: {
+          county: data.county,
+          formData: data.formData,
+          aiPrompt: data.aiPrompt,
+          generatedAt: new Date().toISOString()
+        }
+      })
+      .returning();
+    
+    return document;
+  }
 }
-
-// Document Generation Storage Methods
-DatabaseStorage.prototype.getFirmTemplates = async function(firmId: number): Promise<any[]> {
-  const result = await db.execute(sql`
-    SELECT * FROM firm_form_templates 
-    WHERE firm_id = ${firmId} AND is_active = true 
-    ORDER BY name ASC
-  `);
-  return result.rows || [];
-};
-
-DatabaseStorage.prototype.saveGeneratedDocument = async function(data: {
-  firmId: number;
-  userId: number;
-  documentType: string;
-  county: string;
-  formData: any;
-  generatedContent: string;
-  aiPrompt: string;
-}): Promise<any> {
-  const result = await db.execute(sql`
-    INSERT INTO generated_documents 
-    (firm_id, user_id, document_type, county, form_data, generated_content, ai_prompt, status) 
-    VALUES (${data.firmId}, ${data.userId}, ${data.documentType}, ${data.county}, 
-            ${JSON.stringify(data.formData)}, ${data.generatedContent}, ${data.aiPrompt}, 'generated')
-    RETURNING *
-  `);
-  return result.rows[0];
-};
 
 export const storage = new DatabaseStorage();

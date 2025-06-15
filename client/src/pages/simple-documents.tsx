@@ -57,7 +57,7 @@ export default function SimpleDocuments() {
       const data = await response.json();
       setGeneratedDocument(data.document);
     } catch (error) {
-      alert("Error generating document: " + error.message);
+      alert("Error generating document: " + (error as Error).message);
     } finally {
       setIsGenerating(false);
     }
