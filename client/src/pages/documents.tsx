@@ -23,6 +23,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import DocumentUpload from "@/components/DocumentUpload";
 import ReviewLogs from "@/components/ReviewLogs";
+import DocumentDashboard from "@/components/DocumentDashboard";
 
 export default function Documents() {
   const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
@@ -109,12 +110,17 @@ export default function Documents() {
         </div>
       </div>
 
-      <Tabs defaultValue="upload" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="dashboard" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="upload">Upload & Process</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="review-logs">Review Logs</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-4">
+          <DocumentDashboard firmId="firm_1" />
+        </TabsContent>
 
         <TabsContent value="upload" className="space-y-4">
           <DocumentUpload
