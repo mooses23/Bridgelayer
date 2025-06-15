@@ -227,8 +227,8 @@ function AppRouter() {
   // Handle authentication redirects
   useEffect(() => {
     if (!isLoading) {
-      // If user is not logged in, redirect to login (except for logout page)
-      if (!isAuthenticated && currentPath !== '/logout') {
+      // If user is not logged in, redirect to login (except for logout and login pages)
+      if (!isAuthenticated && currentPath !== '/logout' && currentPath !== '/login') {
         navigate('/login');
         return;
       }
