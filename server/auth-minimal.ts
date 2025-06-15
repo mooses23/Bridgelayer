@@ -102,8 +102,24 @@ export const login = async (req: Request, res: Response) => {
     req.session.userId = user.id;
     req.session.userRole = user.role;
 
+    // Determine redirect path based on role and onboarding state
+    let redirectPath = '/dashboard'; // default
+
+    if (user.role === 'admin') {
+      redirectPath = '/admin';
+    } else if ((user.role === 'firm_owner' || user.role === 'firm_admin' || user.role === 'paralegal') && user.firmId) {
+      // Check firm onboarding status
+      const firm = await storage.getFirmById(user.firmId);
+      if (firm && !firm.onboarded) {
+        redirectPath = '/onboarding';
+      } else {
+        redirectPath = '/dashboard';
+      }
+    }
+
     res.json({
       success: true,
+      redirectPath,
       user: {
         id: user.id,
         email: user.email,

@@ -42,7 +42,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; redirectPath?: string }> => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -53,15 +53,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        return true;
+        const loginData = await response.json();
+        setUser(loginData.user);
+        return { 
+          success: true, 
+          redirectPath: loginData.redirectPath 
+        };
       } else {
-        return false;
+        return { success: false };
       }
     } catch (error) {
       console.error('Login failed:', error);
-      return false;
+      return { success: false };
     }
   };
 

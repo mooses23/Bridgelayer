@@ -19,10 +19,12 @@ export default function Login() {
     setIsLoading(true);
     setError('');
 
-    const success = await login(email, password);
+    const result = await login(email, password);
     
-    if (success) {
-      setLocation('/dashboard');
+    if (result.success) {
+      // Use the redirect path returned from server or default to dashboard
+      const redirectPath = result.redirectPath || '/dashboard';
+      setLocation(redirectPath);
     } else {
       setError('Invalid email or password');
     }
@@ -88,9 +90,9 @@ export default function Login() {
             <div className="bg-gray-100 p-4 rounded-lg">
               <p className="font-medium mb-2">Demo Credentials:</p>
               <div className="space-y-1 text-xs">
-                <p><strong>Admin:</strong> admin@firmsync.com / admin123</p>
-                <p><strong>Firm Owner:</strong> owner@testfirm.com / test123</p>
-                <p><strong>Staff:</strong> staff@legaledge.com / staff123</p>
+                <p><strong>Admin:</strong> admin@firmsync.com / password</p>
+                <p><strong>Firm Owner:</strong> owner@testfirm.com / password</p>
+                <p><strong>Staff:</strong> staff@legaledge.com / password</p>
               </div>
             </div>
           </div>
