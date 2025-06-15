@@ -167,18 +167,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user;
 
-      // Check for tenant ID in headers or use user's firm_id
-      const tenantId = req.headers['x-tenant-id'] || user.firm_id;
+      // Check for tenant ID in headers or use user's firmId
+      const tenantId = req.headers['x-tenant-id'] || user?.firmId;
 
       if (!tenantId) {
         return res.status(404).json({ error: 'No tenant ID found' });
       }
 
       // Get firm data
-      // const firmStmt = db.prepare('SELECT * FROM firms WHERE id = ?'); // Assuming you have a database connection named 'db'
-      // const firm = firmStmt.get(tenantId);
       const firm = await storage.getFirm(parseInt(tenantId as string));
-
 
       if (!firm) {
         return res.status(404).json({ error: 'Firm not found' });

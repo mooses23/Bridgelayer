@@ -46,7 +46,7 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    const user = await storage.getUserById(req.session.userId);
+    const user = await storage.getUser(req.session.userId);
     if (!user) {
       req.session.destroy(() => {});
       return res.status(401).json({ message: "User not found" });
@@ -153,7 +153,7 @@ export const getSession = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "No active session" });
     }
 
-    const user = await storage.getUserById(req.session.userId);
+    const user = await storage.getUser(req.session.userId);
     if (!user) {
       req.session.destroy(() => {});
       return res.status(401).json({ message: "User not found" });

@@ -34,14 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing session
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/session');
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
 
           // Fetch firm data if user has firmId
           if (userData.firmId) {
-            const firmResponse = await fetch('/api/firm');
+            const firmResponse = await fetch('/api/firm', {
+              credentials: 'include'
+            });
             if (firmResponse.ok) {
               const firmData = await firmResponse.json();
               setFirm(firmData);
@@ -63,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
+      credentials: 'include'
     });
 
     if (!response.ok) {
@@ -75,7 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Fetch firm data if user has firmId
     if (userData.firmId) {
       try {
-        const firmResponse = await fetch('/api/firm');
+        const firmResponse = await fetch('/api/firm', {
+          credentials: 'include'
+        });
         if (firmResponse.ok) {
           const firmData = await firmResponse.json();
           setFirm(firmData);
@@ -87,7 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    fetch('/api/auth/logout', { method: 'POST' });
+    fetch('/api/auth/logout', { 
+      method: 'POST',
+      credentials: 'include'
+    });
     setUser(null);
     setFirm(null);
   };
