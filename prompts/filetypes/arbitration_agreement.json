@@ -1,0 +1,12 @@
+{
+  "document_type": "Arbitration Agreement",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on arbitration scope, arbitrator selection, procedural rules, and award enforcement. Review class action waivers, discovery limitations, and fee allocation. Pay attention to carve-outs for injunctive relief, unconscionability risks, and statutory compliance."
+}

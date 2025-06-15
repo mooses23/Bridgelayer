@@ -1,0 +1,12 @@
+{
+  "document_type": "Terms of Service",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on user obligations, service limitations, liability disclaimers, and termination provisions. Review intellectual property rights, prohibited uses, and modification procedures. Pay attention to dispute resolution, governing law, and regulatory compliance requirements."
+}

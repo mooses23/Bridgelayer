@@ -1,0 +1,12 @@
+{
+  "document_type": "Privacy Policy",
+  "risk_level": "medium",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on data collection practices, use limitations, sharing restrictions, and user rights. Review consent mechanisms, retention periods, and security measures. Pay attention to regulatory compliance (GDPR, CCPA), cookie policies, and third-party integrations."
+}

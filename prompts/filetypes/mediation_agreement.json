@@ -1,0 +1,12 @@
+{
+  "document_type": "Mediation Agreement",
+  "risk_level": "low",
+  "enabled_features": {
+    "summarize": true,
+    "risk": true,
+    "clauses": true,
+    "crossref": true,
+    "formatting": true
+  },
+  "custom_instructions": "Focus on mediation scope, mediator selection, confidentiality provisions, and settlement authority. Review cost allocation, time limitations, and good faith participation requirements. Pay attention to privilege protections, enforceability of settlements, and termination procedures."
+}
