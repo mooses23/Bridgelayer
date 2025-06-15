@@ -1,0 +1,15 @@
+{
+  "doc_type": "employment",
+  "uploaded_by": "user_1",
+  "timestamp": "2025-06-15T03:27:24.270Z",
+  "features_enabled": [
+    "summarize",
+    "risk",
+    "clauses",
+    "formatting"
+  ],
+  "assigned_reviewer": "associate",
+  "filename": "1749958044270_test_employment_agreement.txt",
+  "file_size": 1328,
+  "auto_detected": false
+}
