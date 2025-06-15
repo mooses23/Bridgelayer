@@ -261,6 +261,18 @@ export interface IStorage {
   getGhostSessionByToken(sessionToken: string): Promise<AdminGhostSession | undefined>;
   endGhostSession(sessionToken: string): Promise<boolean>;
   updateGhostSessionAuditTrail(sessionToken: string, auditTrail: any): Promise<AdminGhostSession | undefined>;
+  
+  // Document Generation
+  getFirmTemplates(firmId: number): Promise<any[]>;
+  saveGeneratedDocument(data: {
+    firmId: number;
+    userId: number;
+    documentType: string;
+    county: string;
+    formData: any;
+    generatedContent: string;
+    aiPrompt: string;
+  }): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {

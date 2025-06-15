@@ -1,42 +1,27 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 export default function TestDocuments() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Documents - Test</h1>
-        <p className="text-gray-600">Testing basic document functionality</p>
+    <div className="p-8">
+      <h1 className="text-3xl font-bold text-blue-600 mb-4">DOCUMENTS PAGE TEST</h1>
+      <div className="bg-green-100 p-4 rounded-lg">
+        <p className="text-lg font-semibold text-green-800">✓ This page is working!</p>
+        <p className="text-green-700">If you can see this message, the routing system is functional.</p>
       </div>
-
-      <Tabs defaultValue="generator" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="generator">Document Generator</TabsTrigger>
-          <TabsTrigger value="test">Test Tab</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="generator" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Document Generator</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Document generation interface will go here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="test" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Test Content</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>This is test content to verify the page renders.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      
+      <div className="mt-6 space-y-4">
+        <h2 className="text-xl font-bold">Document Generator Features:</h2>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Document type dropdown with multiple options</li>
+          <li>County/Region selection for firm-specific areas</li>
+          <li>Dynamic form fields based on document type</li>
+          <li>AI-powered document generation</li>
+          <li>Template upload functionality</li>
+          <li>Cloud storage integration</li>
+        </ul>
+      </div>
+      
+      <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+        <p className="text-blue-800">Once this basic test works, I'll implement the complete Document Generator system.</p>
+      </div>
     </div>
   );
 }

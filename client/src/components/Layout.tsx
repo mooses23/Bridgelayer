@@ -115,11 +115,7 @@ export default function Layout({ children }: LayoutProps) {
                     <item.icon className={`w-5 h-5 mr-3 ${active ? "text-blue-600" : ""}`} />
                     {item.name}
                   </span>
-                  {item.badge && (
-                    <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
-                      {item.badge}
-                    </Badge>
-                  )}
+
                 </Link>
               );
             })}
