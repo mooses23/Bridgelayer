@@ -46,20 +46,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", logout);
   app.get("/api/auth/session", getSession);
 
-  // Firm management endpoints - require authentication
-  app.get("/api/firm", requireAuth, async (req: any, res) => {
+  // Google OAuth routes
+  app.get('/api/auth/google', (req, res) => {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `response_type=code&` +
+      `scope=email profile&` +
+      `access_type=offline`;
+
+    res.redirect(authUrl);
+  });
+
+  app.get('/api/auth/google/callback', async (req, res) => {
     try {
-      if (!req.user?.firmId) {
-        return res.status(403).json({ message: "No firm association" });
+      const { code } = req.query;
+
+      if (!code) {
+        return res.send(`
+          <script>
+            window.opener.postMessage({
+              type: 'GOOGLE_AUTH_ERROR',
+              error: 'No authorization code received'
+            }, '${req.protocol}://${req.get('host')}');
+            window.close();
+          </script>
+        `);
       }
-      const firm = await storage.getFirm(req.user.firmId);
-      if (!firm) {
-        return res.status(404).json({ message: "Firm not found" });
+
+      // Exchange code for tokens
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: `${req.protocol}://${req.get('host')}/api/auth/google/callback`
+        })
+      });
+
+      const tokens = await tokenResponse.json();
+
+      if (!tokens.access_token) {
+        throw new Error('Failed to get access token');
       }
-      res.json(firm);
+
+      // Get user info from Google
+      const userResponse = await fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokens.access_token}`);
+      const googleUser = await userResponse.json();
+
+      // Find or create user in database
+      // const stmt = db.prepare('SELECT * FROM users WHERE email = ?'); // Assuming you have a database connection named 'db'
+      // let user = stmt.get(googleUser.email);
+      let user = await storage.getUserByEmail(googleUser.email);
+
+      if (!user) {
+        // Create new user
+        // const insertStmt = db.prepare(`
+        //   INSERT INTO users (email, firstName, lastName, role, createdAt)
+        //   VALUES (?, ?, ?, ?, ?)
+        // `);
+        //
+        // const result = insertStmt.run(
+        //   googleUser.email,
+        //   googleUser.given_name || '',
+        //   googleUser.family_name || '',
+        //   'firm_user',
+        //   new Date().toISOString()
+        // );
+        //
+        // user = { id: result.lastInsertRowid, email: googleUser.email, role: 'firm_user' };
+        const userData = {
+          email: googleUser.email,
+          username: googleUser.email,
+          firstName: googleUser.given_name || '',
+          lastName: googleUser.family_name || '',
+          role: 'firm_user' as const,
+          firmId: DEMO_FIRM_ID, // Assign a default firm ID
+          password: 'temp_password_123'
+        };
+
+        user = await storage.createUser(userData);
+      }
+
+      // Set session
+      // req.session.userId = user.id;
+      req.session.userId = user.id;
+
+      res.send(`
+        <script>
+          window.opener.postMessage({
+            type: 'GOOGLE_AUTH_SUCCESS',
+            user: ${JSON.stringify(user)}
+          }, '${req.protocol}://${req.get('host')}');
+          window.close();
+        </script>
+      `);
+
     } catch (error) {
-      console.error("Error fetching firm:", error);
-      res.status(500).json({ message: "Failed to fetch firm data" });
+      console.error('Google OAuth error:', error);
+      res.send(`
+        <script>
+          window.opener.postMessage({
+            type: 'GOOGLE_AUTH_ERROR',
+            error: '${error.message}'
+          }, '${req.protocol}://${req.get('host')}');
+          window.close();
+        </script>
+      `);
+    }
+  });
+
+  // Firm management endpoints - require authentication
+  app.get('/api/firm', requireAuth, async (req, res) => {
+    try {
+      const user = req.user;
+
+      // Check for tenant ID in headers or use user's firm_id
+      const tenantId = req.headers['x-tenant-id'] || user.firm_id;
+
+      if (!tenantId) {
+        return res.status(404).json({ error: 'No tenant ID found' });
+      }
+
+      // Get firm data
+      // const firmStmt = db.prepare('SELECT * FROM firms WHERE id = ?'); // Assuming you have a database connection named 'db'
+      // const firm = firmStmt.get(tenantId);
+      const firm = await storage.getFirm(parseInt(tenantId as string));
+
+
+      if (!firm) {
+        return res.status(404).json({ error: 'Firm not found' });
+      }
+
+      // Add default features if not present
+      const firmWithFeatures = {
+        ...firm,
+        features: {
+          billingEnabled: true,
+          aiDebug: false,
+          documentsEnabled: true,
+          intakeEnabled: true,
+          communicationsEnabled: true,
+          calendarEnabled: true,
+          adminGhostMode: false,
+          ...(firm.features || {})
+        }
+      };
+
+      res.json(firmWithFeatures);
+    } catch (error) {
+      console.error('Error fetching firm:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
@@ -167,13 +310,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { folderId } = req.query;
       let documents;
-      
+
       if (folderId) {
         documents = await storage.getFolderDocuments(parseInt(folderId as string), DEMO_FIRM_ID);
       } else {
         documents = await storage.getFirmDocuments(DEMO_FIRM_ID);
       }
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Error fetching documents:", error);
@@ -204,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const content = req.file.buffer.toString('utf-8');
       const selectedDocType = req.body.documentType || undefined;
       const firmId = `firm_${DEMO_FIRM_ID}`;
-      
+
       // Process document upload with prompt routing
       const { processDocumentUpload } = await import('./services/documentUploadProcessor.js');
       const processedDoc = await processDocumentUpload(
@@ -215,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `user_1`, // Will be replaced with proper auth
         selectedDocType
       );
-      
+
       const documentData = {
         firmId: DEMO_FIRM_ID,
         folderId: req.body.folderId ? parseInt(req.body.folderId) : null,
@@ -276,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!document) {
         return res.status(404).json({ message: "Document not found" });
       }
-      
+
       const analyses = await storage.getDocumentAnalyses(documentId);
       res.json(analyses);
     } catch (error) {
@@ -290,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { getDocumentTypeOptions } = await import('./services/documentTypeDetection.js');
       const documentTypes = getDocumentTypeOptions();
-      
+
       // Add default dummy document type entry
       const defaultDocumentTypes = [
         {
@@ -310,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         ...documentTypes
       ];
-      
+
       res.json(defaultDocumentTypes);
     } catch (error) {
       console.error("Error fetching document types:", error);
@@ -373,7 +516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firmId: DEMO_FIRM_ID,
         ...req.body
       });
-      
+
       const settings = await storage.updateFirmAnalysisSettings(DEMO_FIRM_ID, validatedData);
       res.json(settings);
     } catch (error) {
@@ -389,10 +532,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/onboarding/start", async (req, res) => {
     try {
       const { firmName, adminEmail } = req.body;
-      
+
       // Create slug from firm name
       const slug = firmName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      
+
       // Create the firm
       const firmData = {
         name: firmName,
@@ -400,9 +543,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         plan: "starter" as const,
         adminEmail
       };
-      
+
       const firm = await storage.createFirm(firmData);
-      
+
       // Create admin user
       const userData = {
         firmId: firm.id,
@@ -413,9 +556,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: "User",
         role: "firm_admin" as const
       };
-      
+
       const user = await storage.createUser(userData);
-      
+
       res.json({ 
         firm, 
         user,
@@ -430,18 +573,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/onboarding/configure", async (req, res) => {
     try {
       const { firmName, adminEmail, selectedDocTypes, documentConfigs } = req.body;
-      
+
       // Create config files for each selected document type
       const fs = await import('fs/promises');
       const path = await import('path');
-      
+
       const firmSlug = firmName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       const firmDir = path.join(process.cwd(), 'firms', firmSlug);
       const configDir = path.join(firmDir, 'config');
-      
+
       // Ensure directories exist
       await fs.mkdir(configDir, { recursive: true });
-      
+
       // Generate config files for each document type
       for (const docType of selectedDocTypes) {
         const config = documentConfigs[docType];
@@ -462,12 +605,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             suggestionMode: config.suggestionMode,
             customInstructions: ''
           };
-          
+
           const configPath = path.join(configDir, `${docType}.json`);
           await fs.writeFile(configPath, JSON.stringify(configData, null, 2));
         }
       }
-      
+
       // Create summary file
       const summaryData = {
         firmName,
@@ -476,10 +619,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentTypes: selectedDocTypes,
         configurations: documentConfigs
       };
-      
+
       const summaryPath = path.join(firmDir, 'onboarding-summary.json');
       await fs.writeFile(summaryPath, JSON.stringify(summaryData, null, 2));
-      
+
       res.json({ 
         message: "Onboarding completed successfully",
         configPath: configDir,
@@ -506,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { title, filename, documentId } = req.body;
       const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const threadData = {
         firmId: DEMO_FIRM_ID,
         threadId,
@@ -515,7 +658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentId: documentId || null,
         createdBy: DEMO_USER_ID
       };
-      
+
       const thread = await storage.createMessageThread(threadData);
       res.status(201).json(thread);
     } catch (error) {
@@ -538,7 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/messages/send", async (req, res) => {
     try {
       const { threadId, content, recipientRole, senderRole } = req.body;
-      
+
       if (!threadId || !content || !senderRole) {
         return res.status(400).json({ message: "Missing required fields: threadId, content, senderRole" });
       }
@@ -558,7 +701,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isSystemMessage: false,
         readBy: [DEMO_USER_ID] // Mark as read by sender
       };
-      
+
       const message = await storage.createMessage(messageData);
       res.status(201).json(message);
     } catch (error) {
@@ -669,14 +812,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error: any) {
       console.error('[AI Review] Error during analysis:', error);
-      
+
       if (error.code === 'insufficient_quota') {
         return res.status(402).json({
           message: "OpenAI API quota exceeded. Please check your billing status.",
           error_type: "quota_exceeded"
         });
       }
-      
+
       if (error.code === 'invalid_api_key') {
         return res.status(401).json({
           message: "Invalid OpenAI API key. Please check your configuration.",
@@ -694,14 +837,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/review/status/:firm_id/:filename", async (req, res) => {
     try {
       const { firm_id, filename } = req.params;
-      
+
       const baseFilename = path.parse(filename).name;
       const responsePath = path.join(process.cwd(), 'firms', firm_id, 'review_logs', `${baseFilename}_response.txt`);
-      
+
       try {
         const stats = await fs.stat(responsePath);
         const content = await fs.readFile(responsePath, 'utf-8');
-        
+
         res.json({
           status: 'reviewed',
           completed_at: stats.mtime.toISOString(),
@@ -727,14 +870,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/review/result/:firm_id/:filename", async (req, res) => {
     try {
       const { firm_id, filename } = req.params;
-      
+
       const baseFilename = path.parse(filename).name;
       const responsePath = path.join(process.cwd(), 'firms', firm_id, 'review_logs', `${baseFilename}_response.txt`);
-      
+
       try {
         const content = await fs.readFile(responsePath, 'utf-8');
         const stats = await fs.stat(responsePath);
-        
+
         res.json({
           analysis: content,
           completed_at: stats.mtime.toISOString(),
@@ -759,7 +902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = parseInt(req.params.firmId);
       const { getFirmVerticalInfo } = await import('./services/verticalAwareDocumentProcessor.js');
-      
+
       const verticalInfo = await getFirmVerticalInfo(firmId);
       res.json(verticalInfo);
     } catch (error) {
@@ -772,7 +915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = parseInt(req.params.firmId);
       const { getFirmDocumentTypes } = await import('./services/verticalAwareDocumentProcessor.js');
-      
+
       const documentTypes = await getFirmDocumentTypes(firmId);
       res.json(documentTypes);
     } catch (error) {
@@ -784,13 +927,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/vertical/analyze", async (req, res) => {
     try {
       const { documentId, firmId } = req.body;
-      
+
       if (!documentId || !firmId) {
         return res.status(400).json({ message: "Document ID and Firm ID are required" });
       }
 
       const { processDocumentWithVertical } = await import('./services/verticalAwareDocumentProcessor.js');
-      
+
       await processDocumentWithVertical(documentId, firmId);
       res.json({ 
         message: "Document processed successfully with vertical-aware analysis",
@@ -833,7 +976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: "Human resources document analysis for HR professionals"
         }
       ];
-      
+
       res.json(availableVerticals);
     } catch (error) {
       console.error("Error fetching available verticals:", error);
@@ -842,13 +985,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enterprise-grade systems API endpoints
-  
+
   // 1. Audit Logging API
   app.get("/api/audit-logs", async (req, res) => {
     try {
       const { AuditService } = await import('./services/auditService.js');
       const { limit, action, startDate, endDate } = req.query;
-      
+
       let logs;
       if (action) {
         logs = await AuditService.getAuditLogsByAction(DEMO_FIRM_ID, action as string);
@@ -861,7 +1004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         logs = await AuditService.getFirmAuditLogs(DEMO_FIRM_ID, limit ? parseInt(limit as string) : undefined);
       }
-      
+
       res.json(logs);
     } catch (error) {
       console.error("Error fetching audit logs:", error);
@@ -883,7 +1026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
       });
-      
+
       res.json({ message: "Audit log created successfully" });
     } catch (error) {
       console.error("Error creating audit log:", error);
@@ -927,7 +1070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         resourceId: req.body.resourceId,
         priority: req.body.priority,
       });
-      
+
       res.json({ message: "Notification created successfully" });
     } catch (error) {
       console.error("Error creating notification:", error);
@@ -940,7 +1083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { NotificationService } = await import('./services/notificationService.js');
       const notificationId = parseInt(req.params.id);
       const success = await NotificationService.markAsRead(notificationId, DEMO_USER_ID);
-      
+
       if (success) {
         res.json({ message: "Notification marked as read" });
       } else {
@@ -1139,10 +1282,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/billing/invoices", async (req, res) => {
     try {
       const { timeLogIds, ...invoiceData } = req.body;
-      
+
       // Generate invoice number
       const invoiceNumber = `INV-${Date.now()}`;
-      
+
       const invoice = await storage.createInvoice({
         ...invoiceData,
         firmId: DEMO_FIRM_ID,
@@ -1154,13 +1297,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (timeLogIds && timeLogIds.length > 0) {
         const timeLogs = await storage.getFirmTimeLogs(DEMO_FIRM_ID);
         const selectedLogs = timeLogs.filter(log => timeLogIds.includes(log.id));
-        
+
         for (let i = 0; i < selectedLogs.length; i++) {
           const log = selectedLogs[i];
           const hours = log.hours / 60;
           const rate = log.billableRate || 25000; // Default rate
           const amount = Math.round(hours * rate);
-          
+
           await storage.createInvoiceLineItem({
             invoiceId: invoice.id,
             timeLogId: log.id,
@@ -1210,7 +1353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/billing/create-payment-intent", async (req, res) => {
     try {
       const { invoiceId, amount, clientEmail } = req.body;
-      
+
       // Get firm billing settings to retrieve Stripe keys
       const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
       if (!settings?.stripeEnabled || !settings.stripeSecretKey) {
@@ -1218,7 +1361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const stripe = require('stripe')(settings.stripeSecretKey);
-      
+
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount), // Amount should already be in cents
         currency: 'usd',
@@ -1327,7 +1470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/client-portal/login", async (req, res) => {
     try {
       const { email, password, token } = req.body;
-      
+
       if (token) {
         // Token-based login (secure one-click links)
         const clientAuth = await storage.getClientAuthByToken(token);
@@ -1335,7 +1478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             (clientAuth.tokenExpiresAt && new Date() > clientAuth.tokenExpiresAt)) {
           return res.status(401).json({ message: "Invalid or expired token" });
         }
-        
+
         await storage.updateClientAuth(clientAuth.id, { lastLoginAt: new Date() });
         res.json({ 
           success: true, 
@@ -1410,7 +1553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/billing/generate-1099", async (req, res) => {
     try {
       const { year, contractorData } = req.body;
-      
+
       // Use existing AI service to generate 1099 form
       const formData = await storage.generateTaxForm('1099', {
         year,
@@ -1448,7 +1591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Billing and Time Tracking Routes
-  
+
   // Time entries management
   app.get("/api/time-entries", requireAuth, async (req, res) => {
     try {
@@ -1535,7 +1678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const firmId = req.user!.firmId;
       const invoiceId = parseInt(req.params.id);
       const pdfBuffer = await billingStorage.generateInvoicePDF(firmId, invoiceId);
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceId}.pdf`);
       res.send(pdfBuffer);
@@ -1550,7 +1693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { invoiceId, amount } = req.body;
       const firmId = req.user!.firmId;
-      
+
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount), // Amount in cents
         currency: "usd",
@@ -1586,6 +1729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(settings);
     } catch (error) {
       console.error("Error updating billing settings:", error);
+      res.status<string>("/api/billing/settings", error);
       res.status(500).json({ message: "Failed to update billing settings" });
     }
   });
@@ -1604,7 +1748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/generate-document", async (req, res) => {
     try {
       const { documentType, county, formData, useTemplate } = req.body;
-      
+
       // Get firm-specific template if requested
       let templateContent = null;
       if (useTemplate) {
@@ -1617,7 +1761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Build AI prompt for document generation
       const prompt = buildDocumentGenerationPrompt(documentType, county, formData, templateContent);
-      
+
       // Generate document using OpenAI
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -1726,9 +1870,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firmId: DEMO_FIRM_ID,
         intakeNumber
       };
-      
+
       const intake = await storage.createClientIntake(intakeData);
-      
+
       // Trigger AI triage
       if (intake) {
         try {
@@ -1739,7 +1883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Continue without triage if AI fails
         }
       }
-      
+
       res.json(intake);
     } catch (error) {
       console.error("Error creating client intake:", error);
@@ -1773,14 +1917,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const documentId = parseInt(req.params.documentId);
       const document = await storage.getDocument(documentId, DEMO_FIRM_ID);
-      
+
       if (!document) {
         return res.status(404).json({ message: "Document not found" });
       }
-      
+
       const triageResult = await performDocumentTriage(document, DEMO_FIRM_ID);
       const result = await storage.createAiTriageResult(triageResult);
-      
+
       res.json(result);
     } catch (error) {
       console.error("Error performing document triage:", error);
@@ -2011,7 +2155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { targetFirmId, purpose, notes } = req.body;
       const sessionToken = `ghost_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const sessionData = {
         adminUserId: 1, // Admin user ID
         targetFirmId,
@@ -2039,6 +2183,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error ending ghost session:", error);
       res.status(500).json({ message: "Failed to end ghost session" });
+    }
+  });
+
+  // Update firm endpoint to handle both /api/firm and /api/firms/:id
+  app.get('/api/firms/:id', requireAuth, async (req, res) => {
+    try {
+      const firmId = req.params.id;
+      const user = req.user;
+      const tenantId = req.headers['x-tenant-id'];
+
+      // Admin users can access any firm, others only their own or tenant-scoped firm
+      const allowedFirmId = tenantId || user.firm_id;
+
+      if (user.role !== 'admin' && allowedFirmId !== firmId) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // const firmStmt = db.prepare('SELECT * FROM firms WHERE id = ?');
+      // const firm = firmStmt.get(firmId);
+      const firm = await storage.getFirm(parseInt(firmId));
+
+      if (!firm) {
+        return res.status(404).json({ error: 'Firm not found' });
+      }
+
+      // Add default features if not present
+      const firmWithFeatures = {
+        ...firm,
+        features: {
+          billingEnabled: true,
+          aiDebug: false,
+          documentsEnabled: true,
+          intakeEnabled: true,
+          communicationsEnabled: true,
+          calendarEnabled: true,
+          adminGhostMode: false,
+          ...(firm.features || {})
+        }
+      };
+
+      res.json(firmWithFeatures);
+    } catch (error) {
+      console.error('Error fetching firm:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 
@@ -2182,22 +2370,22 @@ Provide triage assessment in JSON format:
 // Helper function to build AI prompts for document generation
 function buildDocumentGenerationPrompt(documentType: string, county: string, formData: any, templateContent?: string | null): string {
   const basePrompt = `Generate a professional legal document for ${documentType} in ${county}, California.`;
-  
+
   let prompt = basePrompt + "\n\n";
-  
+
   if (templateContent) {
     prompt += `Use this template as a formatting guide:\n${templateContent}\n\n`;
   }
-  
+
   prompt += "Document Details:\n";
-  
+
   // Add form data to prompt
   Object.entries(formData).forEach(([key, value]) => {
     prompt += `- ${key}: ${value}\n`;
   });
-  
+
   prompt += "\n";
-  
+
   // Document-specific instructions
   switch (documentType) {
     case 'eviction-notice':
@@ -2207,7 +2395,7 @@ function buildDocumentGenerationPrompt(documentType: string, county: string, for
 - Consequences of non-compliance
 - Required statutory disclosures for ${county}`;
       break;
-      
+
     case 'rent-demand':
       prompt += `Generate a formal rent demand letter that includes:
 - Professional letterhead format
@@ -2216,7 +2404,7 @@ function buildDocumentGenerationPrompt(documentType: string, county: string, for
 - Late fee calculations if applicable
 - Next steps if payment is not received`;
       break;
-      
+
     case 'lease-agreement':
       prompt += `Generate a residential lease agreement compliant with California landlord-tenant law including:
 - All required California disclosures
@@ -2225,7 +2413,7 @@ function buildDocumentGenerationPrompt(documentType: string, county: string, for
 - Local ${county} specific requirements
 - Clear lease terms and conditions`;
       break;
-      
+
     case 'employment-contract':
       prompt += `Generate an employment agreement that includes:
 - At-will employment language compliant with California Labor Code
@@ -2234,12 +2422,12 @@ function buildDocumentGenerationPrompt(documentType: string, county: string, for
 - California-specific employment law compliance
 - Termination procedures`;
       break;
-      
+
     default:
       prompt += `Generate the document with proper legal formatting and language appropriate for ${county}, California jurisdiction.`;
   }
-  
+
   prompt += `\n\nEnsure the document is professionally formatted, legally accurate, and includes all necessary dates, signatures lines, and contact information.`;
-  
+
   return prompt;
 }

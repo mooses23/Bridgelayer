@@ -14,29 +14,22 @@ import {
   Bell 
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTenant } from "@/context/TenantContext";
 
 export default function FirmLayout() {
   const { user, firm, logout } = useAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Feature flags - would come from firm settings in real implementation
-  const features = {
-    cases: true,
-    intake: true,
-    documents: true,
-    billing: true,
-    settings: true
-  };
+  const { hasFeature } = useTenant();
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home, current: location === "/dashboard" },
-    { name: "Cases", href: "/cases", icon: Users, current: location === "/cases", enabled: features.cases },
-    { name: "Intake", href: "/intake", icon: Inbox, current: location === "/intake", enabled: features.intake },
-    { name: "Documents", href: "/documents", icon: FileText, current: location === "/documents", enabled: features.documents },
-    { name: "Billing", href: "/billing", icon: DollarSign, current: location === "/billing", enabled: features.billing },
-    { name: "Settings", href: "/settings", icon: Settings, current: location === "/settings", enabled: features.settings },
-  ].filter(item => item.enabled !== false);
+    ...(hasFeature('cases') ? [{ name: "Cases", href: "/cases", icon: Users, current: location === "/cases" }] : []),
+    ...(hasFeature('intake') ? [{ name: "Intake", href: "/intake", icon: Inbox, current: location === "/intake" }] : []),
+    ...(hasFeature('documents') ? [{ name: "Documents", href: "/documents", icon: FileText, current: location === "/documents" }] : []),
+    ...(hasFeature('billing') ? [{ name: "Billing", href: "/billing", icon: DollarSign, current: location === "/billing" }] : []),
+    { name: "Settings", href: "/settings", icon: Settings, current: location === "/settings" },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">

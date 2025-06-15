@@ -33,7 +33,7 @@ let isPoolHealthy = true;
 pool.on('error', (err) => {
   console.error('Database pool error:', err.message);
   isPoolHealthy = false;
-  
+
   // Attempt to recover after a delay
   setTimeout(() => {
     console.log('Attempting to restore database connection...');
@@ -64,7 +64,7 @@ export const withDatabase = async (operation: () => Promise<any>) => {
   if (!isPoolHealthy) {
     throw new Error('Database connection is not healthy');
   }
-  
+
   try {
     return await operation();
   } catch (error) {
@@ -79,7 +79,7 @@ let isShuttingDown = false;
 const gracefulShutdown = async () => {
   if (isShuttingDown) return;
   isShuttingDown = true;
-  
+
   console.log('Shutting down database connections...');
   try {
     await pool.end();
@@ -92,3 +92,15 @@ const gracefulShutdown = async () => {
 
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
+
+// Create firms table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS firms (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    onboarded BOOLEAN DEFAULT 0,
+    plan TEXT DEFAULT 'free',
+    features TEXT DEFAULT '{}',
+    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`);
