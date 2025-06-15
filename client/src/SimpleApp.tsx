@@ -4,12 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/Layout";
-import Dashboard from "@/pages/dashboard";
-import Documents from "@/pages/documents";
-import Clients from "@/pages/clients";
-import Intake from "@/pages/intake";
-import Billing from "@/pages/billing";
-import Settings from "@/pages/settings";
 
 // Enhanced Interactive Dashboard Component
 function EnhancedDashboard() {
@@ -173,15 +167,15 @@ function SimpleApp() {
       case 'dashboard':
         return <EnhancedDashboard />;
       case 'clients':
-        return <Clients />;
+        return <div className="p-6"><h1 className="text-2xl font-bold">Clients</h1><p>Client management interface</p></div>;
       case 'documents':
-        return <Documents />;
+        return <div className="p-6"><h1 className="text-2xl font-bold">Documents</h1><p>Document analysis and management</p></div>;
       case 'intake':
-        return <Intake />;
+        return <div className="p-6"><h1 className="text-2xl font-bold">Intake</h1><p>Client intake and case management</p></div>;
       case 'billing':
-        return <Billing />;
+        return <div className="p-6"><h1 className="text-2xl font-bold">Billing</h1><p>Time tracking and invoicing</p></div>;
       case 'settings':
-        return <Settings />;
+        return <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1><p>Application configuration</p></div>;
       default:
         return <EnhancedDashboard />;
     }
