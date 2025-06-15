@@ -93,14 +93,5 @@ const gracefulShutdown = async () => {
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
-// Create firms table
-db.exec(`
-  CREATE TABLE IF NOT EXISTS firms (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    onboarded BOOLEAN DEFAULT 0,
-    plan TEXT DEFAULT 'free',
-    features TEXT DEFAULT '{}',
-    createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+// Database initialization will be handled by Drizzle migrations
+// The schema is defined in shared/schema.ts and applied via drizzle-kit

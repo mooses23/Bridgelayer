@@ -34,13 +34,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check for existing session
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/auth/session');
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
 
-          // Fetch firm data if user has firm_id
-          if (userData.firm_id) {
+          // Fetch firm data if user has firmId
+          if (userData.firmId) {
             const firmResponse = await fetch('/api/firm');
             if (firmResponse.ok) {
               const firmData = await firmResponse.json();
@@ -72,8 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userData = await response.json();
     setUser(userData);
 
-    // Fetch firm data if user has firm_id
-    if (userData.firm_id) {
+    // Fetch firm data if user has firmId
+    if (userData.firmId) {
       try {
         const firmResponse = await fetch('/api/firm');
         if (firmResponse.ok) {
