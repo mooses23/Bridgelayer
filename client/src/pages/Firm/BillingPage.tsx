@@ -1,14 +1,50 @@
 
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import { DollarSign, Clock, FileText, TrendingUp, Plus, Download } from "lucide-react";
 import { useTenant } from "@/context/TenantContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { timeEntrySchema, invoiceSchema } from "@shared/validation";
+
+interface TimeEntryFormData {
+  clientId: number;
+  caseId?: number | null;
+  description: string;
+  hours: number;
+  billableRate: number;
+  date: Date;
+  billable: boolean;
+}
 
 export default function BillingPage() {
   const { tenant } = useTenant();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showTimeForm, setShowTimeForm] = useState(false);
+
+  // Time entry form validation
+  const {
+    register: registerTime,
+    handleSubmit: handleTimeSubmit,
+    formState: { errors: timeErrors, isSubmitting: isTimeSubmitting },
+    setValue: setTimeValue,
+    reset: resetTimeForm
+  } = useForm({
+    resolver: yupResolver(timeEntrySchema),
+    defaultValues: {
+      billable: true,
+      date: new Date()
+    }
+  });
 
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
     queryKey: ["invoices", tenant?.id],
@@ -29,18 +65,38 @@ export default function BillingPage() {
   });
 
   const addTimeMutation = useMutation({
-    mutationFn: (entry: any) => 
+    mutationFn: (entry: TimeEntryFormData) => 
       fetch("/api/time-logs", { 
         method: "POST", 
         credentials: "include", 
         headers: { "Content-Type": "application/json" }, 
         body: JSON.stringify({ tenant: tenant?.id, ...entry }) 
-      }).then(r => r.json()),
+      }).then(res => {
+        if (!res.ok) throw new Error('Failed to create time entry');
+        return res.json();
+      }),
     onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Time entry created successfully"
+      });
       queryClient.invalidateQueries({ queryKey: ["timeLogs", tenant?.id] });
       queryClient.invalidateQueries({ queryKey: ["billingSummary", tenant?.id] });
+      resetTimeForm();
+      setShowTimeForm(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create time entry",
+        variant: "destructive"
+      });
     }
   });
+
+  const onTimeSubmit = (data: TimeEntryFormData) => {
+    addTimeMutation.mutate(data);
+  };
 
   // Fallback data for when API is not available
   const fallbackInvoices = [

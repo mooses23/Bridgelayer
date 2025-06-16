@@ -10,6 +10,11 @@ import {
   insertFolderSchema,
   insertMessageSchema
 } from "@shared/schema";
+import { 
+  clientIntakeSchema, 
+  timeEntrySchema, 
+  validateAsync 
+} from "@shared/validation";
 import { storage } from "./storage";
 import { billingStorage } from "./storage-billing";
 import { processDocument } from "./services/documentProcessor";
@@ -403,9 +408,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
 
+      // Server-side validation using shared Yup schema
+      const validation = await validateAsync(timeEntrySchema, timeEntry);
+      if (!validation.isValid) {
+        return res.status(400).json({ 
+          error: 'Validation failed', 
+          details: validation.errors 
+        });
+      }
+
       const firmId = parseInt(tenant);
       const newTimeEntry = await billingStorage.createTimeEntry({
-        ...timeEntry,
+        ...validation.data,
         firmId
       });
       
@@ -2183,9 +2197,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/client-intakes", async (req, res) => {
     try {
+      // Server-side validation using shared Yup schema
+      const validation = await validateAsync(clientIntakeSchema, req.body);
+      if (!validation.isValid) {
+        return res.status(400).json({ 
+          error: 'Validation failed', 
+          details: validation.errors 
+        });
+      }
+
       const intakeNumber = `INT-${Date.now()}`;
       const intakeData = {
-        ...req.body,
+        ...validation.data,
         firmId: DEMO_FIRM_ID,
         intakeNumber
       };
