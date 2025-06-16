@@ -38,6 +38,29 @@ const STORAGE_PROVIDERS = [
 
 export function ApiKeysStep({ data, updateData, onNext, onPrevious }: ApiKeysStepProps) {
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<Record<string, boolean>>({});
+
+  // Check OAuth status on component mount
+  React.useEffect(() => {
+    const checkOAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/oauth/status/current-tenant');
+        if (response.ok) {
+          const status = await response.json();
+          setConnectionStatus(status);
+          
+          // Update form data if a provider is already connected
+          if (status.activeProvider && !data.storageProvider) {
+            updateData({ storageProvider: status.activeProvider });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check OAuth status:', error);
+      }
+    };
+    
+    checkOAuthStatus();
+  }, [data.storageProvider, updateData]);
 
   const handleOAuthConnect = async (provider: 'google' | 'dropbox' | 'onedrive') => {
     setConnecting(provider);
@@ -139,7 +162,7 @@ export function ApiKeysStep({ data, updateData, onNext, onPrevious }: ApiKeysSte
 
       <div className="grid gap-4">
         {STORAGE_PROVIDERS.map((provider) => {
-          const isConnected = data.storageProvider === provider.id;
+          const isConnected = data.storageProvider === provider.id || connectionStatus[provider.id];
           const isConnecting = connecting === provider.id;
 
           return (

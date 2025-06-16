@@ -403,6 +403,10 @@ router.get("/oauth/status/:tenantId", async (req, res) => {
   try {
     const { tenantId } = req.params;
     
+    if (!tenantId || tenantId.trim() === '') {
+      return res.status(400).json({ error: 'Valid tenant ID required' });
+    }
+    
     // Find firm and settings
     const [firm] = await db
       .select()
@@ -420,7 +424,13 @@ router.get("/oauth/status/:tenantId", async (req, res) => {
       .where(eq(firmSettings.firmId, firm.id))
       .limit(1);
     
-    const oauthTokens = settings?.oauthTokens ? JSON.parse(settings.oauthTokens) : {};
+    let oauthTokens = {};
+    try {
+      oauthTokens = settings?.oauthTokens ? JSON.parse(settings.oauthTokens) : {};
+    } catch (parseError) {
+      console.error('Failed to parse OAuth tokens:', parseError);
+      oauthTokens = {};
+    }
     
     const status = {
       google: !!oauthTokens.google,

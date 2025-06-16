@@ -892,7 +892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/firm/analysis-settings", async (req, res) => {
     try {
-      const validatedData = insertFirmAnalysisSettingsSchema.parse({
+      const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includes fixes and improvements based on the code review.
         firmId: DEMO_FIRM_ID,
         ...req.body
       });
@@ -1755,7 +1755,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment processing endpoints
   app.post("/api/billing/create-payment-intent", async (req, res) => {
     try {
-      const { invoiceId, amount, clientEmail } = req.body;
+      const { invoiceId, amount, clientEmail } = reqde code review and incorporating OAuth route registration.
+```typescript
+.body;
 
       // Get firm billing settings to retrieve Stripe keys
       const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
@@ -2611,7 +2613,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admin users can access any firm, others only their own or tenant-scoped firm
       const allowedFirmId = tenantId || user.firmId;
 
-      if (user.role !== 'admin' && allowedFirmId !== firmId) {
+      if (user.role !== 'admin' &&```typescript
+ allowedFirmId !== firmId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -3141,6 +3144,11 @@ app.get('/api/tenant/config', async (req, res) => {
       res.status(500).json({ error: 'Failed to retrieve sessions' });
     }
   });
+
+  // Register route modules
+  app.use('/api/admin', adminRoutes);
+  app.use('/api/onboarding', onboardingRoutes);
+  app.use('/api', oauthRoutes);
 
   const httpServer = createServer(app);
 
