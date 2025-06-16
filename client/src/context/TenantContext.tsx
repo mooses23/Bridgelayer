@@ -42,12 +42,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   // Load tenant data based on user's firmId
   useEffect(() => {
     if (isLoading) return; // Wait for session to load
-    
+
     if (!user?.firmId) {
       setLoading(false);
       return;
     }
-    
+
     fetch(`/api/tenant-by-id/${user.firmId}`, { credentials: "include" })
       .then(r => r.json())
       .then(data => setTenant(data))

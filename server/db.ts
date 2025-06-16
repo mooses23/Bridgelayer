@@ -17,12 +17,12 @@ if (!process.env.DATABASE_URL) {
 // Configure connection pool with conservative settings
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  max: 5,
-  min: 1,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 5000,
-  query_timeout: 10000,
-  statement_timeout: 10000,
+  max: 3,
+  min: 0,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+  query_timeout: 15000,
+  statement_timeout: 15000,
 });
 
 export const db = drizzle({ client: pool, schema });
@@ -60,16 +60,28 @@ export const checkDatabaseHealth = async () => {
 };
 
 // Database connection wrapper with retry
-export const withDatabase = async (operation: () => Promise<any>) => {
-  if (!isPoolHealthy) {
-    throw new Error('Database connection is not healthy');
-  }
-
-  try {
-    return await operation();
-  } catch (error) {
-    console.error('Database operation failed:', error);
-    throw error;
+export const withDatabase = async (operation: () => Promise<any>, retries = 2) => {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      console.error(`Database operation failed (attempt ${attempt + 1}):`, error.message);
+      
+      if (attempt === retries) {
+        throw error;
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+      
+      // Reset pool health on connection errors
+      if (error.message.includes('Connection terminated') || error.message.includes('connect')) {
+        isPoolHealthy = false;
+        setTimeout(() => {
+          isPoolHealthy = true;
+        }, 2000);
+      }
+    }
   }
 };
 
