@@ -42,8 +42,9 @@ export default function AdminDashboard() {
     systemHealth: "Unknown"
   });
 
-  // Get recent firms from tenants data
-  const recentFirms = tenants.slice(0, 3).map((tenant: any) => ({
+  // Get recent firms from tenants data - ensure tenants is an array
+  const tenantsArray = Array.isArray(tenants) ? tenants : [];
+  const recentFirms = tenantsArray.slice(0, 3).map((tenant: any) => ({
     id: tenant.id,
     name: tenant.name,
     plan: tenant.plan || "Professional",
