@@ -1,0 +1,96 @@
+# AI Document Analysis Core – Implementation Breakdown
+
+## 1. 🧠 Backend: Wire OpenAI GPT-4 Calls into `/api/documents/analyze`
+
+- **Endpoint**:  
+  POST `/api/documents/analyze`
+- **Input**:  
+  Document (PDF/DOCX/text), document type, tenantId, and user metadata (from session/JWT).
+- **Process**:
+  1. Accept file upload and metadata.
+  2. Preprocess/convert file to plain text if needed (e.g., using `pdf-parse`, `mammoth`, or similar).
+  3. Select or compose prompt using a legal-type-specific template (see section 3).
+  4. Call OpenAI GPT-4 API with the document text and prompt.
+  5. Store only minimal, non-sensitive analysis metadata in the DB; never store raw document or API keys.
+  6. Return structured analysis result (JSON) to the frontend.
+- **Security**:
+  - All requests authenticated and tenant-scoped.
+  - API keys stored encrypted; never exposed to client.
+
+---
+
+## 2. 📑 Frontend: Upload & Preview Component
+
+- **Component**:  
+  `<DocumentAnalyzer />`
+- **Features**:
+  - Drag-and-drop or file picker for uploading legal documents.
+  - Dropdown to select document type (integrate AI-powered suggestions/autocomplete).
+  - Progress indicator during upload and analysis.
+  - Preview panel to review analysis results (structured highlights, summaries, extracted clauses, risks, etc).
+  - Error handling and retry.
+- **Integration**:
+  - Uses `TenantContext` for tenant isolation.
+  - Calls `/api/documents/analyze` and renders results.
+  - Modular design for use in both admin and tenant dashboards.
+
+---
+
+## 3. 🤖 Prompt-Engineering Templates for Legal Document Types
+
+- **Goal**:  
+  Create customizable prompt templates for different legal document types (e.g., NDA, engagement letter, contract, lease).
+- **Structure**:
+  - Each template includes context, instructions, and extraction targets.
+- **Examples**:
+
+    **NDA Extraction Template:**
+    ```
+    You are a legal AI assistant. Analyze the following NDA and extract:
+    - Parties involved
+    - Effective date
+    - Confidentiality period
+    - Key obligations and restrictions
+    - Termination clauses
+    - Jurisdiction
+    Respond in a structured JSON format.
+    ```
+
+    **Engagement Letter Summary Template:**
+    ```
+    Act as a legal document analyst. Summarize this engagement letter, highlighting:
+    - Client and attorney names
+    - Scope of work/services
+    - Fee arrangements
+    - Termination and dispute resolution clauses
+    - Important deadlines
+    Structure your output as a readable summary.
+    ```
+
+    **Lease Agreement Risk Analysis:**
+    ```
+    Review this lease agreement and flag any high-risk or unusual clauses, especially regarding:
+    - Early termination
+    - Rent escalation
+    - Maintenance responsibilities
+    - Security deposit terms
+    - Renewal/extension options
+    Provide a risk overview in plain English.
+    ```
+
+- **Modularity**:
+  - Store prompt templates in a config file or DB table for easy updates and expansion.
+
+---
+
+## 4. **Security & Best Practices**
+
+- Use encrypted storage for API keys and sensitive configs.
+- Never transmit or store raw document data in logs or client-side.
+- All tenant/user context enforced at every layer.
+- Modular code for easy extension to new document types or AI models.
+
+---
+
+**Result:**  
+Firms can securely upload documents, select type, and receive tailored, AI-powered legal insights—fully tenant-aware, with reusable components and prompt templates for rapid onboarding of new legal use cases.
