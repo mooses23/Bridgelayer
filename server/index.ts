@@ -1,11 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
-import { registerRoutes } from "./routes-minimal";
+import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAuthData } from "./seed-auth-data";
+import { pool } from "./db";
 
 const app = express();
 
@@ -66,8 +69,29 @@ app.use('/api', apiLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// Cookie parser for JWT tokens
+// Cookie parser middleware
 app.use(cookieParser());
+
+// Session configuration with PostgreSQL session store
+const PgSession = connectPgSimple(session);
+
+app.use(session({
+  store: new PgSession({
+    pool: pool,
+    tableName: 'session'
+  }),
+  secret: process.env.SESSION_SECRET || 'firmsync-session-secret-change-in-production',
+  name: 'firmsync.sid',
+  resave: false,
+  saveUninitialized: false,
+  rolling: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax'
+  }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
