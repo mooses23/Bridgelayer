@@ -27,6 +27,8 @@ import OnboardingPage from '@/pages/Onboarding';
 // Client Pages
 import ClientLayout from '@/layouts/ClientLayout';
 import ClientDashboard from '@/pages/Client/ClientDashboard';
+import ClientInvoices from '@/pages/Client/ClientInvoices';
+import ClientDocuments from '@/pages/Client/ClientDocuments';
 
 // Loading Component
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -64,7 +66,7 @@ export default function RoleRouter() {
                 <Route path="/onboarding" element={<OnboardingPage />} />
               ) : (
                 <Route path="/" element={<FirmDashboardLayout />}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route index element={<DashboardPage />} />
                   <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="cases" element={<CasesPage />} />
                   <Route path="intake" element={<IntakePage />} />
@@ -82,6 +84,9 @@ export default function RoleRouter() {
           {user.role === 'client' && (
             <Route path="/client" element={<ClientLayout />}>
               <Route index element={<ClientDashboard />} />
+              <Route path="dashboard" element={<ClientDashboard />} />
+              <Route path="invoices" element={<ClientInvoices />} />
+              <Route path="documents" element={<ClientDocuments />} />
               <Route path="logout" element={<LogoutPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>

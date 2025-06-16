@@ -103,6 +103,16 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 20.6 - Replace Broad Catch-All with Index + NotFound Implementation Complete
+  - Replaced broad catch-all redirects with proper index routes across all nested route structures
+  - Updated Firm routes to use `<Route index element={<DashboardPage />} />` instead of `<Route index element={<Navigate to="/dashboard" replace />} />`
+  - Enhanced Client routes with proper index routes and added missing ClientInvoices and ClientDocuments pages
+  - Created comprehensive ClientInvoices page with invoice summary cards, payment tracking, and document management
+  - Created ClientDocuments page with search functionality, document status tracking, and download capabilities
+  - Applied pattern consistently: `<Route index element={<ComponentName/>}/>` for default routes, `<Route path="*" element={<NotFoundPage/>}/>` for 404 handling
+  - Ensured all specific routes are defined before wildcard routes to prevent unexpected catches
+  - System now provides proper 404 handling while maintaining direct access to default content via index routes
+
 - **June 16, 2025**: GHGH 20.5 - Convert Layouts to Nested Routes Implementation Complete
   - Successfully converted all layouts (AdminLayout, FirmDashboardLayout, ClientLayout) to use nested routes with `<Outlet />`
   - Updated RoleRouter.tsx to use proper nested route structure instead of layout wrapping
