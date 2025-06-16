@@ -813,7 +813,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(clients).where(eq(clients.firmId, firmId)).orderBy(clients.name);
   }
 
-  async getClient(id: number, firmId: number, firmId: number): Promise<Client | undefined> {
+  async getClient(id: number, firmId: number): Promise<Client | undefined> {
     const [client] = await db.select().from(clients).where(and(eq(clients.id, id), eq(clients.firmId, firmId)));
     return client || undefined;
   }
