@@ -2621,6 +2621,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin System Health endpoints
+  app.get("/api/admin/system-health", requireAdmin, async (req, res) => {
+    try {
+      const { logManager, getSystemHealth } = await import("./logging.js");
+      const health = await getSystemHealth();
+      res.json(health);
+    } catch (error) {
+      console.error("Error fetching system health:", error);
+      res.status(500).json({ message: "Failed to fetch system health" });
+    }
+  });
+
+  app.get("/api/admin/logs", requireAdmin, async (req, res) => {
+    try {
+      const { logManager } = await import("./logging.js");
+      const { level, source, limit, since } = req.query;
+      
+      const filters: any = {};
+      if (level && level !== 'all') filters.level = level as string;
+      if (source && source !== 'all') filters.source = source as string;
+      if (limit) filters.limit = parseInt(limit as string);
+      if (since) filters.since = new Date(since as string);
+      
+      const logs = logManager.getLogs(filters);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      res.status(500).json({ message: "Failed to fetch logs" });
+    }
+  });
+
+  app.delete("/api/admin/logs", requireAdmin, async (req, res) => {
+    try {
+      const { logManager } = await import("./logging.js");
+      logManager.clearLogs();
+      logManager.log('info', 'Application logs cleared by admin', {}, 'admin');
+      res.json({ message: "Logs cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing logs:", error);
+      res.status(500).json({ message: "Failed to clear logs" });
+    }
+  });
+
   app.get('/api/admin/alerts', requireAdmin, async (req, res) => {
     try {
       // In a real system, this would come from a monitoring/alerting system
