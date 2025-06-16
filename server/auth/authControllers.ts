@@ -140,6 +140,81 @@ export class AuthControllers {
   }
 
   /**
+   * JWT Token Refresh - generates new access token using refresh token
+   */
+  static async refreshToken(req: Request, res: Response): Promise<void> {
+    try {
+      // Extract refresh token from HTTP-only cookie
+      const refreshToken = JWTUtils.extractRefreshTokenFromRequest(req);
+      
+      if (!refreshToken) {
+        res.status(401).json({
+          error: 'Refresh token required',
+          message: 'No refresh token provided'
+        });
+        return;
+      }
+
+      // Verify refresh token
+      let payload: any;
+      try {
+        payload = JWTUtils.verifyRefreshToken(refreshToken);
+      } catch (error) {
+        res.status(401).json({
+          error: 'Invalid refresh token',
+          message: 'Refresh token is invalid or expired'
+        });
+        return;
+      }
+
+      // Verify user still exists and has same permissions
+      const user = await storage.getUser(payload.userId);
+      if (!user) {
+        res.status(401).json({
+          error: 'User not found',
+          message: 'User account no longer exists'
+        });
+        return;
+      }
+
+      // Generate new access token with current user data
+      const newAccessToken = JWTUtils.generateAccessToken({
+        userId: user.id,
+        tenantId: payload.tenantId,
+        role: user.role,
+        email: user.email,
+        firmId: user.firmId
+      });
+
+      // Set new access token cookie
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('accessToken', newAccessToken, JWTUtils.getCookieOptions(isProduction));
+
+      // Log token refresh for security audit
+      await auditLogger.logSecurityEvent(
+        user.id,
+        user.firmId,
+        'TOKEN_REFRESH',
+        'Access token refreshed successfully',
+        req.ip,
+        req.get('User-Agent')
+      );
+
+      res.json({
+        success: true,
+        accessToken: newAccessToken,
+        message: 'Token refreshed successfully'
+      });
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      res.status(500).json({
+        error: 'Token refresh failed',
+        message: 'Internal server error during token refresh'
+      });
+    }
+  }
+
+  /**
    * Secure logout with token invalidation
    */
   static async logout(req: Request, res: Response): Promise<void> {

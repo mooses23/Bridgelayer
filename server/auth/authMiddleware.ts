@@ -42,16 +42,10 @@ export const jwtAuthMiddleware = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log('🔐 JWT Auth Middleware - Starting authentication');
-    console.log('🔐 Request headers:', req.headers.authorization ? 'Bearer token present' : 'No Bearer token');
-    console.log('🔐 Request cookies:', req.cookies ? Object.keys(req.cookies) : 'No cookies');
-    
     // Extract JWT token from request
     const token = JWTUtils.extractTokenFromRequest(req);
-    console.log('🔐 Extracted token:', token ? 'Token found' : 'No token');
     
     if (!token) {
-      console.log('🔐 Auth failed: No token provided');
       res.status(401).json({ 
         error: 'Authentication required',
         message: 'No access token provided'

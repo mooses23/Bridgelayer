@@ -53,9 +53,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // JWT Authentication routes
   app.post("/api/auth/login", AuthControllers.login);
+  app.post("/api/auth/refresh", AuthControllers.refreshToken);
   app.post("/api/auth/logout", AuthControllers.logout);
   app.get("/api/auth/session", AuthControllers.getSession);
-  app.post("/api/auth/refresh", AuthControllers.refreshToken);
   app.post("/api/auth/reset-password", AuthControllers.requestPasswordReset);
 
   // OAuth2 routes for SSO authentication
