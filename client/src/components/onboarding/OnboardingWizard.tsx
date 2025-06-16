@@ -262,35 +262,35 @@ export default function OnboardingWizard() {
         return (
           <FirmInfoStep
             data={onboardingData.firmInfo}
-            onChange={(data) => updateOnboardingData('firmInfo', data)}
+            onChange={(data: Partial<OnboardingData['firmInfo']>) => updateOnboardingData('firmInfo', data)}
           />
         );
       case 2:
         return (
           <BrandingStep
             data={onboardingData.branding}
-            onChange={(data) => updateOnboardingData('branding', data)}
+            onChange={(data: Partial<OnboardingData['branding']>) => updateOnboardingData('branding', data)}
           />
         );
       case 3:
         return (
           <PreferencesStep
             data={onboardingData.preferences}
-            onChange={(data) => updateOnboardingData('preferences', data)}
+            onChange={(data: Partial<OnboardingData['preferences']>) => updateOnboardingData('preferences', data)}
           />
         );
       case 4:
         return (
           <IntegrationsStep
             data={onboardingData.integrations}
-            onChange={(data) => updateOnboardingData('integrations', data)}
+            onChange={(data: Partial<OnboardingData['integrations']>) => updateOnboardingData('integrations', data)}
           />
         );
       case 5:
         return (
           <TemplatesStep
             data={onboardingData.templates}
-            onChange={(data) => updateOnboardingData('templates', data)}
+            onChange={(data: Partial<OnboardingData['templates']>) => updateOnboardingData('templates', data)}
           />
         );
       case 6:
