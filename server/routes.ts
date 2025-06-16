@@ -2672,8 +2672,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         active: true,
-        firmId: session.firmId,
-        firmName: session.firmName || 'Unknown Firm',
+        firmId: session.targetFirmId,
+        firmName: 'Unknown Firm', // Will be populated by joining with firms table
         startedAt: session.startedAt
       });
     } catch (error) {

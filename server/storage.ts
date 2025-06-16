@@ -604,6 +604,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(firms).orderBy(firms.name);
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.email);
+  }
+
   async updateFirmVertical(firmId: number, vertical: string): Promise<Firm | undefined> {
     const [firm] = await db
       .update(firms)
