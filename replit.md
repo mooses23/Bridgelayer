@@ -103,6 +103,18 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 23.1 & 23.2 - Frontend Fix for Login Redirects Implementation Complete
+  - Updated backend auth-minimal.ts to return redirectPath in login response alongside user data
+  - Modified SessionContext to return LoginResult object with success flag and redirectPath from backend
+  - Enhanced LoginPage to use backend-provided redirect paths with proper error handling and fallback navigation
+  - Fixed routing structure in RoleRouter to support /dashboard path alongside nested routes
+  - Resolved Onboarding page useAuth error by switching to useSession hook from SessionContext
+  - Created comprehensive AdminSettings page with tabbed interface for system configuration
+  - Added missing admin/settings route to AdminLayout with General, Security, Database, and Notifications tabs
+  - Login redirects now work correctly: admin users → /admin, firm users → /onboarding or /dashboard, clients → /client
+  - Console logging shows redirectPath values for debugging: "✅ Login redirectPath: /admin"
+  - All navigation paths properly mapped to existing route components with fallback error handling
+
 - **June 16, 2025**: GHGH 22.2 - Update Dev Seed to Use bcrypt Implementation Complete
   - Updated server/seed-auth-data.ts to use proper bcrypt password hashing with salt rounds of 10
   - Fixed database field references from passwordHash to password to match actual schema

@@ -1,4 +1,4 @@
-import { useAuth } from "@/context/AuthContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { CheckCircle, Building, Users, Settings } from "lucide-react";
 
 export default function Onboarding() {
   console.log("[Onboarding] loaded");
-  const { user, firm, setSession } = useAuth();
+  const { user } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firmName: "",
@@ -53,9 +53,8 @@ export default function Onboarding() {
 
       if (response.ok) {
         const result = await response.json();
-        // Update firm state with onboarded status
-        setSession(user, { ...firm, onboarded: true });
-        window.location.reload();
+        // Redirect to dashboard after successful onboarding
+        window.location.href = '/dashboard';
       } else {
         console.error('Onboarding failed');
       }
