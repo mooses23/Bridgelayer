@@ -21,12 +21,34 @@ app.use(helmet({
   hsts: false // Disable HSTS in development
 }));
 
-// CORS configuration for Replit JWT authentication
+// CORS configuration for Replit session-based authentication
 app.use(cors({
-  origin: true,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all Replit domains and localhost for development
+    const allowedOrigins = [
+      /^https:\/\/.*\.replit\.dev$/,
+      /^https:\/\/.*\.repl\.co$/,
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:5000'
+    ];
+    
+    const isAllowed = allowedOrigins.some(pattern => {
+      if (typeof pattern === 'string') {
+        return origin === pattern;
+      }
+      return pattern.test(origin);
+    });
+    
+    callback(null, isAllowed);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
+  exposedHeaders: ['Set-Cookie']
 }));
 
 // Rate limiting for authentication endpoints
@@ -86,10 +108,11 @@ app.use(session({
   saveUninitialized: false,
   rolling: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Set to false for Replit development environment
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax'
+    sameSite: 'none', // Required for cross-origin cookies in Replit
+    domain: undefined // Let browser handle domain automatically
   }
 }));
 

@@ -1,0 +1,107 @@
+# Landing Page & Cookie Logic – Outstanding Items Checklist
+
+## 1. **Cookie Parsing on Initial Load**
+- **Frontend:**  
+  - On initial app mount (or route change), does your frontend check for the presence of an auth cookie (e.g., `auth_token`)?
+  - Does it try to validate or use the cookie before making protected API calls?
+  - Is there a loading state while awaiting auth check, or does it immediately redirect/logout on null?
+
+- **Backend:**  
+  - Does every protected endpoint actually check the cookie and validate the session/JWT?
+  - Are you returning 401/403 responses consistently if the cookie is missing or invalid?
+
+---
+
+## 2. **Tenant Context Initialization**
+- On landing, does your frontend reliably determine the tenant (from subdomain or config)?
+- Is the tenant context loaded *before* any user-specific or protected requests are made?
+- Are you handling cases where the cookie’s tenant does **not** match the subdomain (user tries to use a cookie for a different firm)?
+
+---
+
+## 3. **Cross-Domain/Subdomain Cookie Logic**
+- Is the cookie’s `domain` attribute set correctly (e.g., `.yourdomain.com` for all subdomains)?
+- Are you serving both frontend and backend from the same (sub)domain and protocol?
+- Is the cookie `Secure`, `SameSite`, and `Path` attributes set for your scenario (see previous debug advice)?
+
+---
+
+## 4. **Auth Bootstrapping & Route Guards**
+- Does your React app provide a bootstrapping phase that:
+  - Checks for the cookie,
+  - Pings a `/api/auth/me` (or similar endpoint) to validate it,
+  - Loads user and tenant info into context/global state,
+  - Only then renders protected routes/components?
+- If the check fails, does it redirect to login or show an error state?
+
+- **Example Route Guard:**
+    ```typescript
+    // Pseudo-code for ProtectedRoute
+    if (auth.loading) return <Spinner />;
+    if (!auth.user) return <Navigate to="/login" />;
+    return children;
+    ```
+
+---
+
+## 5. **Edge Cases**
+- What happens if the cookie is present but expired/invalid? (Should force logout and clear cookie.)
+- What if the user bookmarks `firmA.domain.com` but their cookie is for `firmB`? (Should clear/invalidate and force re-auth.)
+- Are there race conditions where tenant context isn’t set before auth check, or vice versa?
+
+---
+
+## 6. **API Call Credentials**
+- Are all fetch/axios API calls using `credentials: "include"` or `withCredentials: true`?
+- Is CORS configured to allow credentials and the exact origin?
+
+---
+
+## 7. **Error Handling & Self-Healing**
+- On any auth error (401/403), does the frontend:
+  - Clear cached user/tenant info,
+  - Remove the cookie (if possible),
+  - Redirect to login or show a recovery prompt?
+
+---
+
+## 8. **Recommended Minimal Flow**
+```plaintext
+[User hits landing page]
+│
+├─> Frontend parses subdomain (tenantId)
+│
+├─> Frontend checks for auth cookie
+│
+├─> If cookie exists:
+│     └─> Call /api/auth/me
+│           ├─> If valid, hydrate user/tenant context
+│           └─> If invalid, clear cookie, redirect to login
+│
+└─> If no cookie, show login page
+```
+
+---
+
+## 9. **Outstanding Logic to Review/Implement**
+- [ ] **Tenant-aware cookie/session validation** (cookie’s tenant must match subdomain)
+- [ ] **Auth bootstrapping on every landing** (not just after login)
+- [ ] **Graceful fallback on cookie mismatch, expiry, or parsing errors**
+- [ ] **Consistent domain + SameSite + Secure cookie attributes**
+- [ ] **Loading/guard state between “unknown,” “authenticated,” and “unauthenticated”**
+- [ ] **Frontend and backend time sync (JWT expiry, clock drift)**
+- [ ] **API call credential inclusion and CORS matching**
+
+---
+
+**If any of these are missing or broken, landing with cookies will fail or behave inconsistently.**
+
+---
+
+**Next Steps:**  
+- Review your `TenantContext` initialization and auth bootstrapping logic.
+- Add/verify `/api/auth/me` or similar endpoint for session validation on every landing.
+- Double check subdomain/tenant matching logic.
+- Use loading/guard states to prevent UI flashes or race conditions.
+
+If you want, share your current bootstrapping code or route guard logic and I’ll review the exact flow for gaps.
