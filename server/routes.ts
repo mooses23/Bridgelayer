@@ -201,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
-      res.json(tenantData);
+      res.json({ tenant: tenantData });
     } catch (error) {
       console.error('Error fetching tenant:', error);
       res.status(500).json({ error: 'Internal server error' });

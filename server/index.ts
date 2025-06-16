@@ -20,23 +20,9 @@ app.use(helmet({
   hsts: false // Disable HSTS in development
 }));
 
-// CORS configuration for multi-tenant subdomains
+// CORS configuration for development environment
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests from same origin, subdomains, and development
-    const allowedOrigins = [
-      /^https?:\/\/localhost:\d+$/,
-      /^https?:\/\/.*\.replit\.dev$/,
-      /^https?:\/\/.*\.firmsync\.com$/,
-      /^https?:\/\/firmsync\.com$/
-    ];
-    
-    if (!origin || allowedOrigins.some(pattern => pattern.test(origin))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow all origins in development
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
