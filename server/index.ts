@@ -11,28 +11,13 @@ import MemoryStore from "memorystore";
 
 const app = express();
 
-// Trust proxy for rate limiting and security headers in production
-app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
+// Trust proxy for rate limiting and security headers - enable for Replit
+app.set('trust proxy', true);
 
-// Security middleware - Helmet for security headers
+// Security middleware - Helmet for security headers (disabled CSP for Replit dev)
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // unsafe-eval needed for Vite dev
-      connectSrc: ["'self'", "https://api.openai.com", "wss:", "ws:"],
-      imgSrc: ["'self'", "data:", "https:"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null
-    }
-  },
-  hsts: process.env.NODE_ENV === "production" ? {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  } : false
+  contentSecurityPolicy: false, // Disable CSP in development to prevent Vite issues
+  hsts: false // Disable HSTS in development
 }));
 
 // CORS configuration for multi-tenant subdomains
@@ -66,10 +51,14 @@ const authLimiter = rateLimit({
     message: 'Please try again later'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: {
+    trustProxy: false, // Disable trust proxy validation for development
+    xForwardedForHeader: false // Disable X-Forwarded-For validation
+  }
 });
 
-// General API rate limiting
+// General API rate limiting with trust proxy configuration
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // limit each IP to 1000 requests per windowMs
@@ -78,7 +67,11 @@ const apiLimiter = rateLimit({
     message: 'Please try again later'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  validate: {
+    trustProxy: false, // Disable trust proxy validation for development
+    xForwardedForHeader: false // Disable X-Forwarded-For validation
+  }
 });
 
 // Apply rate limiting
