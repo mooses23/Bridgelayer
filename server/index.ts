@@ -87,12 +87,11 @@ app.use(session({
   }),
   cookie: {
     secure: false,
-    httpOnly: false, // Allow JS access for debugging
+    httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'none', // Allow cross-origin transmission
+    sameSite: 'lax', // Same-site for integrated serving
     path: '/'
-  },
-  proxy: true // Trust proxy headers in Replit
+  }
 }));
 
 app.use((req, res, next) => {
