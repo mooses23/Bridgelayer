@@ -2746,7 +2746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin System Health endpoints
-  app.get("/api/admin/system-health", requireAdmin, async (req, res) => {
+  app.get("/api/admin/system-health", jwtAuthMiddleware, requireAdmin, async (req, res) => {
     try {
       const { logManager, getSystemHealth } = await import("./logging.js");
       const health = await getSystemHealth();
@@ -2757,7 +2757,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/logs", requireAdmin, async (req, res) => {
+  app.get("/api/admin/logs", jwtAuthMiddleware, requireAdmin, async (req, res) => {
     try {
       const { logManager } = await import("./logging.js");
       const { level, source, limit, since } = req.query;
@@ -2776,7 +2776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/logs", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/logs", jwtAuthMiddleware, requireAdmin, async (req, res) => {
     try {
       const { logManager } = await import("./logging.js");
       logManager.clearLogs();
