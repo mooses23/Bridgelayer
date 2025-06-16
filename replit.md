@@ -103,6 +103,16 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 15, 2025**: GHGH 20.6 - Wildcard Routes & Index Routes Refinement Complete
+  - Replaced broad catch-all redirects with proper index routes and NotFoundPage components
+  - Updated RoleRouter.tsx to use `<Route index element={<ComponentName/>}/>` for default routes
+  - Replaced `<Route path="*" element={<Navigate to="/path" replace/>}/>` with `<Route path="*" element={<NotFoundPage/>}/>`
+  - Created new NotFoundPage component with proper 404 handling and "Go to Dashboard" link
+  - Applied pattern consistently across all route sections: unauthenticated, admin, onboarding, client, and firm routes
+  - Ensured specific routes (/login, /logout, /onboarding, /admin, /client/*) are defined before wildcard routes
+  - System now properly catches unknown URLs only after checking all real routes first
+  - Improved routing precision and eliminated unexpected redirects for unknown paths
+
 - **June 15, 2025**: GHGH 20.3 - Subdomain Tenant Detection Implementation Complete
   - Updated TenantContext.tsx to detect tenant from subdomain using `window.location.hostname`
   - Added `/api/tenant/:subdomain` endpoint that looks up firms by slug without requiring authentication
