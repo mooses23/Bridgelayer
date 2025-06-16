@@ -6,17 +6,11 @@ import {
   insertDocumentTypeTemplateSchema,
   insertPlatformSettingSchema
 } from "@shared/schema";
-
-// Admin authentication middleware (simplified for BridgeLayer staff)
-const requireAdmin = (req: any, res: any, next: any) => {
-  // TODO: Implement proper admin authentication
-  // For now, assume admin access is granted
-  next();
-};
+import { jwtAuthMiddleware, requireAdmin } from "../auth/authMiddleware";
 
 export function registerAdminRoutes(app: Express) {
   // Firm management routes
-  app.get('/api/admin/firms', requireAdmin, async (req, res) => {
+  app.get('/api/admin/firms', jwtAuthMiddleware, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
       res.json(firms);

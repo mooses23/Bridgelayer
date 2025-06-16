@@ -2697,7 +2697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin API endpoints for AdminDashboard and GhostModePage
-  app.get('/api/tenants', requireAdmin, async (req, res) => {
+  app.get('/api/tenants', jwtAuthMiddleware, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
       
@@ -2720,7 +2720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+  app.get('/api/admin/stats', jwtAuthMiddleware, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
       const users = await storage.getAllUsers();
