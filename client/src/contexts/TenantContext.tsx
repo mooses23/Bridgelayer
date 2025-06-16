@@ -1,28 +1,17 @@
-
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import ApiClient from '@/lib/apiClient';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 interface TenantConfig {
   id: string;
   name: string;
+  subdomain: string;
   branding?: {
+    logo?: string;
     primaryColor?: string;
-    logoUrl?: string;
-    customCss?: string;
+    secondaryColor?: string;
   };
-  features?: {
-    aiAnalysis?: boolean;
-    clientPortal?: boolean;
-    billingModule?: boolean;
-    auditTrail?: boolean;
-  };
-  integrations?: {
-    google?: boolean;
-    microsoft?: boolean;
-    dropbox?: boolean;
-  };
-  templates?: string[];
-  settings?: any;
+  onboardingComplete: boolean;
+  features: Record<string, boolean>;
 }
 
 interface TenantContextType {
@@ -30,154 +19,72 @@ interface TenantContextType {
   config: TenantConfig | null;
   isLoading: boolean;
   error: string | null;
-  refreshConfig: () => Promise<void>;
-  setTenantId: (id: string) => void;
 }
 
 const TenantContext = createContext<TenantContextType>({
   tenantId: '',
   config: null,
-  isLoading: false,
-  error: null,
-  refreshConfig: async () => {},
-  setTenantId: () => {}
+  isLoading: true,
+  error: null
 });
 
-export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [tenantId, setTenantId] = useState<string>('');
-  const [config, setConfig] = useState<TenantConfig | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const extractTenantFromHost = (): string => {
-    const hostname = window.location.hostname;
-    
-    // For localhost development, check for tenant in URL params or use default
-    if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tenantParam = urlParams.get('tenant');
-      
-      // Also check for subdomain pattern in localhost (like tenant.localhost)
-      const subdomain = hostname.split('.')[0];
-      if (subdomain !== 'localhost' && subdomain !== '127') {
-        return subdomain;
-      }
-      
-      return tenantParam || 'default';
-    }
-    
-    // For production, extract subdomain
-    const subdomain = hostname.split('.')[0];
-    return subdomain || 'default';
-  };
-
-  const fetchTenantConfig = async (tenant: string): Promise<void> => {
-    if (!tenant) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Set tenant header for API requests
-      const headers: Record<string, string> = {
-        'X-Tenant-ID': tenant
-      };
-      
-      const response = await fetch(`/api/tenant/config?tenant=${tenant}`, {
-        headers
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch tenant config: ${response.statusText}`);
-      }
-      
-      const tenantConfig = await response.json();
-      setConfig(tenantConfig);
-    } catch (err) {
-      console.error('Error fetching tenant config:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load tenant configuration');
-      
-      // Set default config on error
-      setConfig({
-        id: tenant,
-        name: tenant.charAt(0).toUpperCase() + tenant.slice(1),
-        branding: {},
-        features: {
-          aiAnalysis: true,
-          clientPortal: true,
-          billingModule: true,
-          auditTrail: true
-        },
-        integrations: {},
-        templates: []
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const refreshConfig = async (): Promise<void> => {
-    if (tenantId) {
-      await fetchTenantConfig(tenantId);
-    }
-  };
-
-  const handleSetTenantId = (id: string): void => {
-    setTenantId(id);
-    fetchTenantConfig(id);
-  };
+export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [tenantId, setTenantId] = useState('');
 
   useEffect(() => {
-    const extractedTenantId = extractTenantFromHost();
-    if (extractedTenantId && extractedTenantId !== tenantId) {
-      setTenantId(extractedTenantId);
-      fetchTenantConfig(extractedTenantId);
+    // Extract tenant from subdomain
+    const hostname = window.location.hostname;
+    let extractedTenantId = '';
+
+    if (hostname.includes('.') && !hostname.startsWith('www.')) {
+      // Extract subdomain (e.g., 'smithlaw' from 'smithlaw.firmsync.com')
+      extractedTenantId = hostname.split('.')[0];
+    } else if (hostname === 'localhost' || hostname.startsWith('127.0.0.1')) {
+      // For development, check if there's a tenant in the path or use default
+      const pathSegments = window.location.pathname.split('/').filter(Boolean);
+      if (pathSegments[0] && pathSegments[0] !== 'admin') {
+        extractedTenantId = pathSegments[0];
+      } else {
+        // Default tenant for development
+        extractedTenantId = 'testfirm';
+      }
     }
+
+    setTenantId(extractedTenantId);
   }, []);
 
-  // Update API client with tenant header when tenantId changes
-  useEffect(() => {
-    if (tenantId) {
-      // Add tenant header to all API requests
-      ApiClient.setDefaultHeader('X-Tenant-ID', tenantId);
-    }
-  }, [tenantId]);
+  const { data: config, isLoading, error } = useQuery({
+    queryKey: ['tenant-config', tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
 
-  const contextValue: TenantContextType = {
-    tenantId,
-    config,
-    isLoading,
-    error,
-    refreshConfig,
-    setTenantId: handleSetTenantId
-  };
+      const response = await fetch(`/api/tenant/${tenantId}`);
+      if (!response.ok) {
+        throw new Error('Failed to load tenant configuration');
+      }
+      return response.json() as TenantConfig;
+    },
+    enabled: !!tenantId,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   return (
-    <TenantContext.Provider value={contextValue}>
+    <TenantContext.Provider value={{
+      tenantId,
+      config,
+      isLoading,
+      error: error?.message || null
+    }}>
       {children}
     </TenantContext.Provider>
   );
 };
 
-export const useTenant = (): TenantContextType => {
+export const useTenant = () => {
   const context = useContext(TenantContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useTenant must be used within a TenantProvider');
   }
   return context;
-};
-
-export const useTenantConfig = () => {
-  const { config } = useTenant();
-  return config;
-};
-
-export const useTenantFeatures = () => {
-  const { config } = useTenant();
-  return config?.features || {};
-};
-
-export const useTenantBranding = () => {
-  const { config } = useTenant();
-  return config?.branding || {};
 };

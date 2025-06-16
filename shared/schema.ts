@@ -430,7 +430,16 @@ export const aiTriageResults = pgTable("ai_triage_results", {
   reviewedAt: timestamp("reviewed_at"),
 });
 
-
+export const firmSettings = pgTable("firm_settings", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  storageProvider: text("storage_provider"),
+  oauthTokens: text("oauth_tokens"),
+  apiKeys: text("api_keys"),
+  features: text("features"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({
@@ -641,6 +650,12 @@ export const insertAvailableIntegrationSchema = createInsertSchema(availableInte
   createdAt: true,
 });
 
+export const insertFirmSettingsSchema = createInsertSchema(firmSettings).omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+});
+
 // Types
 export type InsertFirm = z.infer<typeof insertFirmSchema>;
 export type Firm = typeof firms.$inferSelect;
@@ -704,3 +719,5 @@ export type InsertDocumentTypeTemplate = z.infer<typeof insertDocumentTypeTempla
 export type DocumentTypeTemplate = typeof documentTypeTemplates.$inferSelect;
 export type InsertAvailableIntegration = z.infer<typeof insertAvailableIntegrationSchema>;
 export type AvailableIntegration = typeof availableIntegrations.$inferSelect;
+export type InsertFirmSettings = z.infer<typeof insertFirmSettingsSchema>;
+export type FirmSettings = typeof firmSettings.$inferSelect;

@@ -26,6 +26,7 @@ import session from "express-session";
 import OpenAI from "openai";
 import fs from "fs/promises";
 import path from "path";
+import { Router } from "express";
 
 // Demo constants for development
 const DEMO_USER_ID = 1;
@@ -892,8 +893,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/firm/analysis-settings", async (req, res) => {
     try {
       const validatedData = insertFirmAnalysisSettingsSchema.parse({
-This code implements tenant configuration endpoints and applies tenant extraction middleware to all routes.
-```typescript
         firmId: DEMO_FIRM_ID,
         ...req.body
       });
@@ -1756,7 +1755,7 @@ This code implements tenant configuration endpoints and applies tenant extractio
   // Stripe payment processing endpoints
   app.post("/api/billing/create-payment-intent", async (req, res) => {
     try {
-      const { invoiceId, amount, clientEmail } = req.body;
+      const { invoiceId, amount, clientEmail } = req.body:
 
       // Get firm billing settings to retrieve Stripe keys
       const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
