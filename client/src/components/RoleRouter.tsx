@@ -63,33 +63,30 @@ export default function RoleRouter() {
           {/* GHGH 20.1 - Firm Routes with Nested Structure */}
           {(user.role === 'firm_admin' || user.role === 'paralegal') && (
             <>
-              {/* Check if firm needs onboarding */}
-              {tenant && !tenant.onboarded ? (
-                <Route path="/onboarding" element={<OnboardingPage />} />
-              ) : (
-                <>
-                  <Route path="/" element={<FirmDashboardLayout />}>
-                    <Route index element={<DashboardPage />} />
-                    <Route path="cases" element={<CasesPage />} />
-                    <Route path="intake" element={<IntakePage />} />
-                    <Route path="documents" element={<DocumentsPage />} />
-                    <Route path="billing" element={<BillingPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="logout" element={<LogoutPage />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                  <Route path="/dashboard" element={<FirmDashboardLayout />}>
-                    <Route index element={<DashboardPage />} />
-                    <Route path="cases" element={<CasesPage />} />
-                    <Route path="intake" element={<IntakePage />} />
-                    <Route path="documents" element={<DocumentsPage />} />
-                    <Route path="billing" element={<BillingPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="logout" element={<LogoutPage />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                </>
-              )}
+              {/* Always include onboarding route for firm users */}
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              
+              {/* Main firm routes */}
+              <Route path="/" element={<FirmDashboardLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="cases" element={<CasesPage />} />
+                <Route path="intake" element={<IntakePage />} />
+                <Route path="documents" element={<DocumentsPage />} />
+                <Route path="billing" element={<BillingPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="logout" element={<LogoutPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+              <Route path="/dashboard" element={<FirmDashboardLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="cases" element={<CasesPage />} />
+                <Route path="intake" element={<IntakePage />} />
+                <Route path="documents" element={<DocumentsPage />} />
+                <Route path="billing" element={<BillingPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="logout" element={<LogoutPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
             </>
           )}
 

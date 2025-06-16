@@ -79,7 +79,8 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
 // Middleware to check if user is admin
 export const requireAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   await requireAuth(req, res, () => {
-    if (req.user?.role !== "admin") {
+    const adminRoles = ['platform_admin', 'admin', 'super_admin'];
+    if (!req.user || !adminRoles.includes(req.user.role)) {
       return res.status(403).json({ message: "Admin access required" });
     }
     next();

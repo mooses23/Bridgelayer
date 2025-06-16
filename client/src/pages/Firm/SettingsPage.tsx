@@ -38,16 +38,16 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firmName">Firm Name</Label>
-                  <Input id="firmName" value={tenant?.name || "Loading..."} />
+                  <Input id="firmName" value={tenant?.name || "Loading..."} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="plan">Plan</Label>
-                  <Input id="plan" value={tenant?.plan || "Professional"} disabled />
+                  <Input id="plan" value={tenant?.plan || "Professional"} readOnly />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="domain">Domain</Label>
-                <Input id="domain" value={tenant?.domain || "Not configured"} />
+                <Input id="domain" value={tenant?.slug || "Not configured"} readOnly />
               </div>
               <Button>Save Changes</Button>
             </CardContent>
@@ -61,16 +61,16 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" value={user?.firstName || ""} />
+                  <Input id="firstName" value={user?.firstName || ""} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" value={user?.lastName || ""} />
+                  <Input id="lastName" value={user?.lastName || ""} readOnly />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" value={user?.email || ""} type="email" />
+                <Input id="email" value={user?.email || ""} type="email" readOnly />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
