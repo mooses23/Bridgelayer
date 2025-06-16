@@ -306,7 +306,144 @@ export default function BillingPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Time Entry Form */}
+        {showTimeForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Add Time Entry</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleTimeSubmit(onTimeSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="clientId">Client *</Label>
+                    <Input
+                      id="clientId"
+                      type="number"
+                      {...registerTime("clientId", { valueAsNumber: true })}
+                      placeholder="Client ID"
+                    />
+                    {timeErrors.clientId && (
+                      <p className="text-sm text-red-600 mt-1">{timeErrors.clientId.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="caseId">Case ID (Optional)</Label>
+                    <Input
+                      id="caseId"
+                      type="number"
+                      {...registerTime("caseId", { valueAsNumber: true })}
+                      placeholder="Case ID"
+                    />
+                    {timeErrors.caseId && (
+                      <p className="text-sm text-red-600 mt-1">{timeErrors.caseId.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="hours">Hours *</Label>
+                    <Input
+                      id="hours"
+                      type="number"
+                      step="0.25"
+                      {...registerTime("hours", { valueAsNumber: true })}
+                      placeholder="Hours worked"
+                    />
+                    {timeErrors.hours && (
+                      <p className="text-sm text-red-600 mt-1">{timeErrors.hours.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="billableRate">Billable Rate *</Label>
+                    <Input
+                      id="billableRate"
+                      type="number"
+                      step="0.01"
+                      {...registerTime("billableRate", { valueAsNumber: true })}
+                      placeholder="Rate per hour"
+                    />
+                    {timeErrors.billableRate && (
+                      <p className="text-sm text-red-600 mt-1">{timeErrors.billableRate.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="date">Date *</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      {...registerTime("date", { valueAsDate: true })}
+                    />
+                    {timeErrors.date && (
+                      <p className="text-sm text-red-600 mt-1">{timeErrors.date.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id="billable"
+                      type="checkbox"
+                      {...registerTime("billable")}
+                      className="rounded border-gray-300"
+                    />
+                    <Label htmlFor="billable">Billable</Label>
+                    {timeErrors.billable && (
+                      <p className="text-sm text-red-600 mt-1">{timeErrors.billable.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    {...registerTime("description")}
+                    placeholder="Describe the work performed"
+                    rows={3}
+                  />
+                  {timeErrors.description && (
+                    <p className="text-sm text-red-600 mt-1">{timeErrors.description.message}</p>
+                  )}
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button 
+                    type="submit" 
+                    disabled={isTimeSubmitting}
+                    className="flex-1"
+                  >
+                    {isTimeSubmitting ? "Creating..." : "Create Time Entry"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setShowTimeForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Quick Add Time Entry Button */}
+      {!showTimeForm && (
+        <div className="fixed bottom-6 right-6">
+          <Button
+            onClick={() => setShowTimeForm(true)}
+            size="lg"
+            className="rounded-full shadow-lg"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Time
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
