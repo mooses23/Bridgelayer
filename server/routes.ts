@@ -46,9 +46,35 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_demo", {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication routes
-  app.post("/api/auth/login", login);
-  app.post("/api/auth/logout", logout);
+  // Import audit logger
+  const { auditLogger } = await import('./services/auditLogger.js');
+
+  // Authentication routes with audit logging
+  app.post("/api/auth/login", async (req, res) => {
+    const result = await login(req, res);
+    if (req.session?.userId) {
+      await auditLogger.logLogin(
+        req.session.userId, 
+        req.session.firmId || null, 
+        req.ip, 
+        req.get('User-Agent')
+      );
+    }
+    return result;
+  });
+  
+  app.post("/api/auth/logout", async (req, res) => {
+    if (req.session?.userId) {
+      await auditLogger.logLogout(
+        req.session.userId, 
+        req.session.firmId || null, 
+        req.ip, 
+        req.get('User-Agent')
+      );
+    }
+    return await logout(req, res);
+  });
+  
   app.get("/api/auth/session", getSession);
 
   // Google OAuth routes
@@ -2569,6 +2595,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching firm:', error);
       res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Audit trail endpoints
+  app.get('/api/audit-logs', requireAuth, async (req, res) => {
+    try {
+      const { auditLogger } = await import('./services/auditLogger.js');
+      const { limit = 10, userId, firmId } = req.query;
+      
+      // Only admins can see all logs, users can only see their own
+      const isAdmin = ['platform_admin', 'admin', 'super_admin'].includes(req.user?.role || '');
+      const filterUserId = isAdmin ? (userId ? parseInt(userId as string) : undefined) : req.user?.id;
+      const filterFirmId = isAdmin ? (firmId ? parseInt(firmId as string) : undefined) : req.user?.firmId;
+      
+      const logs = auditLogger.getLogs(filterUserId, filterFirmId, parseInt(limit as string));
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
     }
   });
 

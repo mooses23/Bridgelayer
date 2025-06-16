@@ -122,7 +122,7 @@ export default function RoleRouter() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       )}
 
-      {/* GHGH 20.6 - Catch-all 404 for unknown routes */}
+      {/* Catch-all routes for each layout and general 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

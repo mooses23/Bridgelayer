@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 export default function AdminLayout() {
+  console.log("[AdminLayout] LIVE");
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -112,7 +113,7 @@ export default function AdminLayout() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            
+
             <div className="flex-1 lg:flex lg:items-center lg:justify-between">
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">

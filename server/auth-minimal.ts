@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
+import { auditLogger } from "./services/auditLogger";
 
 // Extend Express Request type to include user
 declare global {
@@ -24,6 +25,7 @@ declare module "express-session" {
   interface SessionData {
     userId?: number;
     userRole?: string;
+    firmId?: number | null;
   }
 }
 
@@ -113,16 +115,21 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Set session data
-    (req.session as any).userId = user.id;
-    (req.session as any).userRole = user.role;
+    req.session.userId = user.id;
+    req.session.userRole = user.role;
+    req.session.firmId = user.firmId || null;
     
     // Force session save
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-      } else {
-        console.log('Session saved successfully with userId:', user.id);
-      }
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          reject(err);
+        } else {
+          console.log('Session saved successfully with userId:', user.id);
+          resolve();
+        }
+      });
     });
 
     // Determine redirect path based on role and onboarding state
@@ -189,6 +196,9 @@ export const getSession = async (req: Request, res: Response) => {
     }
 
     res.json({
+      userId: req.session.userId,
+      role: req.session.userRole,
+      firmId: req.session.firmId,
       user: {
         id: user.id,
         email: user.email,

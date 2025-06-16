@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useSession } from "@/contexts/SessionContext";
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -24,6 +25,7 @@ export default function LoginPage() {
       const result = await login(email, password);
       if (result.success) {
         console.log("✅ Login redirectPath:", result.redirectPath);
+        toast.success('Login successful!');
         if (result.redirectPath) {
           try {
             navigate(result.redirectPath);
@@ -35,10 +37,12 @@ export default function LoginPage() {
           navigate("/dashboard"); // fallback
         }
       } else {
+        toast.error('Invalid credentials');
         setError('Login failed');
       }
     } catch (error) {
       console.error("Login failed:", error);
+      toast.error('Login failed. Please try again.');
       setError('Login failed');
     } finally {
       setLoading(false);

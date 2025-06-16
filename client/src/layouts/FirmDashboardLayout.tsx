@@ -18,6 +18,7 @@ import { useSession } from "@/contexts/SessionContext";
 import { useTenant } from "@/context/TenantContext";
 
 export default function FirmLayout() {
+  console.log("[FirmLayout] LIVE");
   const { user, logout } = useSession();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);

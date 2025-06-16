@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TenantProvider } from '@/context/TenantContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import RoleRouter from '@/components/RoleRouter';
+import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,7 @@ export default function App() {
                 <TenantProvider>
                   <ErrorBoundary>
                     <RoleRouter />
+                    <Toaster position="top-right" />
                   </ErrorBoundary>
                 </TenantProvider>
               </ErrorBoundary>

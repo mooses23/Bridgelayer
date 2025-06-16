@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 
 export default function AdminDashboard() {
+  console.log("[AdminDashboard] LIVE");
   const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
     queryKey: ["tenants"],
     queryFn: () => fetch("/api/tenants", { credentials: "include" }).then(r => r.json()),
@@ -19,14 +19,14 @@ export default function AdminDashboard() {
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: systemAlerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ["system-alerts"],
+  const { data: systemAlerts = [] } = useQuery({
+    queryKey: ['/api/admin/alerts'],
     queryFn: () => fetch("/api/admin/alerts", { credentials: "include" }).then(r => r.json()),
     staleTime: 1 * 60 * 1000,
   });
 
   // Ensure systemAlerts is always an array
-  const alertsArray = Array.isArray(systemAlerts) ? systemAlerts : [];
+  const safeSystemAlerts = Array.isArray(systemAlerts) ? systemAlerts : [];
 
   // Fallback data only when loading and no data
   const fallbackStats = {
@@ -203,12 +203,12 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>System Alerts</CardTitle>
             <Badge variant="outline" className="bg-red-50 text-red-700">
-              {systemAlerts.length} Active
+              {safeSystemAlerts.length} Active
             </Badge>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {alertsArray.map((alert: any) => (
+              {safeSystemAlerts.map((alert: any) => (
                 <div
                   key={alert.id}
                   className="flex items-start space-x-3 p-3 border rounded-lg"
