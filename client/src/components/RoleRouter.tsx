@@ -26,6 +26,7 @@ import ClientInvoicesPage from "@/pages/Client/ClientInvoicesPage";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import TenantsPage from "@/pages/Admin/TenantsPage";
 import GhostModePage from "@/pages/Admin/GhostModePage";
+import NotFoundPage from "@/pages/NotFoundPage";
 
 export default function RoleRouter() {
   const { user, firm, loading: authLoading } = useAuth();
@@ -38,9 +39,10 @@ export default function RoleRouter() {
     return (
       <Routes>
         <Route element={<PublicLayout />}>
+          <Route index element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/logout" element={<LogoutPage />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     );
@@ -51,11 +53,12 @@ export default function RoleRouter() {
     return (
       <Routes>
         <Route element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/tenants" element={<TenantsPage />} />
           <Route path="/admin/ghost" element={<GhostModePage />} />
           <Route path="/logout" element={<LogoutPage />} />
-          <Route path="*" element={<Navigate to="/admin" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     );
@@ -66,8 +69,9 @@ export default function RoleRouter() {
     return (
       <Routes>
         <Route element={<OnboardingLayout />}>
+          <Route index element={<OnboardingWizard />} />
           <Route path="/onboarding/*" element={<OnboardingWizard />} />
-          <Route path="*" element={<Navigate to="/onboarding" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     );
@@ -78,11 +82,12 @@ export default function RoleRouter() {
     return (
       <Routes>
         <Route element={<ClientLayout />}>
+          <Route index element={<ClientDashboard />} />
           <Route path="/client/login" element={<ClientLoginPage />} />
           <Route path="/client/dashboard" element={<ClientDashboard />} />
           <Route path="/client/invoices" element={<ClientInvoicesPage />} />
           <Route path="/logout" element={<LogoutPage />} />
-          <Route path="*" element={<Navigate to="/client/dashboard" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     );
@@ -92,13 +97,14 @@ export default function RoleRouter() {
   return (
     <Routes>
       <Route element={<FirmDashboardLayout />}>
+        <Route index element={<DashboardPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/cases" element={<CasesPage />} />
         <Route path="/intake" element={<IntakePage />} />
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/logout" element={<LogoutPage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
   );
