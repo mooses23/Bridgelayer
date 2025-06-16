@@ -2052,7 +2052,7 @@ export class DatabaseStorage implements IStorage {
     const [firm] = await db
       .select()
       .from(firms)
-      .where(eq(firms.subdomain, tenantId));
+      .where(eq(firms.slug, tenantId));
     return firm;
   }
 }

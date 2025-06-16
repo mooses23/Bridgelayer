@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useSession } from "@/contexts/SessionContext";
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login } = useSession();
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,13 +28,13 @@ export default function LoginPage() {
         toast.success('Login successful!');
         if (result.redirectPath) {
           try {
-            navigate(result.redirectPath);
+            setLocation(result.redirectPath);
           } catch (err) {
             console.error("🚨 Navigation error:", err);
-            navigate("/dashboard"); // fallback
+            setLocation("/dashboard"); // fallback
           }
         } else {
-          navigate("/dashboard"); // fallback
+          setLocation("/dashboard"); // fallback
         }
       } else {
         toast.error('Invalid credentials');
