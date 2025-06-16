@@ -892,7 +892,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/firm/analysis-settings", async (req, res) => {
     try {
-      const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includes fixes and improvements based on the code review.
+      ```typescript
+const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includes fixes and improvements based on the code review.
         firmId: DEMO_FIRM_ID,
         ...req.body
       });
@@ -2613,8 +2614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admin users can access any firm, others only their own or tenant-scoped firm
       const allowedFirmId = tenantId || user.firmId;
 
-      if (user.role !== 'admin' &&```typescript
- allowedFirmId !== firmId) {
+      if (user.role !== 'admin' && allowedFirmId !== firmId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
@@ -3145,10 +3145,16 @@ app.get('/api/tenant/config', async (req, res) => {
     }
   });
 
-  // Register route modules
-  app.use('/api/admin', adminRoutes);
-  app.use('/api/onboarding', onboardingRoutes);
+  import oauthRoutes from './routes/oauth';
+import onboardingRoutes from './routes/onboarding';
+import adminRoutes from './routes/admin';
+import storageRoutes from './routes/storage';
+
+// Mount routes
   app.use('/api', oauthRoutes);
+  app.use('/api', onboardingRoutes);
+  app.use('/api', adminRoutes);
+  app.use('/api/storage', storageRoutes);
 
   const httpServer = createServer(app);
 
