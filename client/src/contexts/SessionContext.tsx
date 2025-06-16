@@ -10,11 +10,16 @@ interface User {
   firm?: any;
 }
 
+interface LoginResult {
+  success: boolean;
+  redirectPath?: string;
+}
+
 interface SessionContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
 }
@@ -45,7 +50,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -56,14 +61,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const loginData = await response.json();
+        console.log("✅ Login redirectPath:", loginData.redirectPath);
         setUser(loginData.user);
-        return true;
+        return {
+          success: true,
+          redirectPath: loginData.redirectPath
+        };
       } else {
-        return false;
+        return { success: false };
       }
     } catch (error) {
       console.error('Login failed:', error);
-      return false;
+      return { success: false };
     }
   };
 

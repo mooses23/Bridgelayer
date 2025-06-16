@@ -21,9 +21,19 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        navigate('/dashboard');
+      const result = await login(email, password);
+      if (result.success) {
+        console.log("✅ Login redirectPath:", result.redirectPath);
+        if (result.redirectPath) {
+          try {
+            navigate(result.redirectPath);
+          } catch (err) {
+            console.error("🚨 Navigation error:", err);
+            navigate("/dashboard"); // fallback
+          }
+        } else {
+          navigate("/dashboard"); // fallback
+        }
       } else {
         setError('Login failed');
       }

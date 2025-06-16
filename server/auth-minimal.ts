@@ -146,7 +146,8 @@ export const login = async (req: Request, res: Response) => {
         lastName: user.lastName,
         role: user.role,
         firmId: user.firmId
-      }
+      },
+      redirectPath
     });
   } catch (error) {
     console.error("Login error:", error);
