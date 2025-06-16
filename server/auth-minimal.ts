@@ -113,76 +113,60 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Set session data - ensure it's properly stored
-    const sessionData = {
+    // Set session data and save properly before responding
+    req.session.userId = user.id;
+    req.session.userRole = user.role;
+    req.session.firmId = user.firmId;
+
+    console.log('Setting session data:', {
       userId: user.id,
       userRole: user.role,
-      firmId: user.firmId,
-      email: user.email,
-      loginTime: new Date().toISOString()
-    };
+      firmId: user.firmId
+    });
 
-    console.log('Setting session data:', sessionData);
-
-    // First save current session data
-    Object.assign(req.session, sessionData);
-
-    req.session.save((saveErr) => {
-      if (saveErr) {
-        console.error('Initial session save error:', saveErr);
-        return res.status(500).json({ error: 'Session save failed' });
+    // Save session before sending response (critical for persistence)
+    req.session.save(async (err) => {
+      if (err) {
+        console.error('Session save failed:', err);
+        return res.status(500).json({ error: "Session save failed" });
       }
 
-      // Then regenerate for security
-      req.session.regenerate((regenerateErr) => {
-        if (regenerateErr) {
-          console.error('Session regeneration error:', regenerateErr);
-          return res.status(500).json({ error: 'Session creation failed' });
+      console.log('✅ Session saved successfully:', {
+        userId: req.session.userId,
+        userRole: req.session.userRole,
+        sessionId: req.sessionID
+      });
+
+      // Determine redirect path based on role and onboarding state
+      let redirectPath = '/dashboard'; // default
+
+      try {
+        if (user.role === 'admin') {
+          redirectPath = '/admin';
+        } else if ((user.role === 'firm_owner' || user.role === 'firm_admin' || user.role === 'paralegal') && user.firmId) {
+          // Check firm onboarding status
+          const firm = await storage.getFirm(user.firmId);
+          if (firm && !firm.onboarded) {
+            redirectPath = '/onboarding';
+          } else {
+            redirectPath = '/dashboard';
+          }
         }
+      } catch (firmLookupError) {
+        console.warn('Firm lookup failed, using default redirect:', firmLookupError);
+      }
 
-        // Re-apply session data after regeneration
-        Object.assign(req.session, sessionData);
-
-        req.session.save((finalSaveErr) => {
-          if (finalSaveErr) {
-            console.error('Final session save error:', finalSaveErr);
-            return res.status(500).json({ error: 'Session finalization failed' });
-          }
-
-          console.log('✅ Session regenerated and saved:', {
-            userId: req.session.userId,
-            userRole: req.session.userRole,
-            sessionId: req.sessionID
-          });
-
-          // Determine redirect path based on role and onboarding state
-          let redirectPath = '/dashboard'; // default
-
-          if (user.role === 'admin') {
-            redirectPath = '/admin';
-          } else if ((user.role === 'firm_owner' || user.role === 'firm_admin' || user.role === 'paralegal') && user.firmId) {
-            // Check firm onboarding status
-            const firm = await storage.getFirm(user.firmId);
-            if (firm && !firm.onboarded) {
-              redirectPath = '/onboarding';
-            } else {
-              redirectPath = '/dashboard';
-            }
-          }
-
-          res.json({
-            message: "Logged in",
-            user: {
-              id: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              role: user.role,
-              firmId: user.firmId
-            },
-            redirectPath
-          });
-        });
+      res.json({
+        message: "Logged in",
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          firmId: user.firmId
+        },
+        redirectPath
       });
     });
   } catch (error) {

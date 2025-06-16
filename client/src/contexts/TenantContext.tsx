@@ -120,7 +120,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <TenantContext.Provider value={{
       tenantId: tenant?.id || '',
       config: tenant || null,
-      isLoading,
+      isLoading: loading,
       error
     }}>
       {children}
