@@ -1,0 +1,52 @@
+[plugin:runtime-error-plugin] systemAlerts.map is not a function. (In 'systemAlerts.map(
+          (alert) => /* @__PURE__ */ jsxDEV(
+            "div",
+            {
+              "data-replit-metadata": "client/src/pages/Admin/AdminDashboard.tsx:209:14",
+              "data-component-name": "div",
+              className: "flex items-start space-x-3 p-3 border rounded-lg",
+              children: [
+                /* @__PURE__ */ jsxDEV(AlertTriangle, { "data-replit-metadata": "client/src/pages/Admin/AdminDashboard.tsx:213:18", "data-component-name": "AlertTriangle", className: "w-5 h-5 text-yellow-500 mt-0.5" }, void 0, false, {
+                  fileName: "/home/runner/workspace/client/src/pages/Admin/AdminDashboard.tsx",
+                  lineNumber: 213,
+                  columnNumber: 19
+                }, this),
+                /* @__PURE__ */ jsxDEV("div", { "data-replit-metadata": "client/src/pages/Admin/AdminDashboard.tsx:214:18", "data-component-name": "div", className: "flex-1 space-y-1", children: [
+                  /* @__PURE__ */ jsxDEV("p", { "data-replit-metadata": "client/src/pages/Admin/AdminDashboard.tsx:215:20", "data-component-name": "p", className: "text-sm font-medium text-gray-900", children: alert.message }, void 0, false, {
+                    fileName: "/home/runner/workspace/client/src/pages/Admin/AdminDashboard.tsx",
+                    lineNumber: 215,
+                    columnNumber: 21
+                  }, this),
+                  /* @__PURE__ */ jsxDEV("div", { "data-replit-metadata": "client/src/pages/Admin/AdminDashboard.tsx:216:20", "data-component-name": "div", className: "flex items-center space-x-2", children: [
+                    /* @__PURE__ */ jsxDEV(Badge, { "data-replit-metadata": "client/src/pages/Admin/AdminDashboard.tsx:217:22", "data-component-name": "Badge", className: getAlertColor(alert.type), children: alert.type }, void 0, false, {
+                      fileName: "/home/runner/workspace/client/src/pages/Admin/AdminDashboard.tsx",
+                      lineNumber: 217,
+                      columnNumber: 23
+                    }, this),
+                    /* @__PURE__ */ jsxDEV("span", { "data-replit-metadata": "client/src/pages/Admin/AdminDashboard.tsx:220:22", "data-component-name": "span", className: "text-xs text-gray-500", children: alert.time }, void 0, false, {
+                      fileName: "/home/runner/workspace/client/src/pages/Admin/AdminDashboard.tsx",
+                      lineNumber: 220,
+                      columnNumber: 23
+                    }, this)
+                  ] }, void 0, true, {
+                    fileName: "/home/runner/workspace/client/src/pages/Admin/AdminDashboard.tsx",
+                    lineNumber: 216,
+                    columnNumber: 21
+                  }, this)
+                ] }, void 0, true, {
+                  fileName: "/home/runner/workspace/client/src/pages/Admin/AdminDashboard.tsx",
+                  lineNumber: 214,
+                  columnNumber: 19
+                }, this)
+              ]
+            },
+            alert.id,
+            true,
+            {
+              fileName: "/home/runner/workspace/client/src/pages/Admin/AdminDashboard.tsx",
+              lineNumber: 209,
+              columnNumber: 15
+            },
+            this
+          )
+        )', 'systemAlerts.map' is undefined)

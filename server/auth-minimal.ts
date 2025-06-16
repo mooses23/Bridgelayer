@@ -42,18 +42,19 @@ export interface AuthenticatedRequest extends Request {
 // Middleware to check if user is authenticated
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    const sessionUserId = (req.session as any)?.userId;
     console.log('Session check:', { 
       sessionExists: !!req.session,
-      userId: req.session?.userId,
+      userId: sessionUserId,
       cookies: req.headers.cookie,
       sessionData: req.session
     });
     
-    if (!req.session || !req.session.userId) {
+    if (!req.session || !sessionUserId) {
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    const user = await storage.getUser(req.session.userId);
+    const user = await storage.getUser(sessionUserId);
     if (!user) {
       req.session.destroy(() => {});
       return res.status(401).json({ message: "User not found" });
@@ -111,16 +112,17 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Set session
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
+    // Set session data
+    (req.session as any).userId = user.id;
+    (req.session as any).userRole = user.role;
     
-    // Save session
-    await new Promise<void>((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
+    // Force session save
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+      } else {
+        console.log('Session saved successfully with userId:', user.id);
+      }
     });
 
     // Determine redirect path based on role and onboarding state

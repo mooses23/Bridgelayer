@@ -25,6 +25,9 @@ export default function AdminDashboard() {
     staleTime: 1 * 60 * 1000,
   });
 
+  // Ensure systemAlerts is always an array
+  const alertsArray = Array.isArray(systemAlerts) ? systemAlerts : [];
+
   // Fallback data only when loading and no data
   const fallbackStats = {
     totalFirms: "...",
@@ -205,7 +208,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {systemAlerts.map((alert) => (
+              {alertsArray.map((alert: any) => (
                 <div
                   key={alert.id}
                   className="flex items-start space-x-3 p-3 border rounded-lg"
