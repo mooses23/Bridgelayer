@@ -256,70 +256,7 @@ export class AuthControllers {
     }
   }
 
-  /**
-   * Refresh access token using refresh token
-   */
-  static async refreshToken(req: Request, res: Response): Promise<void> {
-    try {
-      const refreshToken = JWTUtils.extractRefreshTokenFromRequest(req);
 
-      if (!refreshToken) {
-        res.status(401).json({
-          error: 'No refresh token',
-          message: 'Refresh token required'
-        });
-        return;
-      }
-
-      // Verify refresh token
-      let payload;
-      try {
-        payload = JWTUtils.verifyRefreshToken(refreshToken);
-      } catch {
-        res.status(401).json({
-          error: 'Invalid refresh token',
-          message: 'Refresh token is invalid or expired'
-        });
-        return;
-      }
-
-      // Verify user still exists and is active
-      const user = await storage.getUser(payload.userId);
-      if (!user) {
-        res.status(401).json({
-          error: 'User not found',
-          message: 'User account no longer exists'
-        });
-        return;
-      }
-
-      // TODO: Check token version against database to handle revocation
-
-      // Generate new access token
-      const newAccessToken = JWTUtils.generateAccessToken({
-        userId: user.id,
-        tenantId: payload.tenantId,
-        role: user.role,
-        email: user.email,
-        firmId: user.firmId
-      });
-
-      // Set new access token cookie
-      const isProduction = process.env.NODE_ENV === 'production';
-      res.cookie('accessToken', newAccessToken, JWTUtils.getCookieOptions(isProduction));
-
-      res.json({
-        success: true,
-        message: 'Token refreshed successfully'
-      });
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      res.status(500).json({
-        error: 'Token refresh failed',
-        message: 'Internal server error during token refresh'
-      });
-    }
-  }
 
   /**
    * Get current session info

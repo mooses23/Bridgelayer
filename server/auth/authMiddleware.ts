@@ -3,13 +3,17 @@ import { JWTUtils, JWTPayload } from './jwtUtils';
 import { storage } from '../storage';
 import { auditLogger } from '../services/auditLogger';
 
-// Extend Express Request type to include JWT user data
+// Extend Express Request type to include session user data
 declare global {
   namespace Express {
     interface Request {
-      user?: JWTPayload & {
+      user?: {
+        id: number;
+        email: string;
         firstName: string;
         lastName: string;
+        role: string;
+        firmId?: number | null;
         firm?: any;
       };
       tenant?: {
@@ -21,9 +25,13 @@ declare global {
 }
 
 export interface AuthenticatedRequest extends Request {
-  user: JWTPayload & {
+  user: {
+    id: number;
+    email: string;
     firstName: string;
     lastName: string;
+    role: string;
+    firmId?: number | null;
     firm?: any;
   };
   tenant: {

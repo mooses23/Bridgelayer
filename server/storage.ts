@@ -1744,44 +1744,6 @@ export class DatabaseStorage implements IStorage {
     return session;
   }
 
-    // Audit log operations
-  async createAuditLog(auditLog: InsertAuditLog): Promise<void> {
-    try {
-      await db.insert(auditLogs).values(auditLog).returning();
-    } catch (error) {
-      console.error('Failed to create audit log:', error);
-    }
-  }
-
-  async getFirmAuditLogs(firmId: number, limit: number = 100): Promise<AuditLog[]> {
-    return await db
-      .select()
-      .from(auditLogs)
-      .where(eq(auditLogs.firmId, firmId))
-      .orderBy(desc(auditLogs.timestamp))
-      .limit(limit);
-  }
-
-  async getAuditLogsByAction(firmId: number, action: string): Promise<AuditLog[]> {
-    return await db
-      .select()
-      .from(auditLogs)
-      .where(and(eq(auditLogs.firmId, firmId), eq(auditLogs.action, action)))
-      .orderBy(desc(auditLogs.timestamp));
-  }
-
-  async getAuditLogsByDateRange(firmId: number, startDate: Date, endDate: Date): Promise<AuditLog[]> {
-    return await db
-      .select()
-      .from(auditLogs)
-      .where(and(
-        eq(auditLogs.firmId, firmId),
-        sql`${auditLogs.timestamp} >= ${startDate}`,
-        sql`${auditLogs.timestamp} <= ${endDate}`
-      ))
-      .orderBy(desc(auditLogs.timestamp));
-  }
-
   // User operations
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
