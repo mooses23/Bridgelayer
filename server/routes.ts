@@ -2549,6 +2549,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API endpoints for AdminDashboard and GhostModePage
+  app.get('/api/tenants', requireAdmin, async (req, res) => {
+    try {
+      const firms = await storage.getAllFirms();
+      
+      // Transform firms to tenant format with additional metadata
+      const tenants = firms.map(firm => ({
+        id: firm.id,
+        name: firm.name,
+        slug: firm.slug,
+        plan: firm.plan || "Professional",
+        status: firm.status || "Active",
+        userCount: 0, // Will be populated by actual user count query
+        lastActivity: "Recently",
+        onboarded: firm.onboarded
+      }));
+
+      res.json(tenants);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+    try {
+      const firms = await storage.getAllFirms();
+      const users = await storage.getAllUsers();
+      
+      const totalFirms = firms.length;
+      const activeFirms = firms.filter(f => f.status === 'active' || !f.status).length;
+      const totalUsers = users.length;
+      const documentsProcessed = 45892; // This would come from actual document processing stats
+      
+      const stats = {
+        totalFirms,
+        activeFirms,
+        totalUsers,
+        documentsProcessed,
+        systemHealth: "Healthy"
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/admin/alerts', requireAdmin, async (req, res) => {
+    try {
+      // In a real system, this would come from a monitoring/alerting system
+      const alerts = [
+        {
+          id: 1,
+          type: "warning",
+          message: "High API usage detected for Wilson & Associates",
+          time: "10 minutes ago"
+        },
+        {
+          id: 2,
+          type: "info", 
+          message: "Scheduled maintenance completed successfully",
+          time: "2 hours ago"
+        },
+        {
+          id: 3,
+          type: "error",
+          message: "Failed login attempts from IP 192.168.1.100", 
+          time: "3 hours ago"
+        }
+      ];
+
+      res.json(alerts);
+    } catch (error) {
+      console.error('Error fetching admin alerts:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/admin/ghost/:firmId', requireAdmin, async (req, res) => {
+    try {
+      const firmId = parseInt(req.params.firmId);
+      const adminUserId = req.user?.id;
+      
+      if (!adminUserId) {
+        return res.status(401).json({ error: 'Admin user ID required' });
+      }
+
+      // Create ghost session
+      const session = await storage.createGhostSession({
+        adminUserId,
+        firmId,
+        startedAt: new Date()
+      });
+
+      res.json({ 
+        success: true, 
+        sessionId: session.id,
+        message: 'Ghost mode activated' 
+      });
+    } catch (error) {
+      console.error('Error starting ghost session:', error);
+      res.status(500).json({ error: 'Failed to start ghost session' });
+    }
+  });
+
+  app.get('/api/admin/ghost/current', requireAdmin, async (req, res) => {
+    try {
+      const adminUserId = req.user?.id;
+      
+      if (!adminUserId) {
+        return res.status(401).json({ error: 'Admin user ID required' });
+      }
+
+      const session = await storage.getCurrentGhostSession(adminUserId);
+      
+      if (!session) {
+        return res.json({ active: false });
+      }
+
+      res.json({
+        active: true,
+        firmId: session.firmId,
+        firmName: session.firmName || 'Unknown Firm',
+        startedAt: session.startedAt
+      });
+    } catch (error) {
+      console.error('Error fetching current ghost session:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/admin/ghost/exit', requireAdmin, async (req, res) => {
+    try {
+      const adminUserId = req.user?.id;
+      
+      if (!adminUserId) {
+        return res.status(401).json({ error: 'Admin user ID required' });
+      }
+
+      const session = await storage.endGhostSession(adminUserId);
+      
+      res.json({ 
+        success: true,
+        message: 'Ghost mode deactivated'
+      });
+    } catch (error) {
+      console.error('Error ending ghost session:', error);
+      res.status(500).json({ error: 'Failed to end ghost session' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

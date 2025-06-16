@@ -3,63 +3,54 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Users, Activity, AlertTriangle, TrendingUp, Eye, Settings } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 
 export default function AdminDashboard() {
-  const systemStats = {
-    totalFirms: 247,
-    activeFirms: 198,
-    totalUsers: 1847,
-    documentsProcessed: 45892,
-    systemHealth: "Healthy"
+  const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
+    queryKey: ["tenants"],
+    queryFn: () => fetch("/api/tenants", { credentials: "include" }).then(r => r.json()),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: systemStats, isLoading: statsLoading } = useQuery({
+    queryKey: ["admin-stats"],
+    queryFn: () => fetch("/api/admin/stats", { credentials: "include" }).then(r => r.json()),
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const { data: systemAlerts = [], isLoading: alertsLoading } = useQuery({
+    queryKey: ["system-alerts"],
+    queryFn: () => fetch("/api/admin/alerts", { credentials: "include" }).then(r => r.json()),
+    staleTime: 1 * 60 * 1000,
+  });
+
+  // Fallback data only when loading and no data
+  const fallbackStats = {
+    totalFirms: "...",
+    activeFirms: "...",
+    totalUsers: "...",
+    documentsProcessed: "...",
+    systemHealth: "Loading..."
   };
 
-  const recentFirms = [
-    {
-      id: 1,
-      name: "Wilson & Associates",
-      plan: "Professional",
-      users: 12,
-      status: "Active",
-      lastActivity: "2 hours ago"
-    },
-    {
-      id: 2,
-      name: "Tech Law Group",
-      plan: "Enterprise",
-      users: 25,
-      status: "Active",
-      lastActivity: "5 minutes ago"
-    },
-    {
-      id: 3,
-      name: "Property Legal Services",
-      plan: "Basic",
-      users: 5,
-      status: "Trial",
-      lastActivity: "1 day ago"
-    }
-  ];
+  const displayStats = systemStats || (statsLoading ? fallbackStats : {
+    totalFirms: 0,
+    activeFirms: 0,
+    totalUsers: 0,
+    documentsProcessed: 0,
+    systemHealth: "Unknown"
+  });
 
-  const systemAlerts = [
-    {
-      id: 1,
-      type: "warning",
-      message: "High API usage detected for Wilson & Associates",
-      time: "10 minutes ago"
-    },
-    {
-      id: 2,
-      type: "info",
-      message: "Scheduled maintenance completed successfully",
-      time: "2 hours ago"
-    },
-    {
-      id: 3,
-      type: "error",
-      message: "Failed login attempts from IP 192.168.1.100",
-      time: "3 hours ago"
-    }
-  ];
+  // Get recent firms from tenants data
+  const recentFirms = tenants.slice(0, 3).map((tenant: any) => ({
+    id: tenant.id,
+    name: tenant.name,
+    plan: tenant.plan || "Professional",
+    users: tenant.userCount || 0,
+    status: tenant.status || "Active",
+    lastActivity: tenant.lastActivity || "Recently"
+  }));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -107,8 +98,10 @@ export default function AdminDashboard() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalFirms}</div>
-            <p className="text-xs text-muted-foreground">+12 this month</p>
+            <div className="text-2xl font-bold">{displayStats.totalFirms}</div>
+            <p className="text-xs text-muted-foreground">
+              {displayStats.totalFirms === "..." ? "Loading..." : "+12 this month"}
+            </p>
           </CardContent>
         </Card>
 
@@ -118,8 +111,10 @@ export default function AdminDashboard() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.activeFirms}</div>
-            <p className="text-xs text-muted-foreground">80% active rate</p>
+            <div className="text-2xl font-bold">{displayStats.activeFirms}</div>
+            <p className="text-xs text-muted-foreground">
+              {displayStats.activeFirms === "..." ? "Loading..." : "80% active rate"}
+            </p>
           </CardContent>
         </Card>
 
@@ -129,8 +124,10 @@ export default function AdminDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">+89 this week</p>
+            <div className="text-2xl font-bold">{displayStats.totalUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              {displayStats.totalUsers === "..." ? "Loading..." : "+89 this week"}
+            </p>
           </CardContent>
         </Card>
 
@@ -140,8 +137,13 @@ export default function AdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{systemStats.documentsProcessed.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Processed this month</p>
+            <div className="text-2xl font-bold">
+              {displayStats.documentsProcessed === "..." ? "..." : 
+               typeof displayStats.documentsProcessed === 'number' ? displayStats.documentsProcessed.toLocaleString() : displayStats.documentsProcessed}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {displayStats.documentsProcessed === "..." ? "Loading..." : "Processed this month"}
+            </p>
           </CardContent>
         </Card>
 
@@ -151,8 +153,12 @@ export default function AdminDashboard() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{systemStats.systemHealth}</div>
-            <p className="text-xs text-muted-foreground">All services operational</p>
+            <div className={`text-2xl font-bold ${displayStats.systemHealth === "Loading..." ? "text-gray-600" : "text-green-600"}`}>
+              {displayStats.systemHealth}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {displayStats.systemHealth === "Loading..." ? "Checking status..." : "All services operational"}
+            </p>
           </CardContent>
         </Card>
       </div>

@@ -144,6 +144,7 @@ export interface IStorage {
   
   // Admin panel operations - Firm management
   getAllFirms(): Promise<Firm[]>;
+  getAllUsers(): Promise<User[]>;
   updateFirmVertical(firmId: number, vertical: string): Promise<Firm | undefined>;
   
   // Admin panel operations - Integration management
