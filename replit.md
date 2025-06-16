@@ -103,6 +103,16 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 20.5 - Convert Layouts to Nested Routes Implementation Complete
+  - Successfully converted all layouts (AdminLayout, FirmDashboardLayout, ClientLayout) to use nested routes with `<Outlet />`
+  - Updated RoleRouter.tsx to use proper nested route structure instead of layout wrapping
+  - Changed from `<Route path="/admin/*" element={<AdminLayout><Routes>...</Routes></AdminLayout>} />` to `<Route path="/admin" element={<AdminLayout />}><Route index element={<AdminDashboard />} /></Route>`
+  - Applied nested route pattern consistently across all user roles: admin, firm (firm_admin/paralegal), and client
+  - Fixed FirmDashboardLayout to use SessionContext instead of AuthContext and tenant data from TenantContext
+  - Removed layout children wrapping in favor of React Router v6 nested routes with `<Outlet />` pattern
+  - All layouts now properly render child components through `<Outlet />` for cleaner route architecture
+  - System maintains role-based access control while using modern React Router nested route structure
+
 - **June 16, 2025**: GHGH 20.4 - SessionProvider App Wrapper Implementation Complete
   - Updated App.tsx to wrap application with SessionProvider as outermost provider
   - Replaced AuthProvider with SessionProvider for session-based authentication management

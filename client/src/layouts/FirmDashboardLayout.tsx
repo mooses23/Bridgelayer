@@ -20,7 +20,7 @@ export default function FirmLayout() {
   const { user, logout } = useSession();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { hasFeature } = useTenant();
+  const { hasFeature, tenant } = useTenant();
 
   console.log("Navigated to", location.pathname);
 
@@ -62,7 +62,7 @@ export default function FirmLayout() {
 
           {/* Firm name */}
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">{firm?.name || "Your Firm"}</h2>
+            <h2 className="text-lg font-medium text-gray-900">{tenant?.name || "Your Firm"}</h2>
             <p className="text-sm text-gray-500">{user?.role}</p>
           </div>
 
@@ -132,7 +132,7 @@ export default function FirmLayout() {
             <div className="flex-1 lg:flex lg:items-center lg:justify-between">
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate">
-                  {firm?.name || "Dashboard"}
+                  {tenant?.name || "Dashboard"}
                 </h1>
               </div>
 
