@@ -23,7 +23,20 @@ app.use(helmet({
 
 // CORS configuration for development environment
 app.use(cors({
-  origin: true, // Allow all origins in development
+  origin: function(origin, callback) {
+    // Allow requests from Replit domains and localhost
+    const allowedOrigins = [
+      /\.replit\.dev$/,
+      /localhost/,
+      /127\.0\.0\.1/
+    ];
+    
+    if (!origin || allowedOrigins.some(pattern => pattern.test(origin))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all in development
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -74,23 +87,22 @@ app.use(cookieParser());
 
 // Configure session middleware with PostgreSQL store
 const PgSession = ConnectPgSimple(session);
+// Configure express-session for Replit environment
 app.use(session({
   secret: process.env.SESSION_SECRET || 'firmsync-dev-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
-  name: 'firmsync.sid',
+  name: 'connect.sid', // Use standard session name
   store: new PgSession({
     pool: pool,
     tableName: 'session',
     createTableIfMissing: true
   }),
   cookie: {
-    secure: false, // HTTP for development
-    httpOnly: true, // Secure against XSS
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Allow cross-origin for dev
-    domain: undefined, // Auto-detect domain
-    path: '/' // Available for all paths
+    secure: false,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: 'lax'
   }
 }));
 

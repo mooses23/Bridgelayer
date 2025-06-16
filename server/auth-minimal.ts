@@ -127,20 +127,43 @@ export const login = async (req: Request, res: Response) => {
       sessionId: req.sessionID
     });
     
-    // Force session save without regeneration to maintain data
+    // Force session regeneration and save to ensure proper cookie setting
     await new Promise<void>((resolve, reject) => {
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('Session save error:', saveErr);
-          reject(saveErr);
+      req.session.regenerate((regenErr) => {
+        if (regenErr) {
+          console.error('Session regeneration error:', regenErr);
+          reject(regenErr);
         } else {
-          console.log('✅ Session saved successfully:', {
-            userId: req.session.userId,
-            userRole: req.session.userRole,
-            sessionId: req.sessionID
+          // Set session data after regeneration
+          req.session.userId = user.id;
+          req.session.userRole = user.role;
+          req.session.firmId = user.firmId;
+          
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error('Session save error:', saveErr);
+              reject(saveErr);
+            } else {
+              console.log('✅ Session regenerated and saved:', {
+                userId: req.session.userId,
+                userRole: req.session.userRole,
+                sessionId: req.sessionID
+              });
+              
+              // Manually set session cookie to ensure browser receives it
+              res.cookie('connect.sid', `s:${req.sessionID}`, {
+                httpOnly: true,
+                secure: false,
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000,
+                path: '/'
+              });
+              
+              console.log('🍪 Manual cookie set for session:', req.sessionID);
+              console.log('🍪 Response headers after manual set:', res.getHeaders()['set-cookie']);
+              resolve();
+            }
           });
-          console.log('🍪 Set-Cookie debug:', res.getHeaders()['set-cookie']);
-          resolve();
         }
       });
     });
