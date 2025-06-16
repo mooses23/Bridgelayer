@@ -103,6 +103,16 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 22.2 - Update Dev Seed to Use bcrypt Implementation Complete
+  - Updated server/seed-auth-data.ts to use proper bcrypt password hashing with salt rounds of 10
+  - Fixed database field references from passwordHash to password to match actual schema
+  - Implemented secure password credentials: admin@firmsync.com/admin123, owner@testfirm.com/test123, staff@legaledge.com/staff123
+  - Enhanced seed script to check for existing firms before creating to avoid constraint violations
+  - Added "✅ Seeded users with hashed passwords" success logging message as requested
+  - Successfully tested all three user accounts with new bcrypt-hashed passwords showing proper authentication
+  - Removed existing users and re-seeded with properly secured password hashes
+  - Authentication system now uses industry-standard bcrypt security for all password storage and validation
+
 - **June 16, 2025**: GHGH 22.1 - Debug & Fix Login Handler Implementation Complete
   - Added comprehensive console logging to POST /api/auth/login route for debugging login issues
   - Fixed password field reference from user.hashedPassword to user.password to match database schema
