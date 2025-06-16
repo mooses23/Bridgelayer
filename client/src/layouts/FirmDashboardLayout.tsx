@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { Outlet } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   Home, 
@@ -73,11 +72,11 @@ export default function FirmLayout() {
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
-                <NavLink 
+                <Link 
                   key={item.name} 
-                  to={item.href}
-                  className={({ isActive }) => `group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive
+                  href={item.href}
+                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    item.current
                       ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
@@ -86,7 +85,7 @@ export default function FirmLayout() {
                     item.current ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
                   }`} />
                   {item.name}
-                </NavLink>
+                </Link>
               );
             })}
           </nav>

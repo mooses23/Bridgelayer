@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { Outlet } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   Building2, 
@@ -64,11 +63,11 @@ export default function AdminLayout() {
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
-                <NavLink 
+                <Link 
                   key={item.name} 
-                  to={item.href}
-                  className={({ isActive }) => `group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    isActive
+                  href={item.href}
+                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    item.current
                       ? 'bg-red-50 text-red-700 border-r-2 border-red-700'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
@@ -77,7 +76,7 @@ export default function AdminLayout() {
                     item.current ? 'text-red-500' : 'text-gray-400 group-hover:text-gray-500'
                   }`} />
                   {item.name}
-                </NavLink>
+                </Link>
               );
             })}
           </nav>
@@ -94,9 +93,9 @@ export default function AdminLayout() {
                 <p className="text-sm font-medium text-gray-900 truncate">System Admin</p>
                 <p className="text-xs text-gray-500 truncate">admin@firmsync.com</p>
               </div>
-              <NavLink to="/logout" className="ml-3 p-2 text-gray-400 hover:text-gray-500" title="Sign out">
+              <Link href="/logout" className="ml-3 p-2 text-gray-400 hover:text-gray-500" title="Sign out">
                 <LogOut className="w-4 h-4" />
-              </NavLink>
+              </Link>
             </div>
           </div>
         </div>
