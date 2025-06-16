@@ -17,6 +17,7 @@ import SystemHealthPage from '@/pages/Admin/SystemHealthPage';
 // Firm Pages
 import FirmDashboardLayout from '@/layouts/FirmDashboardLayout';
 import DashboardPage from '@/pages/Firm/DashboardPage';
+import TemplatedDashboard from '@/pages/Firm/TemplatedDashboard';
 import CasesPage from '@/pages/Firm/CasesPage';
 import IntakePage from '@/pages/Firm/IntakePage';
 import DocumentsPage from '@/pages/Firm/DocumentsPage';
@@ -69,8 +70,8 @@ export default function RoleRouter() {
               
               {/* Main firm dashboard routes */}
               <Route path="/" element={<FirmDashboardLayout />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="dashboard" element={<DashboardPage />} />
+                <Route index element={<TemplatedDashboard />} />
+                <Route path="dashboard" element={<TemplatedDashboard />} />
                 <Route path="cases" element={<CasesPage />} />
                 <Route path="intake" element={<IntakePage />} />
                 <Route path="documents" element={<DocumentsPage />} />
@@ -79,6 +80,9 @@ export default function RoleRouter() {
                 <Route path="logout" element={<LogoutPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
+              
+              {/* Direct route for templated dashboard testing */}
+              <Route path="/templated-dashboard" element={<TemplatedDashboard />} />
             </>
           )}
 
