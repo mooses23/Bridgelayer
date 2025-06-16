@@ -119,6 +119,7 @@ export class AuthControllers {
       res.json({
         success: true,
         message: 'Login successful',
+        token: accessToken,
         user: {
           id: user.id,
           email: user.email,
