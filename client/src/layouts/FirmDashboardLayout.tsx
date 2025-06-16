@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useTenant } from "@/context/TenantContext";
+import DashboardPage from "@/pages/Firm/DashboardPage";
 
 export default function FirmLayout() {
   console.log("[FirmLayout] LIVE");
@@ -149,7 +150,7 @@ export default function FirmLayout() {
         {/* Page content */}
         <main className="flex-1 p-6">
           <ErrorBoundary>
-            <Outlet />
+            <DashboardPage />
           </ErrorBoundary>
         </main>
       </div>

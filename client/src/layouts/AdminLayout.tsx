@@ -126,7 +126,7 @@ export default function AdminLayout() {
         {/* Page content */}
         <main className="flex-1 p-6">
           <ErrorBoundary>
-            <Outlet />
+            <AdminDashboard />
           </ErrorBoundary>
         </main>
       </div>

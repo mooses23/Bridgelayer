@@ -1,5 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { Outlet } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Home, FileText, DollarSign, LogOut } from "lucide-react";
 
@@ -29,11 +28,11 @@ export default function ClientLayout() {
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <NavLink 
+                  <Link 
                     key={item.name} 
-                    to={item.href}
-                    className={({ isActive }) => `flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      isActive
+                    href={item.href}
+                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      item.current
                         ? 'bg-blue-50 text-blue-700'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
@@ -42,17 +41,17 @@ export default function ClientLayout() {
                       item.current ? 'text-blue-500' : 'text-gray-400'
                     }`} />
                     {item.name}
-                  </NavLink>
+                  </Link>
                 );
               })}
             </nav>
 
             {/* Logout */}
             <div className="flex items-center">
-              <NavLink to="/client/logout" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+              <Link href="/client/logout" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
-              </NavLink>
+              </Link>
             </div>
           </div>
         </div>
