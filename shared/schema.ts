@@ -296,6 +296,65 @@ export const platformSettings = pgTable("platform_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Onboarding system tables
+export const onboardingSessions = pgTable("onboarding_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  adminUserId: integer("admin_user_id").references(() => users.id),
+  currentStep: integer("current_step").notNull().default(1),
+  stepData: jsonb("step_data"),
+  status: text("status").notNull().default("in_progress"), // in_progress, completed, abandoned
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const firmBranding = pgTable("firm_branding", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull().unique(),
+  logoUrl: text("logo_url"),
+  primaryColor: text("primary_color"),
+  secondaryColor: text("secondary_color"),
+  displayName: text("display_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const firmPreferences = pgTable("firm_preferences", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull().unique(),
+  defaultLanguage: text("default_language").default("en"),
+  timezone: text("timezone").default("America/New_York"),
+  practiceAreas: text("practice_areas").array(),
+  caseTypes: text("case_types").array(),
+  fileRetentionDays: integer("file_retention_days").default(2555), // 7 years
+  auditTrailEnabled: boolean("audit_trail_enabled").default(true),
+  folderStructure: text("folder_structure").default("by_matter"), // by_matter, by_date
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const firmTemplates = pgTable("firm_templates", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  fileUrl: text("file_url").notNull(),
+  templateType: text("template_type"), // letterhead, intake_form, engagement_letter, etc.
+  uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const complianceAgreements = pgTable("compliance_agreements", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  agreementType: text("agreement_type").notNull(), // nda, terms_of_service, privacy_policy
+  version: text("version").notNull(),
+  acceptedBy: integer("accepted_by").references(() => users.id).notNull(),
+  acceptedAt: timestamp("accepted_at").defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
 export const documentTypeTemplates = pgTable("document_type_templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -436,6 +495,35 @@ export const insertFirmBillingSettingsSchema = createInsertSchema(firmBillingSet
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   id: true,
   timestamp: true,
+});
+
+// Onboarding schemas
+export const insertOnboardingSessionSchema = createInsertSchema(onboardingSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFirmBrandingSchema = createInsertSchema(firmBranding).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFirmPreferencesSchema = createInsertSchema(firmPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFirmTemplateSchema = createInsertSchema(firmTemplates).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertComplianceAgreementSchema = createInsertSchema(complianceAgreements).omit({
+  id: true,
+  acceptedAt: true,
 });
 
 export const insertClientIntakeSchema = createInsertSchema(clientIntakes).omit({
