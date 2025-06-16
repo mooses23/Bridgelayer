@@ -53,12 +53,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     const result = await login(req, res);
     if (req.session?.userId) {
-      await auditLogger.logLogin(
-        req.session.userId, 
-        req.session.firmId || null, 
-        req.ip, 
-        req.get('User-Agent')
-      );
+      try {
+        await auditLogger.logLogin(
+          req.session.userId, 
+          req.session.firmId || null, 
+          req.ip, 
+          req.get('User-Agent')
+        );
+      } catch (error) {
+        console.error('Audit logging failed but login succeeded:', error);
+        // Don't fail login due to audit logging issues
+      }
     }
     return result;
   });

@@ -115,10 +115,17 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Set session data
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
-    req.session.firmId = user.firmId || null;
+    // Set session data with explicit typing
+    (req.session as any).userId = user.id;
+    (req.session as any).userRole = user.role;
+    (req.session as any).firmId = user.firmId || null;
+    
+    console.log('Setting session data:', {
+      userId: user.id,
+      userRole: user.role,
+      firmId: user.firmId,
+      sessionId: req.sessionID
+    });
     
     // Force session save
     await new Promise<void>((resolve, reject) => {
@@ -127,7 +134,11 @@ export const login = async (req: Request, res: Response) => {
           console.error('Session save error:', err);
           reject(err);
         } else {
-          console.log('Session saved successfully with userId:', user.id);
+          console.log('Session saved successfully:', {
+            userId: user.id,
+            sessionId: req.sessionID,
+            sessionData: req.session
+          });
           resolve();
         }
       });
