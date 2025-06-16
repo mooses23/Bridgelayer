@@ -2857,7 +2857,7 @@ app.get('/api/tenant/config', async (req, res) => {
     }
   });
 
-  app.get("/api/admin/logs", jwtAuthMiddleware, requireAdmin, async (req, res) => {
+  app.get("/api/admin/logs", requireAuth, requireAdmin, async (req, res) => {
     try {
       const { logManager } = await import("./logging.js");
       const { level, source, limit, since } = req.query;
@@ -2876,7 +2876,7 @@ app.get('/api/tenant/config', async (req, res) => {
     }
   });
 
-  app.delete("/api/admin/logs", jwtAuthMiddleware, requireAdmin, async (req, res) => {
+  app.delete("/api/admin/logs", requireAuth, requireAdmin, async (req, res) => {
     try {
       const { logManager } = await import("./logging.js");
       logManager.clearLogs();
