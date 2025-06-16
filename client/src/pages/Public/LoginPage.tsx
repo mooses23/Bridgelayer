@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/context/AuthContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { login } = useAuth();
+  const { login } = useSession();
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -21,8 +21,12 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const success = await login(email, password);
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setError('Login failed');
+      }
     } catch (error) {
       console.error("Login failed:", error);
       setError('Login failed');

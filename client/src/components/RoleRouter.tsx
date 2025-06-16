@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useSession } from '@/contexts/SessionContext';
 import { useTenant } from '@/context/TenantContext';
 
 // Public Pages
@@ -32,10 +32,10 @@ import ClientDashboard from '@/pages/Client/ClientDashboard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function RoleRouter() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useSession();
   const { tenant, loading: tenantLoading } = useTenant();
 
-  if (loading || tenantLoading) {
+  if (isLoading || tenantLoading) {
     return <LoadingSpinner />;
   }
 
