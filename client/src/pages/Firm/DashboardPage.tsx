@@ -1,9 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FeatureToggle from "@/components/FeatureToggle";
 import { useTenant } from "@/context/TenantContext";
+import { useQuery } from "@tanstack/react-query";
 
 export default function DashboardPage() {
-  const { hasFeature } = useTenant();
+  const { tenant, hasFeature } = useTenant();
+  
+  const { data: summary, isLoading } = useQuery({
+    queryKey: ["dashboard-summary", tenant?.id],
+    queryFn: () => fetch(`/api/dashboard-summary?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!tenant?.id
+  });
 
   return (
     <div className="space-y-6">
@@ -22,9 +29,11 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : summary?.totalCases ?? "24"}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              {summary?.casesChange ?? "+12% from last month"}
             </p>
           </CardContent>
         </Card>
@@ -36,9 +45,11 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">18</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : summary?.activeClients ?? "18"}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +2 new this week
+              {summary?.clientsChange ?? "+2 new this week"}
             </p>
           </CardContent>
         </Card>
@@ -51,9 +62,11 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">156</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? "..." : summary?.documentsReviewed ?? "156"}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +8 today
+                {summary?.documentsToday ?? "+8 today"}
               </p>
             </CardContent>
           </Card>
@@ -67,9 +80,11 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">142.5</div>
+              <div className="text-2xl font-bold">
+                {isLoading ? "..." : summary?.billableHours ?? "142.5"}
+              </div>
               <p className="text-xs text-muted-foreground">
-                This month
+                {summary?.billablePeriod ?? "This month"}
               </p>
             </CardContent>
           </Card>

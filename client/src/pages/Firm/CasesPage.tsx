@@ -3,9 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, FileText, Plus } from "lucide-react";
+import { useTenant } from "@/context/TenantContext";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CasesPage() {
-  const cases = [
+  const { tenant } = useTenant();
+  
+  const { data: cases, isLoading } = useQuery({
+    queryKey: ["cases", tenant?.id],
+    queryFn: () => fetch(`/api/cases?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!tenant?.id
+  });
+
+  const { data: casesSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ["cases-summary", tenant?.id],
+    queryFn: () => fetch(`/api/cases-summary?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!tenant?.id
+  });
+
+  // Fallback data structure for when API is not available
+  const fallbackCases = [
     {
       id: 1,
       title: "Smith vs. Johnson",
@@ -80,8 +97,12 @@ export default function CasesPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">+3 from last month</p>
+            <div className="text-2xl font-bold">
+              {summaryLoading ? "..." : casesSummary?.totalCases ?? "24"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {casesSummary?.totalCasesChange ?? "+3 from last month"}
+            </p>
           </CardContent>
         </Card>
 
@@ -91,8 +112,12 @@ export default function CasesPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">18</div>
-            <p className="text-xs text-muted-foreground">+2 from last week</p>
+            <div className="text-2xl font-bold">
+              {summaryLoading ? "..." : casesSummary?.activeCases ?? "18"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {casesSummary?.activeCasesChange ?? "+2 from last week"}
+            </p>
           </CardContent>
         </Card>
 
@@ -102,7 +127,9 @@ export default function CasesPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
+            <div className="text-2xl font-bold">
+              {summaryLoading ? "..." : casesSummary?.highPriority ?? "5"}
+            </div>
             <p className="text-xs text-muted-foreground">Requires attention</p>
           </CardContent>
         </Card>
@@ -113,7 +140,9 @@ export default function CasesPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">
+              {summaryLoading ? "..." : casesSummary?.upcomingDeadlines ?? "8"}
+            </div>
             <p className="text-xs text-muted-foreground">Upcoming deadlines</p>
           </CardContent>
         </Card>
@@ -126,11 +155,14 @@ export default function CasesPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {cases.map((case_) => (
-              <div
-                key={case_.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
-              >
+            {isLoading ? (
+              <div className="text-center py-8">Loading cases...</div>
+            ) : (
+              (cases || fallbackCases).map((case_: any) => (
+                <div
+                  key={case_.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                >
                 <div className="flex-1 space-y-1">
                   <h3 className="font-medium text-gray-900">{case_.title}</h3>
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
@@ -158,7 +190,8 @@ export default function CasesPage() {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
