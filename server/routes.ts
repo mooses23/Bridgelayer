@@ -2667,6 +2667,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tenant API endpoint for subdomain-based tenant detection  
+  app.get('/api/tenant/:subdomain', async (req, res) => {
+    try {
+      const { subdomain } = req.params;
+      
+      // Get firm by slug (subdomain)
+      const firm = await storage.getFirmBySlug(subdomain);
+      
+      if (!firm) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+
+      // Transform firm to tenant format with features
+      const tenant = {
+        id: firm.id,
+        name: firm.name,
+        slug: firm.slug,
+        onboarded: firm.onboarded,
+        plan: firm.plan || 'Professional',
+        features: {
+          billingEnabled: true,
+          aiDebug: false,
+          documentsEnabled: true,
+          intakeEnabled: true,
+          communicationsEnabled: true,
+          calendarEnabled: true,
+          adminGhostMode: false
+        }
+      };
+
+      res.json({ tenant });
+    } catch (error) {
+      console.error('Error fetching tenant by subdomain:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Audit trail endpoints
   app.get('/api/audit-logs', requireAuth, async (req, res) => {
     try {
