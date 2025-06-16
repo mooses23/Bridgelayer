@@ -21,12 +21,8 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        router.push('/dashboard');
-      } else {
-        setError('Invalid email or password');
-      }
+      await login(email, password);
+      navigate('/dashboard');
     } catch (error) {
       console.error("Login failed:", error);
       setError('Login failed');
@@ -57,7 +53,7 @@ export default function LoginPage() {
         if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
           popup?.close();
           // The AuthContext will automatically update from the server response
-          router.push('/dashboard');
+          navigate('/dashboard');
         } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
           popup?.close();
           console.error('Google authentication failed:', event.data.error);

@@ -1,111 +1,122 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { useTenant } from '@/context/TenantContext';
 
-import { Navigate } from "react-router-dom";
-import { Routes, Route } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import LoadingSpinner from "@/components/LoadingSpinner";
+// Public Pages
+import LoginPage from '@/pages/Public/LoginPage';
+import LogoutPage from '@/pages/Public/LogoutPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
-// Layout imports
-import PublicLayout from "@/layouts/PublicLayout";
-import OnboardingLayout from "@/layouts/OnboardingLayout";
-import FirmDashboardLayout from "@/layouts/FirmDashboardLayout";
-import ClientLayout from "@/layouts/ClientLayout";
-import AdminLayout from "@/layouts/AdminLayout";
+// Admin Pages
+import AdminLayout from '@/layouts/AdminLayout';
+import AdminDashboard from '@/pages/Admin/AdminDashboard';
 
-// Page imports
-import LoginPage from "@/pages/Public/LoginPage";
-import LogoutPage from "@/pages/Public/LogoutPage";
-import OnboardingWizard from "@/pages/Onboarding/OnboardingWizard";
-import DashboardPage from "@/pages/Firm/DashboardPage";
-import CasesPage from "@/pages/Firm/CasesPage";
-import IntakePage from "@/pages/Firm/IntakePage";
-import DocumentsPage from "@/pages/Firm/DocumentsPage";
-import BillingPage from "@/pages/Firm/BillingPage";
-import ClientLoginPage from "@/pages/Client/ClientLoginPage";
-import ClientDashboard from "@/pages/Client/ClientDashboard";
-import ClientInvoicesPage from "@/pages/Client/ClientInvoicesPage";
-import AdminDashboard from "@/pages/Admin/AdminDashboard";
-import TenantsPage from "@/pages/Admin/TenantsPage";
-import GhostModePage from "@/pages/Admin/GhostModePage";
-import NotFoundPage from "@/pages/NotFoundPage";
+// Firm Pages
+import FirmDashboardLayout from '@/layouts/FirmDashboardLayout';
+import DashboardPage from '@/pages/Firm/DashboardPage';
+import CasesPage from '@/pages/Firm/CasesPage';
+import IntakePage from '@/pages/Firm/IntakePage';
+import DocumentsPage from '@/pages/Firm/DocumentsPage';
+import BillingPage from '@/pages/Firm/BillingPage';
+import SettingsPage from '@/pages/Firm/SettingsPage';
+
+// Onboarding
+import OnboardingPage from '@/pages/Onboarding';
+
+// Client Pages
+import ClientLayout from '@/layouts/ClientLayout';
+import ClientDashboard from '@/pages/Client/ClientDashboard';
+
+// Loading Component
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function RoleRouter() {
-  const { user, firm, loading: authLoading } = useAuth();
+  const { user, loading } = useAuth();
+  const { tenant, loading: tenantLoading } = useTenant();
 
-  if (authLoading) {
+  if (loading || tenantLoading) {
     return <LoadingSpinner />;
   }
 
-  if (!user) {
-    return (
-      <Routes>
-        <Route element={<PublicLayout />}>
-          <Route index element={<LoginPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/logout" element={<LogoutPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    );
-  }
-
-  // Platform admin routes
-  if (['platform_admin', 'admin', 'super_admin'].includes(user.role)) {
-    return (
-      <Routes>
-        <Route element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/tenants" element={<TenantsPage />} />
-          <Route path="/admin/ghost" element={<GhostModePage />} />
-          <Route path="/logout" element={<LogoutPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    );
-  }
-
-  // Check if firm needs onboarding
-  if (!firm?.onboarded) {
-    return (
-      <Routes>
-        <Route element={<OnboardingLayout />}>
-          <Route index element={<OnboardingWizard />} />
-          <Route path="/onboarding/*" element={<OnboardingWizard />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    );
-  }
-
-  // Client portal routes
-  if (user.role === 'client') {
-    return (
-      <Routes>
-        <Route element={<ClientLayout />}>
-          <Route index element={<ClientDashboard />} />
-          <Route path="/client/login" element={<ClientLoginPage />} />
-          <Route path="/client/dashboard" element={<ClientDashboard />} />
-          <Route path="/client/invoices" element={<ClientInvoicesPage />} />
-          <Route path="/logout" element={<LogoutPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    );
-  }
-
-  // Firm user routes (default)
   return (
     <Routes>
-      <Route element={<FirmDashboardLayout />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/cases" element={<CasesPage />} />
-        <Route path="/intake" element={<IntakePage />} />
-        <Route path="/documents" element={<DocumentsPage />} />
-        <Route path="/billing" element={<BillingPage />} />
-        <Route path="/logout" element={<LogoutPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
+      {/* Public Routes - Always accessible */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/logout" element={<LogoutPage />} />
+      
+      {/* Protected Routes */}
+      {user ? (
+        <>
+          {/* GHGH 20.2 - Admin Routes */}
+          {user.role === 'admin' && (
+            <Route path="/admin/*" element={
+              <AdminLayout>
+                <Routes>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </AdminLayout>
+            } />
+          )}
+
+          {/* GHGH 20.1 - Firm Routes with Nested Structure */}
+          {(user.role === 'firm_admin' || user.role === 'paralegal') && (
+            <>
+              {/* Check if firm needs onboarding */}
+              {tenant && !tenant.onboarded ? (
+                <Route path="/onboarding" element={<OnboardingPage />} />
+              ) : (
+                <Route path="/*" element={
+                  <FirmDashboardLayout>
+                    <Routes>
+                      <Route index element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/dashboard" element={<DashboardPage />} />
+                      <Route path="/cases" element={<CasesPage />} />
+                      <Route path="/intake" element={<IntakePage />} />
+                      <Route path="/documents" element={<DocumentsPage />} />
+                      <Route path="/billing" element={<BillingPage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="*" element={<NotFoundPage />} />
+                    </Routes>
+                  </FirmDashboardLayout>
+                } />
+              )}
+            </>
+          )}
+
+          {/* Client Routes */}
+          {user.role === 'client' && (
+            <Route path="/client/*" element={
+              <ClientLayout>
+                <Routes>
+                  <Route index element={<ClientDashboard />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </ClientLayout>
+            } />
+          )}
+
+          {/* GHGH 20.2 - Role-based Redirects */}
+          <Route path="/" element={
+            user.role === 'admin' ? (
+              <Navigate to="/admin" replace />
+            ) : user.role === 'client' ? (
+              <Navigate to="/client" replace />
+            ) : tenant && !tenant.onboarded ? (
+              <Navigate to="/onboarding" replace />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          } />
+        </>
+      ) : (
+        /* Unauthenticated - Redirect to Login */
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      )}
+
+      {/* GHGH 20.6 - Catch-all 404 for unknown routes */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

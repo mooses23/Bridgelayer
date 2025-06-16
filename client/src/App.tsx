@@ -1,25 +1,29 @@
-import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TenantProvider } from "@/context/TenantContext";
-import RoleRouter from "@/components/RoleRouter";
-import { AuthProvider } from "@/context/AuthContext";
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/context/AuthContext';
+import { TenantProvider } from '@/context/TenantContext';
+import RoleRouter from '@/components/RoleRouter';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: false,
+    },
+  },
+});
 
-function App() {
+export default function App() {
   return (
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <TenantProvider>
             <RoleRouter />
-            <Toaster />
           </TenantProvider>
-        </QueryClientProvider>
+        </AuthProvider>
       </BrowserRouter>
-    </AuthProvider>
+    </QueryClientProvider>
   );
 }
-
-export default App;
