@@ -193,7 +193,9 @@ export const getSession = async (req: Request, res: Response) => {
   try {
     console.log('getSession check:', {
       sessionExists: !!req.session,
+      sessionId: req.sessionID,
       userId: req.session?.userId,
+      cookies: req.headers.cookie,
       sessionData: req.session
     });
     

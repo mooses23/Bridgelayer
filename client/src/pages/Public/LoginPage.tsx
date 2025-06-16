@@ -22,9 +22,20 @@ export default function LoginPage() {
     setError("");
 
     try {
+      console.log('🔐 Starting browser login test');
       const result = await login(email, password);
+      console.log('📤 Login result:', result);
+      
       if (result.success) {
         console.log("✅ Login redirectPath:", result.redirectPath);
+        console.log('🍪 Testing immediate session check...');
+        
+        // Test immediate session verification
+        const sessionTest = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        console.log('🔍 Immediate session test:', sessionTest.status);
+        
         toast.success('Login successful!');
         if (result.redirectPath) {
           try {

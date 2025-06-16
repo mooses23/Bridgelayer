@@ -1,0 +1,126 @@
+# Cookie Transmission Debugging Guide (Authentication Persistence)
+
+## 1. **Backend: Cookie Settings**
+- **Set-Cookie Header:**  
+  On login, ensure your backend sets cookies with the correct attributes:
+  - `HttpOnly` (prevents JS access)
+  - `Secure` (required for HTTPS)
+  - `SameSite=Strict` or `SameSite=Lax` (controls cross-origin sending)
+  - `Domain` and `Path` (for multi-tenant subdomains)
+
+**Example (Express):**
+```typescript
+res.cookie("token", jwt, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax", // or "strict"
+  domain: ".firmsync.com", // for subdomain sharing; adjust for local dev
+  path: "/",
+  maxAge: 1000 * 60 * 60, // 1 hour
+});
+```
+
+**Checklist:**  
+- Is `domain` set to the parent domain (e.g., `.firmsync.com`)?
+- Is `secure` true if running over HTTPS?
+- Is `SameSite` set appropriately for your client-server interaction?
+- Is the token present in the response's `Set-Cookie` header?
+
+---
+
+## 2. **Frontend: Making Authenticated Requests**
+- **Credentials:**  
+  When using `fetch` or axios, you *must* send credentials for cookies to be included.
+  - For `fetch`:  
+    ```js
+    fetch("/api/secure", { credentials: "include" });
+    ```
+  - For `axios`:  
+    ```js
+    axios.get("/api/secure", { withCredentials: true });
+    ```
+
+- **Checklist:**  
+  - Are requests made to the correct subdomain (matches cookie domain)?
+  - Is `credentials: "include"` (or `withCredentials: true`) set on every request needing auth?
+  - Is the API base URL using HTTPS in production?
+
+---
+
+## 3. **Local Development Gotchas**
+- **Different ports** (e.g., Vite on 3000, backend on 5000) and lack of HTTPS can break cookies.
+- Browsers block `Secure` cookies on `localhost` non-HTTPS.
+- `SameSite=Strict` may prevent cookies from being sent if frontend/backend are on different subdomains or ports.
+
+**Dev Solutions:**
+- Use `127.0.0.1.nip.io` or similar wildcard DNS for subdomain testing.
+- Consider relaxing `SameSite` to `"lax"` for local dev.
+- Use HTTP for dev, HTTPS for production.
+
+---
+
+## 4. **Multi-Tenant & Subdomain Notes**
+- `domain: ".firmsync.com"` enables cookies to flow across all subdomains (e.g., `abc.firmsync.com`, `xyz.firmsync.com`).
+- If each tenant is on a different subdomain, make sure the frontend and backend share the parent domain.
+
+---
+
+## 5. **Browser Debugging Steps**
+- Use **Network tab** in browser devtools:
+  - Observe `Set-Cookie` in login response headers.
+  - Confirm the cookie appears in the **Application > Cookies** tab for the correct domain.
+  - On subsequent requests, confirm cookie is sent in the request headers.
+- Use **Console** for errors related to CORS or SameSite/secure rejection.
+
+---
+
+## 6. **CORS Configuration**
+- Backend must allow credentials and the correct origin:
+```typescript
+app.use(cors({
+  origin: "https://app.firmsync.com", // or dynamic subdomain
+  credentials: true,
+}));
+```
+- `Access-Control-Allow-Credentials: true` must be set in response headers.
+
+---
+
+## 7. **Common Pitfalls**
+- Cookie domain mismatch (cookie only works on one subdomain).
+- `Secure` cookies rejected on HTTP.
+- No `withCredentials`/`credentials: "include"` on frontend requests.
+- CORS not permitting credentials or wrong origin.
+- `SameSite=Strict` is too restrictive for your login flow.
+
+---
+
+## 8. **Sample End-to-End Debug Checklist**
+
+1. **Login:**  
+   - Does the backend response set the cookie?
+   - Is the cookie visible in browser storage for the domain?
+2. **Subsequent API Call:**  
+   - Is the cookie automatically sent?
+   - Does the backend see/authenticate the session?
+3. **Persistence:**  
+   - Does the cookie survive reloads and navigation?
+   - Is logout clearing the cookie?
+
+---
+
+## 9. **Test Scenarios**
+- Login/logout on main domain and subdomains.
+- API requests from React app to Express backend (both local and production).
+- Expired/invalid tokens (does the backend clear cookies gracefully?).
+
+---
+
+## 10. **Logging**
+- Log `Set-Cookie` headers on backend.
+- Log cookie presence and contents (not secrets) on frontend (dev only).
+- Log backend session/token validation failures.
+
+---
+
+**If you follow this checklist, you will systematically isolate and fix cookie transmission and authentication persistence issues in your platform.**

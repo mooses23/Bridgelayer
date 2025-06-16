@@ -86,10 +86,10 @@ app.use(session({
   }),
   cookie: {
     secure: false, // Set to true in production with HTTPS
-    httpOnly: true,
+    httpOnly: false, // Enable for development debugging
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax',
-    domain: undefined, // Let browser determine domain
+    sameSite: 'none', // Allow cross-origin cookies for dev
+    domain: 'localhost', // Explicit domain for localhost
     path: '/' // Ensure cookie is available for all paths
   }
 }));
