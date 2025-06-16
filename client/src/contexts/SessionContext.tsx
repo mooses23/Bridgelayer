@@ -36,13 +36,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const checkSession = async () => {
     setIsLoading(true);
     try {
+      console.log('🔍 Checking session with credentials: include');
       const response = await fetch('/api/auth/session', {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+      console.log('📡 Session check response:', response.status, response.statusText);
+      
       if (response.ok) {
         const sessionData = await response.json();
+        console.log('✅ Session data received:', sessionData);
         setUser(sessionData.user);
       } else {
+        console.log('❌ No active session');
         setUser(null);
       }
     } catch (error) {

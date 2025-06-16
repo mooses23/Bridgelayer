@@ -33,11 +33,7 @@ export class ApiClient {
     try {
       const response = await fetch(url, config);
 
-      // Session-based authentication - no token management needed
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
-      }
+      // Session-based authentication - cookies handled automatically
 
       return response;
     } catch (error) {

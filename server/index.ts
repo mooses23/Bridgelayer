@@ -88,7 +88,9 @@ app.use(session({
     secure: false, // Set to true in production with HTTPS
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax'
+    sameSite: 'lax',
+    domain: undefined, // Let browser determine domain
+    path: '/' // Ensure cookie is available for all paths
   }
 }));
 
