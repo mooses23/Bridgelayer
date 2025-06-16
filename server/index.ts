@@ -85,12 +85,12 @@ app.use(session({
     createTableIfMissing: true
   }),
   cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: false, // Enable for development debugging
+    secure: false, // HTTP for development
+    httpOnly: true, // Secure against XSS
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none', // Allow cross-origin cookies for dev
-    domain: 'localhost', // Explicit domain for localhost
-    path: '/' // Ensure cookie is available for all paths
+    sameSite: 'lax', // Allow cross-origin for dev
+    domain: undefined, // Auto-detect domain
+    path: '/' // Available for all paths
   }
 }));
 

@@ -95,7 +95,7 @@ export const requireAdmin = async (req: AuthenticatedRequest, res: Response, nex
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    console.log("Login attempt:", { email, password });
+    console.log("🔐 Login attempt:", { email, password });
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
@@ -134,11 +134,12 @@ export const login = async (req: Request, res: Response) => {
           console.error('Session save error:', saveErr);
           reject(saveErr);
         } else {
-          console.log('Session saved successfully:', {
+          console.log('✅ Session saved successfully:', {
             userId: req.session.userId,
             userRole: req.session.userRole,
             sessionId: req.sessionID
           });
+          console.log('🍪 Set-Cookie debug:', res.getHeaders()['set-cookie']);
           resolve();
         }
       });
