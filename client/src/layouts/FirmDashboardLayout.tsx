@@ -13,11 +13,11 @@ import {
   LogOut,
   Bell 
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useTenant } from "@/context/TenantContext";
 
 export default function FirmLayout() {
-  const { user, firm, logout } = useAuth();
+  const { user, logout } = useSession();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { hasFeature } = useTenant();

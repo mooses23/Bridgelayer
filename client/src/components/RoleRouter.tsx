@@ -49,15 +49,11 @@ export default function RoleRouter() {
         <>
           {/* GHGH 20.2 - Admin Routes */}
           {['platform_admin', 'admin', 'super_admin'].includes(user.role) && (
-            <Route path="/admin/*" element={
-              <AdminLayout>
-                <Routes>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="/logout" element={<LogoutPage />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </AdminLayout>
-            } />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="logout" element={<LogoutPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
           )}
 
           {/* GHGH 20.1 - Firm Routes with Nested Structure */}
@@ -67,36 +63,28 @@ export default function RoleRouter() {
               {tenant && !tenant.onboarded ? (
                 <Route path="/onboarding" element={<OnboardingPage />} />
               ) : (
-                <Route path="/*" element={
-                  <FirmDashboardLayout>
-                    <Routes>
-                      <Route index element={<Navigate to="/dashboard" replace />} />
-                      <Route path="/dashboard" element={<DashboardPage />} />
-                      <Route path="/cases" element={<CasesPage />} />
-                      <Route path="/intake" element={<IntakePage />} />
-                      <Route path="/documents" element={<DocumentsPage />} />
-                      <Route path="/billing" element={<BillingPage />} />
-                      <Route path="/settings" element={<SettingsPage />} />
-                      <Route path="/logout" element={<LogoutPage />} />
-                      <Route path="*" element={<NotFoundPage />} />
-                    </Routes>
-                  </FirmDashboardLayout>
-                } />
+                <Route path="/" element={<FirmDashboardLayout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="cases" element={<CasesPage />} />
+                  <Route path="intake" element={<IntakePage />} />
+                  <Route path="documents" element={<DocumentsPage />} />
+                  <Route path="billing" element={<BillingPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="logout" element={<LogoutPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
               )}
             </>
           )}
 
           {/* Client Routes */}
           {user.role === 'client' && (
-            <Route path="/client/*" element={
-              <ClientLayout>
-                <Routes>
-                  <Route index element={<ClientDashboard />} />
-                  <Route path="/logout" element={<LogoutPage />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </ClientLayout>
-            } />
+            <Route path="/client" element={<ClientLayout />}>
+              <Route index element={<ClientDashboard />} />
+              <Route path="logout" element={<LogoutPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
           )}
 
           {/* GHGH 20.2 - Role-based Redirects */}
