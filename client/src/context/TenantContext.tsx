@@ -32,23 +32,23 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // GHGH 20.3 – Detect Tenant from Subdomain
-  const host = window.location.hostname;           // e.g. "acme.firmsync.com"
-  const [subdomain] = host.split('.');             // e.g. "acme"
-
   // Helper function to check if a feature is enabled
   const hasFeature = (featureName: keyof TenantFeatures): boolean => {
     return tenant?.features?.[featureName] || false;
   };
 
+  // GHGH 20.3 – Detect Tenant from Subdomain
   useEffect(() => {
+    const host = window.location.hostname;       // e.g. "acme.firmsync.com"
+    const [subdomain] = host.split('.');         // "acme"
+    
     if (subdomain && subdomain !== 'localhost' && subdomain !== '127') {
       fetch(`/api/tenant/${subdomain}`)
         .then(res => res.json())
         .then(data => {
           // Set default features if not provided
           const tenantWithFeatures = {
-            ...data,
+            ...data.tenant,
             features: {
               billingEnabled: true,
               aiDebug: false,
@@ -57,7 +57,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
               communicationsEnabled: true,
               calendarEnabled: true,
               adminGhostMode: false,
-              ...data.features
+              ...data.tenant?.features
             }
           };
           setTenant(tenantWithFeatures);
@@ -71,7 +71,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // Fallback for localhost or non-subdomain environments
       setLoading(false);
     }
-  }, [subdomain]);
+  }, []);
 
 return (
     <TenantContext.Provider value={{ tenant, loading, setTenant, hasFeature }}>

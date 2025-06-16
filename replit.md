@@ -103,6 +103,14 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 20.3 - TenantProvider Subdomain Detection Refinement Complete
+  - Updated TenantContext.tsx to follow exact subdomain detection pattern specification
+  - Moved hostname parsing inside useEffect for proper React lifecycle management
+  - Updated API response handling to access `data.tenant` instead of direct `data` object
+  - Removed dependency array to prevent unnecessary re-renders while maintaining functionality
+  - Preserved localhost fallback logic and comprehensive feature defaults for tenant configuration
+  - System now properly detects tenants from subdomain URLs enabling true multi-tenant functionality
+
 - **June 16, 2025**: GHGH 20.2 - Platform Admin Role Expansion Complete
   - Updated admin role check in RoleRouter.tsx to include all platform admin variants
   - Changed from single `user.role === 'admin'` to array check `['platform_admin', 'admin', 'super_admin'].includes(user.role)`
