@@ -21,22 +21,9 @@ app.use(helmet({
   hsts: false // Disable HSTS in development
 }));
 
-// CORS configuration for development environment
+// CORS configuration for Replit single-origin serving
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests from Replit domains and localhost
-    const allowedOrigins = [
-      /\.replit\.dev$/,
-      /localhost/,
-      /127\.0\.0\.1/
-    ];
-    
-    if (!origin || allowedOrigins.some(pattern => pattern.test(origin))) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Allow all in development
-    }
-  },
+  origin: true, // Same origin - no cross-origin issues
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -87,12 +74,12 @@ app.use(cookieParser());
 
 // Configure session middleware with PostgreSQL store
 const PgSession = ConnectPgSimple(session);
-// Configure express-session for Replit environment
+// Configure express-session for Replit environment (single-origin serving)
 app.use(session({
   secret: process.env.SESSION_SECRET || 'firmsync-dev-secret-key-change-in-production',
   resave: false,
-  saveUninitialized: false,
-  name: 'connect.sid', // Use standard session name
+  saveUninitialized: true, // Enable session creation for all requests
+  name: 'firmsync.sid',
   store: new PgSession({
     pool: pool,
     tableName: 'session',
@@ -100,10 +87,12 @@ app.use(session({
   }),
   cookie: {
     secure: false,
-    httpOnly: true,
+    httpOnly: false, // Allow JS access for debugging
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax'
-  }
+    sameSite: 'none', // Allow cross-origin transmission
+    path: '/'
+  },
+  proxy: true // Trust proxy headers in Replit
 }));
 
 app.use((req, res, next) => {

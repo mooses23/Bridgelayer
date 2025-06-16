@@ -1,0 +1,102 @@
+# Streamlined Cookie-Based Auth for Multi-Tenant Apps on Replit
+
+## 1. **Core Principles**
+- Use JWTs in HttpOnly cookies for stateless, secure sessions.
+- Set cookie domain and SameSite attributes for subdomain compatibility.
+- Always use `credentials: "include"` (fetch) or `withCredentials: true` (axios) on the frontend.
+- Serve both frontend and backend from the **same domain/subdomain** to avoid cross-origin cookie woes.
+- Use HTTPS wherever possible—even in dev (Replit supports this).
+
+---
+
+## 2. **Minimal, Reliable Auth Flow**
+
+### Backend (Express/TypeScript)
+```typescript name=src/auth/setAuthCookie.ts
+import { Response } from "express";
+
+export function setAuthCookie(res: Response, token: string) {
+  res.cookie("auth_token", token, {
+    httpOnly: true,
+    secure: true, // Replit uses HTTPS URLs
+    sameSite: "lax", // "none" if using cross-site, but "lax" is safer for most flows
+    domain: ".yourreplitdomain.repl.co", // or "" for current domain only
+    path: "/",
+    maxAge: 1000 * 60 * 60 * 2, // 2 hours
+  });
+}
+```
+
+### Frontend (React/Vite)
+```typescript name=src/api/client.ts
+// Always include credentials in requests!
+export async function apiFetch(url: string, options = {}) {
+  return fetch(url, { ...options, credentials: "include" });
+}
+```
+
+### Express Session Config (if using express-session)
+```typescript name=src/auth/sessionConfig.ts
+import session from "express-session";
+export default session({
+  secret: process.env.SESSION_SECRET!,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    domain: ".yourreplitdomain.repl.co", // set for subdomain sharing
+    maxAge: 1000 * 60 * 60 * 2,
+  }
+});
+```
+
+---
+
+## 3. **Replit-Specific Pitfalls & Solutions**
+
+- **HTTPS:**  
+  Replit projects are always served over HTTPS, so `secure: true` works.
+- **Domains/Subdomains:**  
+  If you use custom subdomains (e.g., `firm1.yourapp.repl.co`), set `domain` to `.yourapp.repl.co` so cookies are shared.
+- **Proxying:**  
+  If frontend and backend are on different ports/subdomains, you *must* proxy API requests through the frontend to ensure cookies are sent.
+- **CORS:**  
+  Always set `credentials: true` in CORS config, and specify the exact origin.
+  ```typescript
+  app.use(cors({
+    origin: "https://yourapp.repl.co", // or wildcard subdomains if supported
+    credentials: true,
+  }));
+  ```
+- **Testing Locally:**  
+  Browsers may block `secure` cookies on `localhost` without HTTPS. Test using the deployed Replit URL.
+
+---
+
+## 4. **Debugging Checklist**
+
+- Login endpoint: Does the Set-Cookie header appear in the response?
+- Browser: Is the cookie visible under Application → Cookies for your domain?
+- Subsequent requests: Is the cookie being sent in the request headers?
+- Are you using the exact same (sub)domain for both frontend and backend?
+- Is `credentials: "include"` present on every relevant frontend fetch?
+- Are CORS and cookie settings aligned?
+
+---
+
+## 5. **If Problems Persist**
+
+- **Simplify:** Run frontend and backend on the same origin (use Vite or Express static to serve React build).
+- **Switch to JWT header auth:** If you keep hitting walls with cookies, consider storing the JWT in memory and sending it as an Authorization header (not as secure as HttpOnly cookie, but much simpler for dev/testing).
+- **Log Everything:** Temporarily log all cookie and auth headers on both client and server to see where transmission fails.
+
+---
+
+## 6. **Conclusion**
+
+Cookie-based multi-tenant auth **is not too complex for Replit**—most issues stem from subtle domain, HTTPS, or CORS misconfigurations.  
+Stick to the above streamlined approach and you’ll have persistent, secure authentication.
+
+If you want, I can review your actual code/config files and point out the exact bottleneck.

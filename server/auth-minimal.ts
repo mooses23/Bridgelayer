@@ -150,17 +150,7 @@ export const login = async (req: Request, res: Response) => {
                 sessionId: req.sessionID
               });
               
-              // Manually set session cookie to ensure browser receives it
-              res.cookie('connect.sid', `s:${req.sessionID}`, {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'lax',
-                maxAge: 24 * 60 * 60 * 1000,
-                path: '/'
-              });
-              
-              console.log('🍪 Manual cookie set for session:', req.sessionID);
-              console.log('🍪 Response headers after manual set:', res.getHeaders()['set-cookie']);
+              console.log('🍪 Session cookie will be set automatically by express-session');
               resolve();
             }
           });
