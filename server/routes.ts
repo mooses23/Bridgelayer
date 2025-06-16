@@ -2919,6 +2919,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comprehensive Onboarding System API Endpoints
+  
+  // Save onboarding progress (auto-save)
+  app.post('/api/admin/onboarding/save-progress', requireAdmin, async (req, res) => {
+    try {
+      const { sessionId, currentStep, stepData, status } = req.body;
+      const adminUserId = req.user?.id;
+
+      if (!sessionId || !stepData) {
+        return res.status(400).json({ error: 'Session ID and step data required' });
+      }
+
+      const session = await storage.saveOnboardingProgress({
+        sessionId,
+        adminUserId,
+        currentStep,
+        stepData,
+        status: status || 'in_progress'
+      });
+
+      res.json({ 
+        success: true,
+        session,
+        message: 'Progress saved'
+      });
+    } catch (error) {
+      console.error('Error saving onboarding progress:', error);
+      res.status(500).json({ error: 'Failed to save progress' });
+    }
+  });
+
+  // Get onboarding session data
+  app.get('/api/admin/onboarding/session/:sessionId', requireAdmin, async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const session = await storage.getOnboardingSession(sessionId);
+      
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      res.json({ session });
+    } catch (error) {
+      console.error('Error retrieving onboarding session:', error);
+      res.status(500).json({ error: 'Failed to retrieve session' });
+    }
+  });
+
+  // Complete onboarding and create firm
+  app.post('/api/admin/onboarding/complete', requireAdmin, async (req, res) => {
+    try {
+      const { sessionId, onboardingData, ipAddress, userAgent } = req.body;
+
+      if (!sessionId || !onboardingData) {
+        return res.status(400).json({ error: 'Session ID and onboarding data required' });
+      }
+
+      // Validate required fields
+      const { firmInfo, branding, preferences } = onboardingData;
+      
+      if (!firmInfo.name || !firmInfo.adminEmail || !firmInfo.acceptedTerms || !firmInfo.acceptedNDA) {
+        return res.status(400).json({ 
+          error: 'Missing required firm information',
+          details: 'Firm name, admin email, and legal agreements are required'
+        });
+      }
+
+      if (!branding.displayName) {
+        return res.status(400).json({ 
+          error: 'Display name is required for branding'
+        });
+      }
+
+      if (!preferences.practiceAreas || preferences.practiceAreas.length === 0) {
+        return res.status(400).json({ 
+          error: 'At least one practice area must be selected'
+        });
+      }
+
+      const result = await storage.completeOnboarding({
+        sessionId,
+        onboardingData,
+        ipAddress: ipAddress || req.ip || 'unknown',
+        userAgent: userAgent || req.get('User-Agent') || 'unknown'
+      });
+
+      // Log the successful firm creation
+      console.log(`✅ Firm created: ${result.firm.name} (ID: ${result.firm.id})`);
+      console.log(`✅ Admin user created: ${result.user.email} (ID: ${result.user.id})`);
+
+      res.json({
+        success: true,
+        message: 'Firm created successfully',
+        firm: {
+          id: result.firm.id,
+          name: result.firm.name,
+          slug: result.firm.slug
+        },
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          name: `${result.user.firstName} ${result.user.lastName}`,
+          role: result.user.role
+        },
+        redirectUrl: result.redirectUrl,
+        temporaryPassword: 'tempPassword123!' // Send this securely to admin
+      });
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      res.status(500).json({ 
+        error: 'Failed to complete onboarding',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Upload firm template during onboarding
+  app.post('/api/admin/onboarding/upload-template', requireAdmin, async (req, res) => {
+    try {
+      // This would typically handle file uploads using multer
+      // For now, we'll handle base64 encoded files from the frontend
+      const { fileName, fileData, templateType, description } = req.body;
+      
+      if (!fileName || !fileData || !templateType) {
+        return res.status(400).json({ error: 'File name, data, and template type required' });
+      }
+
+      // In a real implementation, you would:
+      // 1. Save the file to cloud storage (S3, etc.)
+      // 2. Get the file URL
+      // 3. Save template metadata to database
+      
+      // For demo purposes, we'll return a success response
+      const fileUrl = `/uploads/templates/${fileName}`;
+      
+      res.json({
+        success: true,
+        templateUrl: fileUrl,
+        message: 'Template uploaded successfully'
+      });
+    } catch (error) {
+      console.error('Error uploading template:', error);
+      res.status(500).json({ error: 'Failed to upload template' });
+    }
+  });
+
+  // Get firm setup data for existing firms
+  app.get('/api/admin/firm/:firmId/setup', requireAdmin, async (req, res) => {
+    try {
+      const { firmId } = req.params;
+      const firmIdNum = parseInt(firmId);
+
+      if (isNaN(firmIdNum)) {
+        return res.status(400).json({ error: 'Invalid firm ID' });
+      }
+
+      const [firm, branding, preferences, integrations, templates, agreements] = await Promise.all([
+        storage.getFirm(firmIdNum),
+        storage.getFirmBranding(firmIdNum),
+        storage.getFirmPreferences(firmIdNum),
+        storage.getFirmIntegrations(firmIdNum),
+        storage.getFirmTemplates(firmIdNum),
+        storage.getComplianceAgreements(firmIdNum)
+      ]);
+
+      if (!firm) {
+        return res.status(404).json({ error: 'Firm not found' });
+      }
+
+      res.json({
+        firm,
+        branding,
+        preferences,
+        integrations,
+        templates,
+        agreements
+      });
+    } catch (error) {
+      console.error('Error retrieving firm setup data:', error);
+      res.status(500).json({ error: 'Failed to retrieve firm data' });
+    }
+  });
+
+  // List all onboarding sessions for admin monitoring
+  app.get('/api/admin/onboarding/sessions', requireAdmin, async (req, res) => {
+    try {
+      // This would typically get all sessions from database
+      // For now, return empty array
+      res.json({ sessions: [] });
+    } catch (error) {
+      console.error('Error retrieving onboarding sessions:', error);
+      res.status(500).json({ error: 'Failed to retrieve sessions' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

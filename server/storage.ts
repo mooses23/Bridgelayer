@@ -1828,6 +1828,217 @@ export class DatabaseStorage implements IStorage {
 
     return document;
   }
+
+  // Onboarding system methods
+  async saveOnboardingProgress(data: {
+    sessionId: string;
+    adminUserId?: number;
+    currentStep: number;
+    stepData: any;
+    status: string;
+  }): Promise<any> {
+    const [session] = await db
+      .insert(onboardingSessions)
+      .values(data)
+      .onConflictDoUpdate({
+        target: onboardingSessions.sessionId,
+        set: {
+          currentStep: data.currentStep,
+          stepData: data.stepData,
+          status: data.status,
+          updatedAt: new Date(),
+        }
+      })
+      .returning();
+    return session;
+  }
+
+  async getOnboardingSession(sessionId: string): Promise<any> {
+    const [session] = await db
+      .select()
+      .from(onboardingSessions)
+      .where(eq(onboardingSessions.sessionId, sessionId));
+    return session;
+  }
+
+  async completeOnboarding(data: {
+    sessionId: string;
+    onboardingData: any;
+    ipAddress: string;
+    userAgent: string;
+  }): Promise<{ firm: any; user: any; redirectUrl: string }> {
+    const { onboardingData, ipAddress, userAgent } = data;
+    
+    try {
+      // Create firm slug from name
+      const firmSlug = onboardingData.firmInfo.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      // Create the firm
+      const [firm] = await db
+        .insert(firms)
+        .values({
+          name: onboardingData.firmInfo.name,
+          slug: firmSlug,
+          plan: 'starter',
+          status: 'active',
+          onboarded: true,
+          settings: {
+            timezone: onboardingData.firmInfo.timezone,
+            defaultLanguage: onboardingData.preferences.defaultLanguage,
+          }
+        })
+        .returning();
+
+      // Create the admin user
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash('tempPassword123!', 10);
+      
+      const [adminUser] = await db
+        .insert(users)
+        .values({
+          firmId: firm.id,
+          email: onboardingData.firmInfo.adminEmail,
+          password: hashedPassword,
+          firstName: onboardingData.firmInfo.adminName.split(' ')[0] || onboardingData.firmInfo.adminName,
+          lastName: onboardingData.firmInfo.adminName.split(' ').slice(1).join(' ') || '',
+          role: 'firm_admin',
+          status: 'active',
+        })
+        .returning();
+
+      // Save firm branding
+      if (onboardingData.branding.displayName || onboardingData.branding.logoUrl) {
+        await db
+          .insert(firmBranding)
+          .values({
+            firmId: firm.id,
+            logoUrl: onboardingData.branding.logoUrl || null,
+            primaryColor: onboardingData.branding.primaryColor,
+            secondaryColor: onboardingData.branding.secondaryColor,
+            displayName: onboardingData.branding.displayName,
+          });
+      }
+
+      // Save firm preferences
+      await db
+        .insert(firmPreferences)
+        .values({
+          firmId: firm.id,
+          defaultLanguage: onboardingData.preferences.defaultLanguage,
+          timezone: onboardingData.firmInfo.timezone,
+          practiceAreas: onboardingData.preferences.practiceAreas,
+          caseTypes: onboardingData.preferences.caseTypes,
+          fileRetentionDays: onboardingData.preferences.fileRetentionDays,
+          auditTrailEnabled: onboardingData.preferences.auditTrailEnabled,
+          folderStructure: onboardingData.preferences.folderStructure,
+        });
+
+      // Save integrations
+      if (onboardingData.integrations.selectedIntegrations.length > 0) {
+        for (const integration of onboardingData.integrations.selectedIntegrations) {
+          await db
+            .insert(firmIntegrations)
+            .values({
+              firmId: firm.id,
+              integrationType: integration,
+              settings: onboardingData.integrations.integrationCredentials[integration] || {},
+              isActive: true,
+            });
+        }
+      }
+
+      // Save compliance agreements
+      const agreements = [
+        { type: 'terms_of_service', accepted: onboardingData.firmInfo.acceptedTerms },
+        { type: 'nda', accepted: onboardingData.firmInfo.acceptedNDA }
+      ];
+
+      for (const agreement of agreements) {
+        if (agreement.accepted) {
+          await db
+            .insert(complianceAgreements)
+            .values({
+              firmId: firm.id,
+              agreementType: agreement.type,
+              version: '1.0',
+              acceptedBy: adminUser.id,
+              ipAddress,
+              userAgent,
+            });
+        }
+      }
+
+      // Mark onboarding session as completed
+      await db
+        .update(onboardingSessions)
+        .set({ status: 'completed', updatedAt: new Date() })
+        .where(eq(onboardingSessions.sessionId, data.sessionId));
+
+      return {
+        firm,
+        user: adminUser,
+        redirectUrl: '/admin'
+      };
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      throw error;
+    }
+  }
+
+  async saveFirmTemplate(data: {
+    firmId: number;
+    fileName: string;
+    originalName: string;
+    fileUrl: string;
+    templateType: string;
+    uploadedBy: number;
+  }): Promise<any> {
+    const [template] = await db
+      .insert(firmTemplates)
+      .values(data)
+      .returning();
+    return template;
+  }
+
+  async getFirmBranding(firmId: number): Promise<any> {
+    const [branding] = await db
+      .select()
+      .from(firmBranding)
+      .where(eq(firmBranding.firmId, firmId));
+    return branding;
+  }
+
+  async getFirmPreferences(firmId: number): Promise<any> {
+    const [preferences] = await db
+      .select()
+      .from(firmPreferences)
+      .where(eq(firmPreferences.firmId, firmId));
+    return preferences;
+  }
+
+  async getFirmIntegrations(firmId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(firmIntegrations)
+      .where(eq(firmIntegrations.firmId, firmId));
+  }
+
+  async getFirmTemplates(firmId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(firmTemplates)
+      .where(eq(firmTemplates.firmId, firmId));
+  }
+
+  async getComplianceAgreements(firmId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(complianceAgreements)
+      .where(eq(complianceAgreements.firmId, firmId));
+  }
 }
 
 export const storage = new DatabaseStorage();

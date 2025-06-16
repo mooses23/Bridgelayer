@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Info, ChevronLeft, ChevronRight, Building } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 import { useSession } from "@/contexts/SessionContext";
 
 // Step components
