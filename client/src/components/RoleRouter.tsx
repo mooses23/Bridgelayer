@@ -100,8 +100,8 @@ export default function RoleRouter() {
               <Navigate to="/admin" replace />
             ) : user.role === 'client' ? (
               <Navigate to="/client" replace />
-            ) : tenant && !tenant.onboarded ? (
-              <Navigate to="/onboarding" replace />
+            ) : user.firmId && user.role !== 'client' ? (
+              <Navigate to="/dashboard" replace />
             ) : (
               <Navigate to="/dashboard" replace />
             )

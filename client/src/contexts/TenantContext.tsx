@@ -80,8 +80,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw new Error(`Failed to fetch tenant data: ${response.status}`);
       }
       
-      const tenantData = await response.json();
-      setTenant(tenantData);
+      const data = await response.json();
+      setTenant(data.tenant);
     } catch (err) {
       console.error('Error fetching tenant data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
