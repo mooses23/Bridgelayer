@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSession } from '@/contexts/SessionContext';
 import { useTenant } from '@/contexts/TenantContext';
-import { useTenant } from '@/contexts/TenantContext';
 
 // Public Pages
 import LoginPage from '@/pages/Public/LoginPage';

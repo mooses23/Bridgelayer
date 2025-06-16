@@ -27,6 +27,10 @@ import OpenAI from "openai";
 import fs from "fs/promises";
 import path from "path";
 
+// Demo constants for development
+const DEMO_USER_ID = 1;
+const DEMO_FIRM_ID = 1;
+
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
@@ -41,7 +45,7 @@ const requireSystemAdmin = [jwtAuthMiddleware, requireAdmin];
 // Import Stripe for payment processing
 import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_demo", {
-  apiVersion: "2023-10-16",
+  apiVersion: "2025-05-28.basil",
 });
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -154,11 +158,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Google OAuth error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.send(`
         <script>
           window.opener.postMessage({
             type: 'GOOGLE_AUTH_ERROR',
-            error: '${error.message}'
+            error: '${errorMessage}'
           }, '${req.protocol}://${req.get('host')}');
           window.close();
         </script>
