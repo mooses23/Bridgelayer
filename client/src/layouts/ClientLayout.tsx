@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Home, FileText, DollarSign, LogOut } from "lucide-react";
+import ClientDashboard from "@/pages/Client/ClientDashboard";
 
 export default function ClientLayout() {
   const location = useLocation();
@@ -60,7 +61,7 @@ export default function ClientLayout() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ErrorBoundary>
-          <Outlet />
+          <ClientDashboard />
         </ErrorBoundary>
       </main>
     </div>

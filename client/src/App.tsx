@@ -13,8 +13,8 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TenantProvider>
-        <SessionProvider>
+      <SessionProvider>
+        <TenantProvider>
           <Router>
             <div className="min-h-screen bg-gray-50">
               <Switch>
@@ -23,8 +23,8 @@ function App() {
               <Toaster />
             </div>
           </Router>
-        </SessionProvider>
-      </TenantProvider>
+        </TenantProvider>
+      </SessionProvider>
     </QueryClientProvider>
   );
 }

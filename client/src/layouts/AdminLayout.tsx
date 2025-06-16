@@ -13,6 +13,7 @@ import {
   Home,
   Activity
 } from "lucide-react";
+import AdminDashboard from "@/pages/Admin/AdminDashboard";
 
 export default function AdminLayout() {
   console.log("[AdminLayout] LIVE");
