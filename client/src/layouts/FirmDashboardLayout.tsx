@@ -26,10 +26,10 @@ export default function FirmLayout() {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: Home, current: location.pathname === "/dashboard" },
-    ...(hasFeature('cases') ? [{ name: "Cases", href: "/cases", icon: Users, current: location.pathname === "/cases" }] : []),
-    ...(hasFeature('intake') ? [{ name: "Intake", href: "/intake", icon: Inbox, current: location.pathname === "/intake" }] : []),
-    ...(hasFeature('documents') ? [{ name: "Documents", href: "/documents", icon: FileText, current: location.pathname === "/documents" }] : []),
-    ...(hasFeature('billing') ? [{ name: "Billing", href: "/billing", icon: DollarSign, current: location.pathname === "/billing" }] : []),
+    { name: "Cases", href: "/cases", icon: Users, current: location.pathname === "/cases" },
+    ...(hasFeature('intakeEnabled') ? [{ name: "Intake", href: "/intake", icon: Inbox, current: location.pathname === "/intake" }] : []),
+    ...(hasFeature('documentsEnabled') ? [{ name: "Documents", href: "/documents", icon: FileText, current: location.pathname === "/documents" }] : []),
+    ...(hasFeature('billingEnabled') ? [{ name: "Billing", href: "/billing", icon: DollarSign, current: location.pathname === "/billing" }] : []),
     { name: "Settings", href: "/settings", icon: Settings, current: location.pathname === "/settings" },
   ];
 
@@ -80,8 +80,8 @@ export default function FirmLayout() {
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className={({ isActive }) => `mr-3 h-5 w-5 ${
-                    isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                  <Icon className={`mr-3 h-5 w-5 ${
+                    item.current ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
                   }`} />
                   {item.name}
                 </NavLink>

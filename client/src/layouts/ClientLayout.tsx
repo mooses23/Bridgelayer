@@ -37,8 +37,8 @@ export default function ClientLayout() {
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
-                    <Icon className={({ isActive }) => `mr-2 h-4 w-4 ${
-                      isActive ? 'text-blue-500' : 'text-gray-400'
+                    <Icon className={`mr-2 h-4 w-4 ${
+                      item.current ? 'text-blue-500' : 'text-gray-400'
                     }`} />
                     {item.name}
                   </NavLink>

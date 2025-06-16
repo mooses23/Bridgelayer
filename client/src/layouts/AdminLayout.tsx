@@ -69,8 +69,8 @@ export default function AdminLayout() {
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className={({ isActive }) => `mr-3 h-5 w-5 ${
-                    isActive ? 'text-red-500' : 'text-gray-400 group-hover:text-gray-500'
+                  <Icon className={`mr-3 h-5 w-5 ${
+                    item.current ? 'text-red-500' : 'text-gray-400 group-hover:text-gray-500'
                   }`} />
                   {item.name}
                 </NavLink>
