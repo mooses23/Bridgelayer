@@ -1,0 +1,86 @@
+# Core Auth & Tenant Context – Implementation Guide
+
+## 1. 🔑 Fix Broken Login/Session Flow
+
+**Goal:**  
+Repair and modernize how user identity and session state are managed, ensuring every action is tenant-aware.
+
+**Steps:**
+- **Backend (Express/TypeScript):**
+  - Use JWT or secure session middleware (e.g., express-session, cookie-session, or Passport.js).
+  - On login, generate a session or token including both `userId` and `tenantId`.
+  - Example (JWT payload):
+    ```json
+    {
+      "userId": "abc123",
+      "tenantId": "smithlaw"
+    }
+    ```
+  - On each request, decode the token or read the session:
+    - If using sessions: `req.session.userId`, `req.session.tenantId`
+    - If using JWT: decode and validate, then add to `req.user`
+  - Scaffold any missing middleware to:
+    - Populate `req.session.userId` and `req.session.tenantId` after login
+    - Enforce authentication and correct tenant on all protected routes
+
+- **Copilot Scaffolding Example:**
+    ```typescript
+    // After successful login:
+    req.session.userId = user.id;
+    req.session.tenantId = user.tenantId;
+    ```
+
+---
+
+## 2. 🏠 Implement TenantContext Provider in React
+
+**Goal:**  
+The frontend always knows which tenant (firm) context it’s in, powering subdomain-based routing and access control.
+
+**Steps:**
+- **TenantContext Setup:**
+  - Create a `TenantContext` using React Context API.
+  - On app load, parse the subdomain in `window.location.hostname` to determine `tenantId`.
+  - Fetch and provide tenant-specific config (branding, templates, enabled integrations).
+
+- **Example:**
+    ```typescript
+    // src/context/TenantContext.tsx
+    import React, { createContext, useContext, useEffect, useState } from "react";
+
+    const TenantContext = createContext<{ tenantId: string, config?: any }>({ tenantId: "" });
+
+    export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+      const [tenantId, setTenantId] = useState("");
+      const [config, setConfig] = useState<any>(null);
+
+      useEffect(() => {
+        const subdomain = window.location.hostname.split(".")[0];
+        setTenantId(subdomain);
+        // Fetch tenant config from API if needed
+        fetch(`/api/tenant-config?tenant=${subdomain}`)
+          .then(res => res.json())
+          .then(setConfig);
+      }, []);
+
+      return (
+        <TenantContext.Provider value={{ tenantId, config }}>
+          {children}
+        </TenantContext.Provider>
+      );
+    };
+
+    export const useTenant = () => useContext(TenantContext);
+    ```
+
+- **Routing:**  
+  All React Router routes use the current `tenantId` to fetch data, render branding, and enforce access.
+
+---
+
+**Summary:**  
+- Backend: Always set and validate `userId` and `tenantId` in sessions/tokens.
+- Frontend: Always derive and provide `tenantId` via TenantContext for subdomain-based isolation.
+
+**Result:**  
+Every session and page view is tenant-aware. Data, branding, integrations, and navigation are always scoped, preventing cross-tenant leaks and enabling seamless multi-firm support.
