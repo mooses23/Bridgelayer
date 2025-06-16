@@ -63,6 +63,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
+      console.log('🔐 Attempting login with credentials: include');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,9 +73,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const loginData = await response.json();
-        console.log("✅ Login redirectPath:", loginData.redirectPath);
+        console.log("✅ Login successful, redirectPath:", loginData.redirectPath);
+        console.log("🍪 Response headers:", [...response.headers.entries()]);
         
         setUser(loginData.user);
+        
+        // Force session check after login to verify cookie persistence
+        setTimeout(() => checkSession(), 100);
+        
         return {
           success: true,
           redirectPath: loginData.redirectPath
