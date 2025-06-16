@@ -22,14 +22,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ErrorBoundary>
-          <TenantProvider>
-            <SessionProvider>
+          <SessionProvider>
+            <TenantProvider>
               <RoleRouter />
               <Toaster />
-            </SessionProvider>
-          </TenantProvider>
+            </TenantProvider>
+          </SessionProvider>
         </ErrorBoundary>
       </BrowserRouter>
     </QueryClientProvider>
   );
 }
+
+export default App;

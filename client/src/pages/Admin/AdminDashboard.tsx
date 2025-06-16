@@ -75,7 +75,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const systemAlerts = Array.isArray(data?.systemAlerts) ? data.systemAlerts : [];
+
 
   return (
     <div className="space-y-6">
