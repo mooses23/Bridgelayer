@@ -29,53 +29,99 @@ const TenantContext = createContext<TenantContextType>({
 });
 
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tenantId, setTenantId] = useState('');
+  const [tenant, setTenant] = useState<TenantConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Extract tenant from subdomain
-    const hostname = window.location.hostname;
-    let extractedTenantId = '';
+    const detectTenant = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    if (hostname.includes('.') && !hostname.startsWith('www.')) {
-      // Extract subdomain (e.g., 'smithlaw' from 'smithlaw.firmsync.com')
-      extractedTenantId = hostname.split('.')[0];
-    } else if (hostname === 'localhost' || hostname.startsWith('127.0.0.1')) {
-      // For development, check if there's a tenant in the path or use default
-      const pathSegments = window.location.pathname.split('/').filter(Boolean);
-      if (pathSegments[0] && pathSegments[0] !== 'admin') {
-        extractedTenantId = pathSegments[0];
-      } else {
-        // Default tenant for development
-        extractedTenantId = 'testfirm';
+        // Get hostname without port
+        const hostname = window.location.hostname;
+        console.log('🌐 Detecting tenant from hostname:', hostname);
+
+        // Set default tenant immediately to prevent context errors
+        const defaultTenant: TenantConfig = {
+          id: 'default',
+          name: 'FirmSync',
+          subdomain: 'localhost', // Added subdomain
+          onboardingComplete: false,
+          features: {
+            documentAnalysis: true,
+            aiAssistant: true,
+            advancedReporting: true,
+            integrations: true,
+            customBranding: false,
+            prioritySupport: false
+          }
+        };
+
+        setTenant(defaultTenant);
+
+        let tenantSlug = 'localhost';
+
+        // Extract subdomain from Replit URLs
+        if (hostname.includes('.replit.dev') || hostname.includes('.repl.co')) {
+          // Format: subdomain-hash.username.replit.dev
+          const parts = hostname.split('.');
+          if (parts.length >= 3) {
+            tenantSlug = parts[0]; // Take the first part as tenant slug
+          }
+        }
+
+        console.log('🏷️ Detected tenant slug:', tenantSlug);
+
+        // Try to fetch tenant data from API (non-blocking)
+        try {
+          const response = await fetch(`/api/tenant/${tenantSlug}`, {
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Tenant data loaded:', data);
+            setTenant(data.tenant);
+          } else {
+            console.log('ℹ️ No tenant found for slug, keeping defaults');
+          }
+        } catch (apiError) {
+          console.log('ℹ️ Tenant API not available, using defaults');
+        }
+      } catch (error) {
+        console.error('❌ Error in tenant detection:', error);
+        setError('Failed to load tenant configuration');
+        // Ensure we always have a tenant set
+        setTenant({
+          id: 'default',
+          name: 'FirmSync',
+          subdomain: 'localhost', // Added subdomain
+          onboardingComplete: false,
+          features: {
+            documentAnalysis: true,
+            aiAssistant: true,
+            advancedReporting: false,
+            integrations: false,
+            customBranding: false,
+            prioritySupport: false
+          }
+        });
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    setTenantId(extractedTenantId);
-  }, []);
-
-  const { data: config, isLoading, error } = useQuery({
-    queryKey: ['tenant-config', tenantId],
-    queryFn: async () => {
-      if (!tenantId) return null;
-
-      const response = await fetch(`/api/tenant/${tenantId}`);
-      if (!response.ok) {
-        throw new Error('Failed to load tenant configuration');
-      }
-      const data = await response.json();
-      return data.tenant as TenantConfig;
-    },
-    enabled: !!tenantId,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+    detectTenant();
+  }, []); // Add empty dependency array
 
   return (
     <TenantContext.Provider value={{
-      tenantId,
-      config: config || null,
+      tenantId: tenant?.id || '',
+      config: tenant || null,
       isLoading,
-      error: error?.message || null
+      error
     }}>
       {children}
     </TenantContext.Provider>

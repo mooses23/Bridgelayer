@@ -127,33 +127,25 @@ export const login = async (req: Request, res: Response) => {
       sessionId: req.sessionID
     });
     
-    // Force session regeneration and save to ensure proper cookie setting
+    // Store user data in session without regeneration to preserve data
+    req.session.userId = user.id;
+    req.session.userRole = user.role;
+    req.session.firmId = user.firmId || null;
+    
+    // Force session save to ensure persistence
     await new Promise<void>((resolve, reject) => {
-      req.session.regenerate((regenErr) => {
-        if (regenErr) {
-          console.error('Session regeneration error:', regenErr);
-          reject(regenErr);
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error:', saveErr);
+          reject(saveErr);
         } else {
-          // Set session data after regeneration
-          req.session.userId = user.id;
-          req.session.userRole = user.role;
-          req.session.firmId = user.firmId;
-          
-          req.session.save((saveErr) => {
-            if (saveErr) {
-              console.error('Session save error:', saveErr);
-              reject(saveErr);
-            } else {
-              console.log('✅ Session regenerated and saved:', {
-                userId: req.session.userId,
-                userRole: req.session.userRole,
-                sessionId: req.sessionID
-              });
-              
-              console.log('🍪 Session cookie will be set automatically by express-session');
-              resolve();
-            }
+          console.log('✅ Session saved successfully:', {
+            userId: req.session.userId,
+            userRole: req.session.userRole,
+            firmId: req.session.firmId,
+            sessionId: req.sessionID
           });
+          resolve();
         }
       });
     });
@@ -209,11 +201,14 @@ export const getSession = async (req: Request, res: Response) => {
       sessionExists: !!req.session,
       sessionId: req.sessionID,
       userId: req.session?.userId,
-      cookies: req.headers.cookie,
-      sessionData: req.session
+      userRole: req.session?.userRole,
+      firmId: req.session?.firmId,
+      cookies: req.headers.cookie?.substring(0, 100) + '...', // Truncate for readability
+      sessionKeys: req.session ? Object.keys(req.session) : []
     });
     
     if (!req.session || !req.session.userId) {
+      console.log('❌ Session validation failed: missing session or userId');
       return res.status(401).json({ message: "No active session" });
     }
 
