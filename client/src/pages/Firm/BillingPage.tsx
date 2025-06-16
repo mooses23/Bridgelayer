@@ -3,9 +3,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, Clock, FileText, TrendingUp, Plus, Download } from "lucide-react";
+import { useTenant } from "@/context/TenantContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function BillingPage() {
-  const invoices = [
+  const { tenant } = useTenant();
+  const queryClient = useQueryClient();
+
+  const { data: invoices, isLoading: invoicesLoading } = useQuery({
+    queryKey: ["invoices", tenant?.id],
+    queryFn: () => fetch(`/api/invoices?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!tenant?.id
+  });
+
+  const { data: timeLogs, isLoading: timeLogsLoading } = useQuery({
+    queryKey: ["timeLogs", tenant?.id],
+    queryFn: () => fetch(`/api/time-logs?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!tenant?.id
+  });
+
+  const { data: billingSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ["billingSummary", tenant?.id],
+    queryFn: () => fetch(`/api/billing-summary?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!tenant?.id
+  });
+
+  const addTimeMutation = useMutation({
+    mutationFn: (entry: any) => 
+      fetch("/api/time-logs", { 
+        method: "POST", 
+        credentials: "include", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ tenant: tenant?.id, ...entry }) 
+      }).then(r => r.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeLogs", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ["billingSummary", tenant?.id] });
+    }
+  });
+
+  // Fallback data for when API is not available
+  const fallbackInvoices = [
     {
       id: "INV-001",
       client: "ABC Corporation",
@@ -32,7 +70,7 @@ export default function BillingPage() {
     }
   ];
 
-  const timeEntries = [
+  const fallbackTimeEntries = [
     {
       id: 1,
       attorney: "Sarah Wilson",
@@ -105,8 +143,12 @@ export default function BillingPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$245,890</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">
+              {summaryLoading ? "..." : billingSummary?.totalRevenue ?? "$245,890"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {billingSummary?.revenueChange ?? "+12% from last month"}
+            </p>
           </CardContent>
         </Card>
 
@@ -116,8 +158,12 @@ export default function BillingPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$36,950</div>
-            <p className="text-xs text-muted-foreground">3 overdue invoices</p>
+            <div className="text-2xl font-bold">
+              {summaryLoading ? "..." : billingSummary?.outstanding ?? "$36,950"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {billingSummary?.overdueInvoices ?? "3 overdue invoices"}
+            </p>
           </CardContent>
         </Card>
 
@@ -127,8 +173,12 @@ export default function BillingPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">142.5</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <div className="text-2xl font-bold">
+              {summaryLoading ? "..." : billingSummary?.billableHours ?? "142.5"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {billingSummary?.hoursPeriod ?? "This month"}
+            </p>
           </CardContent>
         </Card>
 
@@ -152,7 +202,7 @@ export default function BillingPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {invoices.map((invoice) => (
+              {(invoices || fallbackInvoices).map((invoice: any) => (
                 <div
                   key={invoice.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
@@ -181,7 +231,7 @@ export default function BillingPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {timeEntries.map((entry) => (
+              {(timeLogs || fallbackTimeEntries).map((entry: any) => (
                 <div
                   key={entry.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"

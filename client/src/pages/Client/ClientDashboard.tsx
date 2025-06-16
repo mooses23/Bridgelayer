@@ -3,9 +3,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Download, Calendar, MessageSquare, DollarSign, Clock } from "lucide-react";
+import { useSession } from "@/contexts/SessionContext";
+import { useQuery } from "@tanstack/react-query";
 
 export default function ClientDashboard() {
-  const caseInfo = {
+  const { user } = useSession();
+
+  const { data: invoices, isLoading: invoicesLoading } = useQuery({
+    queryKey: ["clientInvoices", user?.id],
+    queryFn: () => fetch(`/api/client/invoices?user=${user?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!user?.id
+  });
+
+  const { data: caseInfo, isLoading: caseLoading } = useQuery({
+    queryKey: ["clientCase", user?.id],
+    queryFn: () => fetch(`/api/client/case?user=${user?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!user?.id
+  });
+
+  const { data: recentDocuments, isLoading: documentsLoading } = useQuery({
+    queryKey: ["clientDocuments", user?.id],
+    queryFn: () => fetch(`/api/client/documents?user=${user?.id}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!user?.id
+  });
+
+  // Fallback data for when API is not available
+  const fallbackCaseInfo = {
     caseNumber: "2025-001",
     title: "Contract Review & Analysis",
     attorney: "Sarah Wilson",
@@ -13,7 +36,7 @@ export default function ClientDashboard() {
     nextAppointment: "Jan 30, 2025 at 2:00 PM"
   };
 
-  const recentDocuments = [
+  const fallbackDocuments = [
     {
       id: 1,
       name: "Initial Consultation Notes",
@@ -37,7 +60,7 @@ export default function ClientDashboard() {
     }
   ];
 
-  const invoices = [
+  const fallbackInvoices = [
     {
       id: "INV-001",
       description: "Legal Services - Contract Review",
@@ -132,7 +155,7 @@ export default function ClientDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentDocuments.map((doc) => (
+              {(recentDocuments || fallbackDocuments).map((doc: any) => (
                 <div
                   key={doc.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
