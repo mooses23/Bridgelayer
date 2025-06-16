@@ -1,4 +1,4 @@
-import { useAuth } from "@/context/AuthContext";
+import { useSession } from "@/contexts/SessionContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Building, Users, Settings, Shield, Activity } from "lucide-react";
 
 export default function Admin() {
   console.log("[Admin] loaded");
-  const { user, logout } = useAuth();
+  const { user, logout } = useSession();
 
   const handleLogout = async () => {
     await logout();

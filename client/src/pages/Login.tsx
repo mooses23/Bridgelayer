@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useSession } from '@/contexts/SessionContext';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login } = useSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

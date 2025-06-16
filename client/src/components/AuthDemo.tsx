@@ -1,9 +1,10 @@
-import { useAuth } from '@/context/AuthContext';
+import { useSession } from '@/contexts/SessionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AuthDemo() {
-  const { user, firm, loading, logout } = useAuth();
+  const { user, isLoading: loading, logout } = useSession();
+  const firm = user?.firm;
 
   if (loading) {
     return (

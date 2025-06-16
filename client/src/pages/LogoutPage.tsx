@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useSession } from '@/contexts/SessionContext';
 
 export default function LogoutPage() {
-  const { logout } = useAuth();
+  const { logout } = useSession();
 
   useEffect(() => {
     // Perform logout and redirect
