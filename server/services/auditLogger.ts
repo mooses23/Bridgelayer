@@ -100,6 +100,64 @@ class AuditLogger {
     }
   }
 
+  async logSecurityEvent(userId: number | null, firmId: number | null, eventType: string, details: string, ipAddress?: string, userAgent?: string) {
+    const entry: AuditLogEntry = {
+      userId: userId || 0,
+      firmId,
+      action: `SECURITY_${eventType}`,
+      details: { eventType, description: details, timestamp: new Date().toISOString() },
+      ipAddress,
+      userAgent
+    };
+    
+    this.logs.push(entry);
+    
+    try {
+      await storage.createAuditLog({
+        firmId: firmId || 0,
+        userId: userId || 0,
+        actorId: userId || 0,
+        actorName: userId ? 'User' : 'Anonymous',
+        action: `SECURITY_${eventType}`,
+        resourceType: 'security',
+        ipAddress,
+        userAgent,
+        details: { eventType, description: details }
+      });
+    } catch (error) {
+      console.error('Failed to save security audit log:', error);
+    }
+  }
+
+  async logUserCreated(userId: number, firmId: number | null, method: string, ipAddress?: string, userAgent?: string) {
+    const entry: AuditLogEntry = {
+      userId,
+      firmId,
+      action: 'USER_CREATED',
+      details: { method, timestamp: new Date().toISOString() },
+      ipAddress,
+      userAgent
+    };
+    
+    this.logs.push(entry);
+    
+    try {
+      await storage.createAuditLog({
+        firmId: firmId || 0,
+        actorId: userId,
+        actorName: 'System',
+        action: 'USER_CREATED',
+        resourceType: 'user',
+        resourceId: userId.toString(),
+        ipAddress,
+        userAgent,
+        details: { method }
+      });
+    } catch (error) {
+      console.error('Failed to save user creation audit log:', error);
+    }
+  }
+
   getLogs(userId?: number, firmId?: number, limit: number = 10) {
     let filteredLogs = this.logs;
     

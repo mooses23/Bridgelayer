@@ -19,7 +19,9 @@ import { storage } from "./storage";
 import { billingStorage } from "./storage-billing";
 import { processDocument } from "./services/documentProcessor";
 import { registerAdminRoutes } from "./routes/admin";
-import { login, logout, getSession, requireAuth as authRequireAuth, requireAdmin } from "./auth-minimal";
+import { AuthControllers } from "./auth/authControllers";
+import { OAuthHandlers } from "./auth/oauthHandlers";
+import { jwtAuthMiddleware, requireAdmin, requireFirmAccess, enforceTenantIsolation, optionalAuth } from "./auth/authMiddleware";
 import session from "express-session";
 import OpenAI from "openai";
 import fs from "fs/promises";
@@ -32,9 +34,9 @@ const upload = multer({
   },
 });
 
-// Use minimal authentication system
-const requireAuth = authRequireAuth;
-const requireSystemAdmin = requireAdmin;
+// Use JWT authentication system
+const requireAuth = jwtAuthMiddleware;
+const requireSystemAdmin = [jwtAuthMiddleware, requireAdmin];
 
 // Import Stripe for payment processing
 import Stripe from "stripe";
@@ -49,55 +51,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import audit logger
   const { auditLogger } = await import('./services/auditLogger.js');
 
-  // Authentication routes with audit logging
-  app.post("/api/auth/login", async (req, res) => {
-    const result = await login(req, res);
-    if (req.session?.userId) {
-      try {
-        await auditLogger.logLogin(
-          req.session.userId, 
-          req.session.firmId || null, 
-          req.ip, 
-          req.get('User-Agent')
-        );
-      } catch (error) {
-        console.error('Audit logging failed but login succeeded:', error);
-        // Don't fail login due to audit logging issues
-      }
-    }
-    return result;
-  });
-  
-  app.post("/api/auth/logout", async (req, res) => {
-    if (req.session?.userId) {
-      await auditLogger.logLogout(
-        req.session.userId, 
-        req.session.firmId || null, 
-        req.ip, 
-        req.get('User-Agent')
-      );
-    }
-    return await logout(req, res);
-  });
-  
-  app.get("/api/auth/session", getSession);
+  // JWT Authentication routes
+  app.post("/api/auth/login", AuthControllers.login);
+  app.post("/api/auth/logout", AuthControllers.logout);
+  app.get("/api/auth/session", AuthControllers.getSession);
+  app.post("/api/auth/refresh", AuthControllers.refreshToken);
+  app.post("/api/auth/reset-password", AuthControllers.requestPasswordReset);
 
-  // Google OAuth routes
-  app.get('/api/auth/google', (req, res) => {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+  // OAuth2 routes for SSO authentication
+  app.get('/api/auth/google', OAuthHandlers.initiateGoogleAuth);
+  app.get('/api/auth/google/callback', OAuthHandlers.handleGoogleCallback);
+  app.get('/api/auth/microsoft', OAuthHandlers.initiateMicrosoftAuth);
+  app.get('/api/auth/microsoft/callback', OAuthHandlers.handleMicrosoftCallback);
 
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `response_type=code&` +
-      `scope=email profile&` +
-      `access_type=offline`;
-
-    res.redirect(authUrl);
-  });
-
-  app.get('/api/auth/google/callback', async (req, res) => {
+  // Legacy OAuth callback (remove after migration)
+  app.get('/api/auth/google/callback/legacy', async (req, res) => {
     try {
       const { code } = req.query;
 
