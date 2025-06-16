@@ -37,9 +37,8 @@ const upload = multer({
   },
 });
 
-// Use JWT authentication system
-const requireAuth = jwtAuthMiddleware;
-const requireSystemAdmin = [jwtAuthMiddleware, requireAdmin];
+// Use session-based authentication system
+const requireSystemAdmin = [requireAuth, requireAdmin];
 
 // Import Stripe for payment processing
 import Stripe from "stripe";
@@ -54,18 +53,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import audit logger
   const { auditLogger } = await import('./services/auditLogger.js');
 
-  // JWT Authentication routes
-  app.post("/api/auth/login", AuthControllers.login);
-  app.post("/api/auth/refresh", AuthControllers.refreshToken);
-  app.post("/api/auth/logout", AuthControllers.logout);
-  app.get("/api/auth/session", AuthControllers.getSession);
-  app.post("/api/auth/reset-password", AuthControllers.requestPasswordReset);
-
-  // OAuth2 routes for SSO authentication
-  app.get('/api/auth/google', OAuthHandlers.initiateGoogleAuth);
-  app.get('/api/auth/google/callback', OAuthHandlers.handleGoogleCallback);
-  app.get('/api/auth/microsoft', OAuthHandlers.initiateMicrosoftAuth);
-  app.get('/api/auth/microsoft/callback', OAuthHandlers.handleMicrosoftCallback);
+  // Session-based Authentication routes
+  app.post("/api/auth/login", login);
+  app.post("/api/auth/logout", logout);
+  app.get("/api/auth/session", getSession);
 
   // Legacy OAuth callback (remove after migration)
   app.get('/api/auth/google/callback/legacy', async (req, res) => {
@@ -2806,7 +2797,7 @@ app.get('/api/tenant/config', async (req, res) => {
   });
 
   // Admin API endpoints for AdminDashboard and GhostModePage
-  app.get('/api/tenants', jwtAuthMiddleware, requireAdmin, async (req, res) => {
+  app.get('/api/tenants', requireAuth, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
 
@@ -2829,7 +2820,7 @@ app.get('/api/tenant/config', async (req, res) => {
     }
   });
 
-  app.get('/api/admin/stats', jwtAuthMiddleware, requireAdmin, async (req, res) => {
+  app.get('/api/admin/stats', requireAuth, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
       const users = await storage.getAllUsers();
@@ -2855,7 +2846,7 @@ app.get('/api/tenant/config', async (req, res) => {
   });
 
   // Admin System Health endpoints
-  app.get("/api/admin/system-health", jwtAuthMiddleware, requireAdmin, async (req, res) => {
+  app.get("/api/admin/system-health", requireAuth, requireAdmin, async (req, res) => {
     try {
       const { logManager, getSystemHealth } = await import("./logging.js");
       const health = await getSystemHealth();
@@ -3197,16 +3188,10 @@ app.get('/api/tenant/config', async (req, res) => {
     }
   });
 
-  import oauthRoutes from './routes/oauth';
-import onboardingRoutes from './routes/onboarding';
-import adminRoutes from './routes/admin';
-import storageRoutes from './routes/storage';
-
-// Mount routes
-  app.use('/api', oauthRoutes);
-  app.use('/api', onboardingRoutes);
-  app.use('/api', adminRoutes);
-  app.use('/api/storage', storageRoutes);
+  // Register authentication routes
+  app.post("/api/auth/login", login);
+  app.post("/api/auth/logout", logout);
+  app.get("/api/auth/session", getSession);
 
   const httpServer = createServer(app);
 
