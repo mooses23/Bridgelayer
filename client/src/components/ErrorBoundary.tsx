@@ -1,12 +1,13 @@
 import React, { Component, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  showDetails?: boolean;
 }
 
 interface State {
@@ -28,22 +29,34 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ error, errorInfo });
+    
+    // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
+    
+    // In production, you could send error to monitoring service
+    if (process.env.NODE_ENV === 'production') {
+      // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
+    }
   }
 
   handleRetry = () => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
+  handleGoHome = () => {
+    window.location.href = '/';
+  };
+
   render() {
     if (this.state.hasError) {
+      // Use custom fallback if provided
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+        <div className="min-h-[400px] flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
                 <AlertTriangle className="h-12 w-12 text-destructive" />
@@ -52,18 +65,35 @@ export class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground text-center">
-                We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+                We encountered an unexpected error. Please try refreshing or go back to the homepage.
               </p>
               
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {/* Show error details in development */}
+              {(process.env.NODE_ENV === 'development' || this.props.showDetails) && this.state.error && (
                 <details className="mt-4">
-                  <summary className="cursor-pointer text-sm font-medium mb-2">
-                    Error Details (Development)
+                  <summary className="cursor-pointer text-sm font-medium mb-2 text-muted-foreground">
+                    Error Details (Development Mode)
                   </summary>
-                  <pre className="text-xs bg-muted p-3 rounded overflow-auto">
-                    {this.state.error.toString()}
-                    {this.state.errorInfo?.componentStack}
-                  </pre>
+                  <div className="text-xs bg-muted p-3 rounded overflow-auto max-h-40">
+                    <div className="font-mono">
+                      <div className="text-destructive font-bold mb-2">
+                        {this.state.error.name}: {this.state.error.message}
+                      </div>
+                      {this.state.error.stack && (
+                        <pre className="whitespace-pre-wrap">
+                          {this.state.error.stack}
+                        </pre>
+                      )}
+                      {this.state.errorInfo?.componentStack && (
+                        <div className="mt-3">
+                          <div className="font-bold">Component Stack:</div>
+                          <pre className="whitespace-pre-wrap">
+                            {this.state.errorInfo.componentStack}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </details>
               )}
               
@@ -74,10 +104,11 @@ export class ErrorBoundary extends Component<Props, State> {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.reload()}
+                  onClick={this.handleGoHome}
                   className="w-full"
                 >
-                  Refresh Page
+                  <Home className="w-4 h-4 mr-2" />
+                  Go to Homepage
                 </Button>
               </div>
             </CardContent>
@@ -90,32 +121,37 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Hook version for functional components
-export function useErrorHandler() {
-  return (error: Error, errorInfo?: React.ErrorInfo) => {
-    console.error('Error caught by useErrorHandler:', error, errorInfo);
-    // Could integrate with error reporting service here
-  };
-}
-
-// Simple error fallback component
-export function ErrorFallback({ 
+// Simple inline error fallback
+export function InlineErrorFallback({ 
   error, 
-  resetError 
+  retry 
 }: { 
   error: Error; 
-  resetError: () => void;
+  retry?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 space-y-4">
-      <AlertTriangle className="h-8 w-8 text-destructive" />
-      <h2 className="text-lg font-semibold">Something went wrong</h2>
-      <p className="text-sm text-muted-foreground text-center max-w-md">
-        {error.message || 'An unexpected error occurred'}
-      </p>
-      <Button onClick={resetError} size="sm">
-        Try again
-      </Button>
+    <div className="flex flex-col items-center justify-center p-6 space-y-3 text-center">
+      <AlertTriangle className="h-6 w-6 text-destructive" />
+      <div>
+        <h3 className="text-sm font-medium">Unable to load content</h3>
+        <p className="text-xs text-muted-foreground mt-1">
+          {error.message || 'An error occurred'}
+        </p>
+      </div>
+      {retry && (
+        <Button variant="outline" size="sm" onClick={retry}>
+          <RefreshCw className="w-3 h-3 mr-1" />
+          Retry
+        </Button>
+      )}
     </div>
   );
+}
+
+// Hook for manual error throwing in functional components
+export function useErrorHandler() {
+  return (error: Error, errorInfo?: any) => {
+    console.error('Manual error reported:', error, errorInfo);
+    throw error; // This will be caught by the nearest ErrorBoundary
+  };
 }
