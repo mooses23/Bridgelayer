@@ -1,0 +1,86 @@
+# Onboarding Workflow – Implementation Blueprint
+
+## 1. 📝 Templated Firm Dashboard “Room”
+
+**Goal:**  
+Build a modular, reusable dashboard “room” that serves as the central hub for each firm after onboarding.
+
+**Steps:**
+- Create a `FirmDashboardRoom` React component:
+  - Dynamically loads tenant-specific branding, templates, and integrations using the `TenantContext`.
+  - Modular design: child components for document automation, template curation, admin config, etc.
+  - Displays onboarding progress if onboarding is not complete.
+- Syncs with admin dashboard: any config or template updates by admins are reflected instantly in the firm room via state/context sync or websockets.
+
+---
+
+## 2. 🗂️ Multi-Step Onboarding Form
+
+**Goal:**  
+Guide new firms through a clear, validated, multi-step process:  
+1. **Firm Info** (name, subdomain, contact, branding)  
+2. **Account Creation** (admin user, password, MFA)  
+3. **API Key Storage** (connect cloud storage, securely store OAuth/API tokens)
+
+**Steps:**
+- Create a `FirmOnboardingForm` React component:
+  - Uses a stepper (e.g., Material UI Stepper or custom) with three steps.
+  - Each step is a child form component with its own validation.
+- **Step 1: Firm Info**
+  - Fields: Firm name, subdomain, branding upload, contact email.
+  - Validation: Required fields, subdomain uniqueness.
+- **Step 2: Account Creation**
+  - Fields: Admin name, email, password, MFA setup (if enabled).
+  - Validation: Strong password, valid email, MFA code check.
+- **Step 3: API Key Storage**
+  - OAuth connect buttons (Google Drive, Dropbox, etc) and/or secure API key entry.
+  - Validation: Key format, mandatory selection of at least one storage provider.
+- On completion, POST the form data to `/api/onboarding/complete`, storing encrypted tokens using server-side logic (never expose keys to frontend).
+
+---
+
+## 3. 🤖 Copilot-Generated Form Validation & API Boilerplate
+
+**Goal:**  
+Reduce manual errors and speed up dev by generating robust validation and boilerplate code for all onboarding steps.
+
+**Steps:**
+- Use Copilot/AI to scaffold:
+  - Yup/Zod validation schemas for each form step.
+  - API call hooks (e.g., `useOnboardingApi`) for submitting and retrieving onboarding data.
+  - Error handling and UI feedback for failed validations or API errors.
+- Ensure all API calls use secure headers/cookies (no keys in localStorage).
+
+**Sample Validation (Yup):**
+```typescript
+import * as yup from "yup";
+
+export const firmInfoSchema = yup.object({
+  firmName: yup.string().required(),
+  subdomain: yup.string().required().matches(/^[a-z0-9-]+$/, "Invalid subdomain"),
+  contactEmail: yup.string().email().required(),
+  branding: yup.mixed().required(),
+});
+```
+
+**Sample API Hook:**
+```typescript
+import { useMutation } from "react-query";
+export function useOnboardingApi() {
+  return useMutation((data) =>
+    fetch("/api/onboarding/complete", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }).then((r) => r.json())
+  );
+}
+```
+
+---
+
+**Result:**  
+- Firms experience a seamless onboarding flow with instant feedback and secure storage.
+- Admin changes sync across all dashboards/rooms.
+- All code is modular, reusable, and Copilot/AI-accelerated for future updates.
