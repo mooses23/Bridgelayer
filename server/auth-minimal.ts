@@ -44,7 +44,7 @@ export interface AuthenticatedRequest extends Request {
 // Middleware to check if user is authenticated
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const sessionUserId = (req.session as any)?.userId;
+    const sessionUserId = req.session?.userId;
     console.log('Session check:', { 
       sessionExists: !!req.session,
       userId: sessionUserId,
@@ -127,19 +127,31 @@ export const login = async (req: Request, res: Response) => {
       sessionId: req.sessionID
     });
     
-    // Force session save
+    // Force session save and regenerate
     await new Promise<void>((resolve, reject) => {
-      req.session.save((err) => {
+      req.session.regenerate((err) => {
         if (err) {
-          console.error('Session save error:', err);
+          console.error('Session regenerate error:', err);
           reject(err);
         } else {
-          console.log('Session saved successfully:', {
-            userId: user.id,
-            sessionId: req.sessionID,
-            sessionData: req.session
+          // Set session data after regeneration
+          req.session.userId = user.id;
+          req.session.userRole = user.role;
+          req.session.firmId = user.firmId || null;
+          
+          req.session.save((saveErr) => {
+            if (saveErr) {
+              console.error('Session save error:', saveErr);
+              reject(saveErr);
+            } else {
+              console.log('Session saved successfully:', {
+                userId: user.id,
+                sessionId: req.sessionID,
+                sessionData: req.session
+              });
+              resolve();
+            }
           });
-          resolve();
         }
       });
     });
