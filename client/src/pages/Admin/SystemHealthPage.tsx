@@ -119,11 +119,13 @@ export default function SystemHealthPage() {
     }
   };
 
-  const filteredLogs = logsData?.filter(log => 
+  // Ensure logsData is always an array and filter logs
+  const logsArray = Array.isArray(logsData) ? logsData : [];
+  const filteredLogs = logsArray.filter(log => 
     searchTerm === '' || 
     log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.source.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   if (healthLoading) {
     return (
