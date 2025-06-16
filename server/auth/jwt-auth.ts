@@ -53,11 +53,16 @@ export function generateTokens(user: any) {
 
 // Set auth cookies with proper Replit configuration
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  // Get the current domain from environment or request
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const domain = isDevelopment ? undefined : `.${process.env.REPLIT_SLUG}.repl.co`;
+  
   const cookieOptions = {
     httpOnly: true,
-    secure: false, // Development mode - internal requests
-    sameSite: 'none' as const, // Allow cross-origin transmission
+    secure: !isDevelopment, // HTTPS in production, HTTP in development
+    sameSite: 'lax' as const,
     path: '/',
+    ...(domain && { domain }) // Only set domain in production
   };
 
   res.cookie('auth_token', accessToken, {
