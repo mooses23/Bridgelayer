@@ -17,19 +17,21 @@ interface LoginResult {
 
 interface SessionContextType {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
+  setToken: (token: string | null) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const checkSession = async () => {
     setIsLoading(true);
@@ -122,11 +124,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const value = {
     user,
+    token,
     isLoading,
     isAuthenticated: !!user,
     login,
     logout,
     checkSession,
+    setToken,
   };
 
   return (

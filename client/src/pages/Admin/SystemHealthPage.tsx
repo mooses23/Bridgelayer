@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import Spinner from "@/components/ui/spinner";
 import EmptyState from "@/components/ui/empty-state";
 import ApiClient from "@/lib/apiClient";
+import { useTokenRefresh } from "@/hooks/useTokenRefresh";
 import { 
   Activity, 
   AlertCircle, 
@@ -57,6 +58,9 @@ export default function SystemHealthPage() {
   const [logLevel, setLogLevel] = useState<string>('all');
   const [logSource, setLogSource] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Enable automatic JWT token refresh for persistent authentication
+  useTokenRefresh();
 
   // Fetch system health data
   const { 
