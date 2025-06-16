@@ -293,8 +293,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFirmById(id: number): Promise<Firm | undefined> {
-    const [firm] = await db.select().from(firms).where(eq(firms.id, id));
-    return firm || undefined;
+    return this.getFirm(id);
   }
 
   async getFirmBySlug(slug: string): Promise<Firm | undefined> {
@@ -652,11 +651,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(firmIntegrations).where(eq(firmIntegrations.firmId, firmId));
   }
 
-  async updateFirmIntegration(firmId: number, integrationName: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined> {
+  async updateFirmIntegration(firmId: number, integrationType: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined> {
     const [integration] = await db
       .update(firmIntegrations)
       .set({ ...updates, updatedAt: new Date() })
-      .where(and(eq(firmIntegrations.firmId, firmId), eq(firmIntegrations.integrationName, integrationName)))
+      .where(and(eq(firmIntegrations.firmId, firmId), eq(firmIntegrations.integrationType, integrationType)))
       .returning();
     return integration;
   }

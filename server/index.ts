@@ -7,7 +7,8 @@ import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes-minimal";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAuthData } from "./seed-auth-data";
-import MemoryStore from "memorystore";
+import ConnectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 
 const app = express();
 
@@ -71,15 +72,17 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 // Cookie parser for JWT tokens
 app.use(cookieParser());
 
-// Configure session middleware with memory store
-const MemoryStoreSession = MemoryStore(session);
+// Configure session middleware with PostgreSQL store
+const PgSession = ConnectPgSimple(session);
 app.use(session({
   secret: process.env.SESSION_SECRET || 'firmsync-dev-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
   name: 'firmsync.sid',
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000 // prune expired entries every 24h
+  store: new PgSession({
+    pool: pool,
+    tableName: 'session',
+    createTableIfMissing: true
   }),
   cookie: {
     secure: false, // Set to true in production with HTTPS
