@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSession } from '@/contexts/SessionContext';
-import { useTenant } from '@/context/TenantContext';
+
 
 // Public Pages
 import LoginPage from '@/pages/Public/LoginPage';
@@ -37,9 +37,8 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function RoleRouter() {
   const { user, isLoading } = useSession();
-  const { tenant, loading: tenantLoading } = useTenant();
 
-  if (isLoading || tenantLoading) {
+  if (isLoading) {
     return <LoadingSpinner />;
   }
 

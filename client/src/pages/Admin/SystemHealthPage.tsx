@@ -187,7 +187,7 @@ export default function SystemHealthPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Memory Usage</p>
                 <p className="text-2xl font-bold">
-                  {healthData?.memory.used || 0}MB / {healthData?.memory.total || 0}MB
+                  {healthData?.memory?.used || 0}MB / {healthData?.memory?.total || 0}MB
                 </p>
               </div>
               <HardDrive className="w-8 h-8 text-muted-foreground" />

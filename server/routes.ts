@@ -1035,6 +1035,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete firm onboarding endpoint
+  app.post("/api/firm/onboarding", requireAuth, async (req, res) => {
+    try {
+      const user = req.user;
+      
+      if (!user || !user.firmId) {
+        return res.status(400).json({ message: "User must be associated with a firm" });
+      }
+
+      // Update firm onboarded status
+      const updatedFirm = await storage.updateFirm(user.firmId, { onboarded: true });
+      
+      if (!updatedFirm) {
+        return res.status(404).json({ message: "Firm not found" });
+      }
+
+      res.json({ 
+        message: "Onboarding completed successfully",
+        firm: updatedFirm,
+        redirectPath: "/dashboard"
+      });
+    } catch (error) {
+      console.error("Error completing firm onboarding:", error);
+      res.status(500).json({ message: "Failed to complete onboarding" });
+    }
+  });
+
   // Message threads endpoints
   app.get("/api/message-threads", async (req, res) => {
     try {

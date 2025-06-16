@@ -1,0 +1,86 @@
+📌 GHGH FIXING PLAN: FIRMSYNC RECOVERY BLUEPRINT
+
+🔴 GHGH 1: Fix Broken Session Auth
+Problem: session.userId is undefined after login.
+Action:
+
+File: server/auth-minimal.ts
+
+Insert: req.session.userId = user.id before await session.save()
+
+Confirm backend session is restored in /api/auth/session
+
+🔴 GHGH 2: Implement Tenant Context
+Problem: Multi-tenancy is non-functional; TenantContext.tsx is missing.
+Action:
+
+Create: client/src/contexts/TenantContext.tsx
+
+Add subdomain detection: detectTenantFromSubdomain()
+
+Fetch firm data from /api/tenant/:subdomain
+
+Provide firm, features, hasFeature() via React Context
+
+Inject TenantProvider in App.tsx
+
+🔴 GHGH 3: Fix Onboarding Flow
+Problem: Onboarding flag not saving; hard redirect to dashboard.
+Action:
+
+File: server/routes/onboarding.ts
+
+Ensure onboarding sets firm.onboarded = true
+
+Avoid window.location.href; use router push
+
+🔴 GHGH 4: Restore Admin Health Page
+Problem: Crashes due to missing healthData.memory
+Action:
+
+File: client/src/pages/Admin/SystemHealthPage.tsx
+
+Add null checks: healthData?.memory?.used
+
+Add fallback values or loading placeholders
+
+🟡 GHGH 5: Routing Logic Cleanup
+Problem: Client routes incomplete; firm redirect may break
+Action:
+
+Complete client role routes in RoleRouter.tsx
+
+Ensure firm redirection only happens if firm && firm.onboarded
+
+🟡 GHGH 6: Ghost Mode QA
+Problem: Ghost mode not tested.
+Action:
+
+Verify: /admin/ghost loads correct user impersonation UI
+
+Add console logs for ghost switch
+
+🟡 GHGH 7: DEMO_FIRM_ID Removal
+Problem: Hardcoded demo firm logic present
+Action:
+
+File: server/routes/*.ts, storage.ts
+
+Replace DEMO_FIRM_ID with req.session.firmId
+
+🟢 GHGH 8: UI Verification & Component Sync
+Problem: Mounted components exist but aren’t rendered properly
+Action:
+
+Verify all widgets on /dashboard, /documents, /admin
+
+Match layout grid with component files
+
+🟢 GHGH 9: Full Smoke Test
+Action:
+
+Test login for all roles (admin, firm, client)
+
+Verify session fetches, firm context, onboarding, routing, and health
+
+Log each screen visited and loaded data
