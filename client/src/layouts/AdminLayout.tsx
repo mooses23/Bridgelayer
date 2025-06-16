@@ -11,7 +11,8 @@ import {
   Menu, 
   X, 
   LogOut,
-  Home
+  Home,
+  Activity
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -24,6 +25,7 @@ export default function AdminLayout() {
     { name: "Dashboard", href: "/admin", icon: Home, current: location.pathname === "/admin" },
     { name: "Firms", href: "/admin/firms", icon: Building2, current: location.pathname === "/admin/firms" },
     { name: "Usage Analytics", href: "/admin/usage", icon: BarChart3, current: location.pathname === "/admin/usage" },
+    { name: "System Health", href: "/admin/system-health", icon: Activity, current: location.pathname === "/admin/system-health" },
     { name: "Ghost Mode", href: "/admin/ghost", icon: Eye, current: location.pathname === "/admin/ghost" },
     { name: "System Settings", href: "/admin/settings", icon: Settings, current: location.pathname === "/admin/settings" },
   ];

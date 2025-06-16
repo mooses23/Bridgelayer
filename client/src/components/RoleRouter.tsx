@@ -12,6 +12,7 @@ import NotFoundPage from '@/pages/Public/NotFoundPage';
 import AdminLayout from '@/layouts/AdminLayout';
 import AdminDashboard from '@/pages/Admin/AdminDashboard';
 import AdminSettings from '@/pages/Admin/AdminSettings';
+import SystemHealthPage from '@/pages/Admin/SystemHealthPage';
 
 // Firm Pages
 import FirmDashboardLayout from '@/layouts/FirmDashboardLayout';
@@ -54,6 +55,7 @@ export default function RoleRouter() {
           {['platform_admin', 'admin', 'super_admin'].includes(user.role) && (
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
+              <Route path="system-health" element={<SystemHealthPage />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="logout" element={<LogoutPage />} />
               <Route path="*" element={<NotFoundPage />} />
