@@ -62,7 +62,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (!response.ok) {
         throw new Error('Failed to load tenant configuration');
       }
-      return response.json() as TenantConfig;
+      const data = await response.json();
+      return data.tenant as TenantConfig;
     },
     enabled: !!tenantId,
     retry: 2,
@@ -72,7 +73,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   return (
     <TenantContext.Provider value={{
       tenantId,
-      config,
+      config: config || null,
       isLoading,
       error: error?.message || null
     }}>

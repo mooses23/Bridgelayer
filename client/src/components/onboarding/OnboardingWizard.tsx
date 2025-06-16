@@ -53,7 +53,7 @@ export function OnboardingWizard() {
     oauthTokens: {}
   });
 
-  const { mutate: completeOnboarding, isLoading } = useOnboardingApi();
+  const { mutate: completeOnboarding, isPending } = useOnboardingApi();
 
   const updateFormData = (updates: Partial<OnboardingFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -75,9 +75,7 @@ export function OnboardingWizard() {
     try {
       await completeOnboarding(formData);
       toast({
-        title: "Onboarding Complete!",
-        description: "Welcome to FirmSync. Your dashboard is being prepared.",
-        variant: "default"
+        description: "Onboarding Complete! Welcome to FirmSync. Your dashboard is being prepared."
       });
       // Redirect to firm dashboard
       window.location.href = '/dashboard';
