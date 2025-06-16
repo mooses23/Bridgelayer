@@ -1,5 +1,4 @@
 import express, { type Request, Response, NextFunction } from "express";
-import session from "express-session";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
@@ -7,8 +6,6 @@ import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes-minimal";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAuthData } from "./seed-auth-data";
-import ConnectPgSimple from "connect-pg-simple";
-import { pool } from "./db";
 
 const app = express();
 
@@ -21,9 +18,9 @@ app.use(helmet({
   hsts: false // Disable HSTS in development
 }));
 
-// CORS configuration for Replit single-origin serving
+// CORS configuration for Replit JWT authentication
 app.use(cors({
-  origin: true, // Same origin - no cross-origin issues
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -71,28 +68,6 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Cookie parser for JWT tokens
 app.use(cookieParser());
-
-// Configure session middleware with PostgreSQL store
-const PgSession = ConnectPgSimple(session);
-// Configure express-session for Replit environment (single-origin serving)
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'firmsync-dev-secret-key-change-in-production',
-  resave: false,
-  saveUninitialized: true, // Enable session creation for all requests
-  name: 'firmsync.sid',
-  store: new PgSession({
-    pool: pool,
-    tableName: 'session',
-    createTableIfMissing: true
-  }),
-  cookie: {
-    secure: false,
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax', // Same-site for integrated serving
-    path: '/'
-  }
-}));
 
 app.use((req, res, next) => {
   const start = Date.now();

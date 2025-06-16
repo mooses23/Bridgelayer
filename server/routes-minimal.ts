@@ -2,7 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { login, logout, getSession } from "./auth-minimal";
+import { login, logout, getSession, refreshToken } from "./auth/jwt-auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
@@ -10,10 +10,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  // Authentication routes
+  // Authentication routes - JWT based
   app.post("/api/auth/login", login);
   app.post("/api/auth/logout", logout);
   app.get("/api/auth/session", getSession);
+  app.post("/api/auth/refresh", refreshToken);
 
   // Basic tenant route - handles both subdomains and Replit workspace IDs
   app.get("/api/tenant/:identifier", async (req, res) => {
