@@ -2,7 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { requireAuth, requireAdmin } from "./auth/authMiddleware";
+import { requireAuth, requireAdmin } from "./auth/authMiddleware-simple";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint

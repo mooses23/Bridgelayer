@@ -299,3 +299,5 @@ export function TemplatedDashboard() {
     </div>
   );
 }
+
+export default TemplatedDashboard;
