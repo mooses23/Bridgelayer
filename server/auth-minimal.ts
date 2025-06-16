@@ -43,42 +43,40 @@ export interface AuthenticatedRequest extends Request {
 
 // Middleware to check if user is authenticated
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  try {
-    const sessionUserId = req.session?.userId;
-    console.log('Session check:', { 
-      sessionExists: !!req.session,
-      userId: sessionUserId,
-      sessionId: req.sessionID,
-      cookies: req.headers.cookie,
-      sessionData: req.session
-    });
-    
-    if (!req.session || !sessionUserId) {
-      return res.status(401).json({ message: "No active session" });
-    }
+  console.log('Session check:', {
+    sessionExists: !!req.session,
+    userId: req.session?.userId,
+    userRole: req.session?.userRole,
+    sessionId: req.sessionID,
+    sessionKeys: req.session ? Object.keys(req.session) : [],
+    cookies: req.headers.cookie,
+    fullSession: req.session
+  });
 
-    const user = await storage.getUser(sessionUserId);
-    if (!user) {
-      req.session.destroy(() => {});
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    // Set user on request object
-    req.user = {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      firmId: user.firmId
-    };
-
-    next();
-  } catch (error) {
-    console.error("Auth middleware error:", error);
-    res.status(500).json({ message: "Authentication error" });
+  // Check if session exists and has userId
+  if (!req.session || !req.session.userId) {
+    console.log('❌ Authentication failed: No session or userId');
+    return res.status(401).json({ message: 'No active session' });
   }
-};
+
+  const user = await storage.getUser(req.session.userId);
+  if (!user) {
+    req.session.destroy(() => {});
+    return res.status(401).json({ message: "User not found" });
+  }
+
+  // Set user on request object
+  req.user = {
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    firmId: user.firmId
+  };
+
+  next();
+}
 
 // Middleware to check if user is admin
 export const requireAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -108,74 +106,84 @@ export const login = async (req: Request, res: Response) => {
     }
 
     console.log("User found:", { id: user.id, email: user.email, hasPassword: !!user.password });
-    
+
     const valid = await bcrypt.compare(password, user.password);
     console.log("Password valid?", valid);
     if (!valid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Set session data with explicit typing and ensure persistence
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
-    req.session.firmId = user.firmId || null;
-    
-    console.log('Setting session data:', {
+    // Set session data - ensure it's properly stored
+    const sessionData = {
       userId: user.id,
       userRole: user.role,
       firmId: user.firmId,
-      sessionId: req.sessionID
-    });
-    
-    // Store user data in session without regeneration to preserve data
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
-    req.session.firmId = user.firmId || null;
-    
-    // Force session save to ensure persistence
-    await new Promise<void>((resolve, reject) => {
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error('Session save error:', saveErr);
-          reject(saveErr);
-        } else {
-          console.log('✅ Session saved successfully:', {
+      email: user.email,
+      loginTime: new Date().toISOString()
+    };
+
+    console.log('Setting session data:', sessionData);
+
+    // First save current session data
+    Object.assign(req.session, sessionData);
+
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Initial session save error:', saveErr);
+        return res.status(500).json({ error: 'Session save failed' });
+      }
+
+      // Then regenerate for security
+      req.session.regenerate((regenerateErr) => {
+        if (regenerateErr) {
+          console.error('Session regeneration error:', regenerateErr);
+          return res.status(500).json({ error: 'Session creation failed' });
+        }
+
+        // Re-apply session data after regeneration
+        Object.assign(req.session, sessionData);
+
+        req.session.save((finalSaveErr) => {
+          if (finalSaveErr) {
+            console.error('Final session save error:', finalSaveErr);
+            return res.status(500).json({ error: 'Session finalization failed' });
+          }
+
+          console.log('✅ Session regenerated and saved:', {
             userId: req.session.userId,
             userRole: req.session.userRole,
-            firmId: req.session.firmId,
             sessionId: req.sessionID
           });
-          resolve();
-        }
+
+          // Determine redirect path based on role and onboarding state
+          let redirectPath = '/dashboard'; // default
+
+          if (user.role === 'admin') {
+            redirectPath = '/admin';
+          } else if ((user.role === 'firm_owner' || user.role === 'firm_admin' || user.role === 'paralegal') && user.firmId) {
+            // Check firm onboarding status
+            const firm = await storage.getFirm(user.firmId);
+            if (firm && !firm.onboarded) {
+              redirectPath = '/onboarding';
+            } else {
+              redirectPath = '/dashboard';
+            }
+          }
+
+          res.json({
+            message: "Logged in",
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              role: user.role,
+              firmId: user.firmId
+            },
+            redirectPath
+          });
+        });
       });
-    });
-
-    // Determine redirect path based on role and onboarding state
-    let redirectPath = '/dashboard'; // default
-
-    if (user.role === 'admin') {
-      redirectPath = '/admin';
-    } else if ((user.role === 'firm_owner' || user.role === 'firm_admin' || user.role === 'paralegal') && user.firmId) {
-      // Check firm onboarding status
-      const firm = await storage.getFirm(user.firmId);
-      if (firm && !firm.onboarded) {
-        redirectPath = '/onboarding';
-      } else {
-        redirectPath = '/dashboard';
-      }
-    }
-
-    res.json({
-      message: "Logged in",
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        firmId: user.firmId
-      },
-      redirectPath
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -202,13 +210,13 @@ export const getSession = async (req: Request, res: Response) => {
       sessionId: req.sessionID,
       userId: req.session?.userId,
       userRole: req.session?.userRole,
-      firmId: req.session?.firmId,
-      cookies: req.headers.cookie?.substring(0, 100) + '...', // Truncate for readability
-      sessionKeys: req.session ? Object.keys(req.session) : []
+      sessionKeys: req.session ? Object.keys(req.session) : [],
+      cookies: req.headers.cookie,
+      fullSession: req.session
     });
-    
+
     if (!req.session || !req.session.userId) {
-      console.log('❌ Session validation failed: missing session or userId');
+      console.log('❌ Session check failed: No session or userId');
       return res.status(401).json({ message: "No active session" });
     }
 
