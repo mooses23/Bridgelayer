@@ -34,7 +34,7 @@ export default function AuthDemo() {
               <div className="bg-green-50 p-3 rounded">
                 <p><strong>Email:</strong> {user.email}</p>
                 <p><strong>Role:</strong> {user.role}</p>
-                <p><strong>Firm ID:</strong> {user.firm_id || 'None'}</p>
+                <p><strong>Firm ID:</strong> {user.firmId || 'None'}</p>
               </div>
             ) : (
               <div className="bg-red-50 p-3 rounded">
