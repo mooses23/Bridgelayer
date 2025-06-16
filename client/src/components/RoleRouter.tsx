@@ -48,7 +48,7 @@ export default function RoleRouter() {
       {user ? (
         <>
           {/* GHGH 20.2 - Admin Routes */}
-          {user.role === 'admin' && (
+          {['platform_admin', 'admin', 'super_admin'].includes(user.role) && (
             <Route path="/admin/*" element={
               <AdminLayout>
                 <Routes>
@@ -101,7 +101,7 @@ export default function RoleRouter() {
 
           {/* GHGH 20.2 - Role-based Redirects */}
           <Route path="/" element={
-            user.role === 'admin' ? (
+            ['platform_admin', 'admin', 'super_admin'].includes(user.role) ? (
               <Navigate to="/admin" replace />
             ) : user.role === 'client' ? (
               <Navigate to="/client" replace />

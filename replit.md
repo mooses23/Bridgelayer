@@ -103,6 +103,13 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 20.2 - Platform Admin Role Expansion Complete
+  - Updated admin role check in RoleRouter.tsx to include all platform admin variants
+  - Changed from single `user.role === 'admin'` to array check `['platform_admin', 'admin', 'super_admin'].includes(user.role)`
+  - Enhanced AdminLayout routing to properly handle platform_admin, admin, and super_admin roles
+  - Updated role-based redirect logic to ensure all platform admin variants are redirected to `/admin`
+  - System now provides consistent admin experience across all platform administrator role types
+
 - **June 16, 2025**: GHGH 20.1 - Logout Route Placement Fix Complete
   - Removed `/logout` route from public routes section in RoleRouter.tsx
   - Added `/logout` route to AdminLayout nested routes for admin users
