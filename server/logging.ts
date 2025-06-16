@@ -173,3 +173,150 @@ export const getSystemHealth = async () => {
     environment: process.env.NODE_ENV || 'development'
   };
 };
+export interface LogEntry {
+  id: string;
+  timestamp: string;
+  level: 'info' | 'warn' | 'error' | 'debug';
+  message: string;
+  metadata?: any;
+  source: string;
+}
+
+export interface SystemHealth {
+  status: string;
+  uptime: number;
+  memory: {
+    used: number;
+    total: number;
+    external: number;
+  };
+  logs: {
+    total: number;
+    lastHour: number;
+    lastDay: number;
+    errorCount: number;
+    warnCount: number;
+    sources: string[];
+  };
+  timestamp: string;
+  version: string;
+  nodeVersion: string;
+  environment: string;
+}
+
+class LogManager {
+  private logs: LogEntry[] = [];
+  private maxLogs = 10000;
+
+  log(level: LogEntry['level'], message: string, metadata: any = {}, source: string = 'server') {
+    const entry: LogEntry = {
+      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      metadata,
+      source
+    };
+
+    this.logs.unshift(entry);
+    
+    // Keep only maxLogs entries
+    if (this.logs.length > this.maxLogs) {
+      this.logs = this.logs.slice(0, this.maxLogs);
+    }
+
+    // Also log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[${level.toUpperCase()}] ${source}: ${message}`, metadata);
+    }
+  }
+
+  getLogs(filters: {
+    level?: string;
+    source?: string;
+    limit?: number;
+    since?: Date;
+  } = {}): LogEntry[] {
+    let filtered = [...this.logs];
+
+    if (filters.level && filters.level !== 'all') {
+      filtered = filtered.filter(log => log.level === filters.level);
+    }
+
+    if (filters.source && filters.source !== 'all') {
+      filtered = filtered.filter(log => log.source === filters.source);
+    }
+
+    if (filters.since) {
+      filtered = filtered.filter(log => new Date(log.timestamp) >= filters.since!);
+    }
+
+    if (filters.limit) {
+      filtered = filtered.slice(0, filters.limit);
+    }
+
+    return filtered;
+  }
+
+  getSystemHealth(): SystemHealth {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const recentLogs = this.logs.filter(log => new Date(log.timestamp) >= oneDayAgo);
+    const hourlyLogs = this.logs.filter(log => new Date(log.timestamp) >= oneHourAgo);
+    
+    const errorCount = recentLogs.filter(log => log.level === 'error').length;
+    const warnCount = recentLogs.filter(log => log.level === 'warn').length;
+    
+    const sources = [...new Set(this.logs.map(log => log.source))];
+    
+    // Get memory usage
+    const memUsage = process.memoryUsage();
+    const memUsed = Math.round(memUsage.heapUsed / 1024 / 1024);
+    const memTotal = Math.round(memUsage.heapTotal / 1024 / 1024);
+    const memExternal = Math.round(memUsage.external / 1024 / 1024);
+
+    // Determine system status
+    let status = 'healthy';
+    if (errorCount > 10) status = 'error';
+    else if (errorCount > 5 || warnCount > 20) status = 'warning';
+
+    return {
+      status,
+      uptime: Math.floor(process.uptime()),
+      memory: {
+        used: memUsed,
+        total: memTotal,
+        external: memExternal
+      },
+      logs: {
+        total: this.logs.length,
+        lastHour: hourlyLogs.length,
+        lastDay: recentLogs.length,
+        errorCount,
+        warnCount,
+        sources
+      },
+      timestamp: now.toISOString(),
+      version: '1.0.0',
+      nodeVersion: process.version,
+      environment: process.env.NODE_ENV || 'development'
+    };
+  }
+
+  clearLogs() {
+    this.logs = [];
+  }
+}
+
+export const logManager = new LogManager();
+
+export async function getSystemHealth(): Promise<SystemHealth> {
+  return logManager.getSystemHealth();
+}
+
+// Initialize with some sample logs
+logManager.log('info', 'System started successfully', { pid: process.pid }, 'server');
+logManager.log('info', 'Database connection established', {}, 'database');
+logManager.log('info', 'Authentication system initialized', {}, 'auth');

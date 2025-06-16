@@ -102,7 +102,7 @@ export default function SystemHealthPage() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'healthy': return 'text-green-600';
       case 'warning': return 'text-yellow-600';
       case 'error': return 'text-red-600';
@@ -188,8 +188,7 @@ export default function SystemHealthPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Memory Usage</p>
                 <p className="text-2xl font-bold">
-                  {/* Add proper loading state and error handling for healthData */}
-                  {healthData?.memory?.used || 'N/A'}MB / {healthData?.memory?.total || 0}MB
+                  {healthData?.memory?.used || 'N/A'}MB / {healthData?.memory?.total || 'N/A'}MB
                 </p>
               </div>
               <HardDrive className="w-8 h-8 text-muted-foreground" />
@@ -313,9 +312,9 @@ export default function SystemHealthPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sources</SelectItem>
-                {healthData?.logs.sources.map(source => (
+                {healthData?.logs?.sources?.map(source => (
                   <SelectItem key={source} value={source}>{source}</SelectItem>
-                ))}
+                )) || null}
               </SelectContent>
             </Select>
           </div>
