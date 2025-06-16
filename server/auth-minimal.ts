@@ -48,12 +48,13 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
     console.log('Session check:', { 
       sessionExists: !!req.session,
       userId: sessionUserId,
+      sessionId: req.sessionID,
       cookies: req.headers.cookie,
       sessionData: req.session
     });
     
     if (!req.session || !sessionUserId) {
-      return res.status(401).json({ message: "Authentication required" });
+      return res.status(401).json({ message: "No active session" });
     }
 
     const user = await storage.getUser(sessionUserId);

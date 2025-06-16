@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Users, Activity, AlertTriangle, TrendingUp, Eye, Settings, FileText, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function AdminDashboard() {
   console.log("[AdminDashboard] LIVE");
+  const [, setLocation] = useLocation();
+  
   const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
     queryKey: ["tenants"],
     queryFn: () => fetch("/api/tenants", { credentials: "include" }).then(r => r.json()),
@@ -218,25 +220,41 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20">
+              <Button 
+                variant="outline" 
+                className="h-20 hover:bg-gray-50 transition-colors"
+                onClick={() => setLocation('/admin/firms')}
+              >
                 <div className="flex flex-col items-center space-y-2">
                   <Building2 className="w-6 h-6" />
                   <span className="text-sm">Manage Firms</span>
                 </div>
               </Button>
-              <Button variant="outline" className="h-20">
+              <Button 
+                variant="outline" 
+                className="h-20 hover:bg-gray-50 transition-colors"
+                onClick={() => setLocation('/admin/analytics')}
+              >
                 <div className="flex flex-col items-center space-y-2">
                   <TrendingUp className="w-6 h-6" />
                   <span className="text-sm">Usage Analytics</span>
                 </div>
               </Button>
-              <Button variant="outline" className="h-20">
+              <Button 
+                variant="outline" 
+                className="h-20 hover:bg-gray-50 transition-colors"
+                onClick={() => setLocation('/admin/ghost')}
+              >
                 <div className="flex flex-col items-center space-y-2">
                   <Eye className="w-6 h-6" />
                   <span className="text-sm">Ghost Mode</span>
                 </div>
               </Button>
-              <Button variant="outline" className="h-20">
+              <Button 
+                variant="outline" 
+                className="h-20 hover:bg-gray-50 transition-colors"
+                onClick={() => setLocation('/admin/settings')}
+              >
                 <div className="flex flex-col items-center space-y-2">
                   <Settings className="w-6 h-6" />
                   <span className="text-sm">System Settings</span>
