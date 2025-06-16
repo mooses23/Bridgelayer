@@ -1,0 +1,74 @@
+# FirmSync Multi-Tenant Isolation – Technical Deep Dive
+
+## 1. **Tenant Identification**
+- **Subdomain Routing:**  
+  Each firm accesses FirmSync via a unique subdomain (e.g., `smithlaw.firmsync.com`).  
+  - On every request (web or API), the backend parses the subdomain to resolve the active `tenantId`.
+  - Example:  
+    - Request: `GET https://smithlaw.firmsync.com/api/dashboard`
+    - Server extracts `tenantId = "smithlaw"`
+
+- **Token Binding:**  
+  When a user logs in, their JWT or session token includes the `tenantId` they authenticated under.  
+  - Example JWT payload:
+    ```json
+    {
+      "userId": "abc123",
+      "tenantId": "smithlaw",
+      "role": "admin"
+    }
+    ```
+
+## 2. **Data Siloing**
+- **Database Schema:**  
+  - All core tables (users, documents, integrations, templates, etc.) include a `tenant_id` column.
+  - Every query, insertion, and update is **scoped** by `tenant_id`.
+  - Example (Drizzle ORM/SQL):
+    ```typescript
+    // Fetching documents for the current tenant only
+    db.select().from(documents).where(eq(documents.tenantId, req.user.tenantId))
+    ```
+
+- **No Cross-Tenant Access:**  
+  - Backend controllers **never** fetch, update, or delete data outside of the current `tenantId`.
+  - Admins (even with elevated privileges) are limited to their firm’s tenant context.
+
+## 3. **Branding and Configuration**
+- **Frontend Theming:**  
+  - On login or page load, the frontend fetches branding (logo, colors) and config for the active tenant only.
+  - This info is never shared across tenants.
+
+- **Admin Dashboard Sync:**  
+  - Updates to admin config (e.g., enabled integrations, templates) are immediately reflected in all dashboards for that tenant.
+  - Global changes (if any) require explicit propagation logic but must not override or leak tenant-specific settings.
+
+## 4. **Integration Isolation**
+- **API Credentials:**  
+  - OAuth tokens and API keys for third-party integrations (Google Drive, Dropbox, QuickBooks, etc.) are stored **per tenant** and encrypted at-rest.
+  - No tokens or credentials are ever shared or exposed between tenants.
+
+- **Integration Toggle:**  
+  - Admins can enable/disable integrations for their own firm only; toggling never affects other tenants.
+
+## 5. **Request/Response Enforcement**
+- **Middleware:**  
+  - All backend routes use middleware to:
+    - Validate the user’s JWT/session and extract `tenantId`.
+    - Ensure every request’s subdomain matches the `tenantId` in the token.
+    - Reject any request where there’s a mismatch or missing tenant context (HTTP 403).
+
+- **Logging and Auditing:**  
+  - All cross-tenant actions are logged and should be alertable as potential security incidents (should never occur in correct code).
+
+## 6. **Testing and Validation**
+- **Automated Tests:**  
+  - Unit and integration tests ensure no data, config, or integration can be accessed by a user from another tenant.
+  - Tests simulate multiple tenants in parallel and validate total isolation.
+
+- **Manual QA:**  
+  - Regular penetration tests and tenant-switching simulations to catch any edge cases.
+
+---
+
+**Summary:**  
+FirmSync’s system design ensures that each law firm’s data, branding, and integrations are strictly siloed by subdomain and tenant ID, enforced at every layer (routing, authentication, database, integrations). No cross-pollination is possible—guaranteeing privacy, security, and regulatory compliance for every client.
