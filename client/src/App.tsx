@@ -1,37 +1,30 @@
-import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from 'react-hot-toast';
-import { SessionProvider } from "./contexts/SessionContext";
-import { TenantProvider } from "./contexts/TenantContext";
-import RoleRouter from "./components/RoleRouter";
-import ErrorBoundary from "./components/ErrorBoundary";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Router, Route, Switch } from 'wouter';
+import { Toaster } from '@/components/ui/toaster';
+import RoleRouter from '@/components/RoleRouter';
+import NotFoundPage from '@/components/NotFoundPage';
+import { SessionProvider } from '@/contexts/SessionContext';
+import { TenantProvider } from '@/contexts/TenantContext';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function App() {
-  console.log("[App] LIVE");
+  console.log('[App] LIVE');
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ErrorBoundary>
-          <SessionProvider>
-            <TenantProvider>
-              <RoleRouter />
+      <TenantProvider>
+        <SessionProvider>
+          <Router>
+            <div className="min-h-screen bg-gray-50">
+              <Switch>
+                <Route path="*" component={RoleRouter} />
+              </Switch>
               <Toaster />
-            </TenantProvider>
-          </SessionProvider>
-        </ErrorBoundary>
-      </BrowserRouter>
+            </div>
+          </Router>
+        </SessionProvider>
+      </TenantProvider>
     </QueryClientProvider>
   );
 }
-
-export default App;

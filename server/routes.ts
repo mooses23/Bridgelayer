@@ -892,6 +892,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/firm/analysis-settings", async (req, res) => {
     try {
       const validatedData = insertFirmAnalysisSettingsSchema.parse({
+This code implements tenant configuration endpoints and applies tenant extraction middleware to all routes.
+```typescript
         firmId: DEMO_FIRM_ID,
         ...req.body
       });
@@ -2610,7 +2612,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: 'Access denied' });
       }
 
-      // const firmStmt = db.prepare('SELECT * FROM firms WHERE id = ?');
+      // const firmStmt```typescript
+ = db.prepare('SELECT * FROM firms WHERE id = ?');
       // const firm = firmStmt.get(firmId);
       const firm = await storage.getFirm(parseInt(firmId));
 
@@ -2640,43 +2643,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Tenant API endpoint for subdomain-based tenant detection  
-  app.get('/api/tenant/:subdomain', async (req, res) => {
-    try {
-      const { subdomain } = req.params;
+// Tenant API
+app.get('/api/tenant/:tenantId', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
 
-      // Get firm by slug (subdomain)
-      const firm = await storage.getFirmBySlug(subdomain);
+    // Return basic tenant info for now
+    res.json({
+      id: tenantId,
+      name: tenantId.charAt(0).toUpperCase() + tenantId.slice(1),
+      status: 'active'
+    });
+  } catch (error) {
+    console.error('Error fetching tenant:', error);
+    res.status(500).json({ error: 'Failed to fetch tenant' });
+  }
+});
 
-      if (!firm) {
-        return res.status(404).json({ error: 'Tenant not found' });
-      }
+// Tenant configuration endpoint
+app.get('/api/tenant/config', async (req, res) => {
+  try {
+    const tenantId = req.query.tenant as string || req.headers['x-tenant-id'] as string;
 
-      // Transform firm to tenant format with features
-      const tenant = {
-        id: firm.id,
-        name: firm.name,
-        slug: firm.slug,
-        onboarded: firm.onboarded,
-        plan: firm.plan || 'Professional',
-        features: {
-          billingEnabled: true,
-          aiDebug: false,
-          documentsEnabled: true,
-          intakeEnabled: true,
-          communicationsEnabled: true,
-          calendarEnabled: true,
-          adminGhostMode: false
-        }
-      };
-
-      res.json({ tenant });
-    } catch (error) {
-      console.error('Error fetching tenant by subdomain:', error);
-      res.status(500).json({ error: 'Internal server error' });
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant ID required' });
     }
-  });
 
+    // Try to get firm configuration from database
+    let firmConfig = null;
+    try {
+      const firm = await storage.getFirmByTenant(tenantId);
+      if (firm) {
+        firmConfig = {
+          id: tenantId,
+          name: firm.name,
+          branding: {
+            primaryColor: firm.primaryColor || '#3b82f6',
+            logoUrl: firm.logoUrl,
+            customCss: firm.customCss
+          },
+          features: {
+            aiAnalysis: firm.aiAnalysisEnabled ?? true,
+            clientPortal: firm.clientPortalEnabled ?? true,
+            billingModule: firm.billingModuleEnabled ?? true,
+            auditTrail: firm.auditTrailEnabled ?? true
+          },
+          integrations: {
+            google: firm.googleIntegrationEnabled ?? false,
+            microsoft: firm.microsoftIntegrationEnabled ?? false,
+            dropbox: firm.dropboxIntegrationEnabled ?? false
+          },
+          templates: firm.templates || [],
+          settings: firm.settings || {}
+        };
+      }
+    } catch (dbError) {
+      console.log('Database lookup failed, using default config:', dbError);
+    }
+
+    // Return default config if no firm found
+    const defaultConfig = {
+      id: tenantId,
+      name: tenantId.charAt(0).toUpperCase() + tenantId.slice(1),
+      branding: {
+        primaryColor: '#3b82f6'
+      },
+      features: {
+        aiAnalysis: true,
+        clientPortal: true,
+        billingModule: true,
+        auditTrail: true
+      },
+      integrations: {
+        google: false,
+        microsoft: false,
+        dropbox: false
+      },
+      templates: [],
+      settings: {}
+    };
+
+    res.json(firmConfig || defaultConfig);
+  } catch (error) {
+    console.error('Error fetching tenant config:', error);
+    res.status(500).json({ error: 'Failed to fetch tenant configuration' });
+  }
+});
   // Audit trail endpoints
   app.get('/api/audit-logs', requireAuth, async (req, res) => {
     try {

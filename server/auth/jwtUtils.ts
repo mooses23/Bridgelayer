@@ -110,7 +110,7 @@ export class JWTUtils {
     // Try to get tenant from subdomain first
     const hostname = req.get('host') || '';
     const parts = hostname.split('.');
-    
+
     // If we have subdomain.firmsync.com pattern
     if (parts.length >= 3 && parts[1] === 'firmsync') {
       return parts[0];
@@ -135,7 +135,7 @@ export class JWTUtils {
    */
   static validateTenantMatch(req: Request, tokenPayload: JWTPayload): boolean {
     const requestTenant = this.extractTenantFromRequest(req);
-    
+
     // For localhost development, be more lenient
     if (req.get('host')?.includes('localhost') || req.get('host')?.includes('replit')) {
       return true;
@@ -154,7 +154,7 @@ export class JWTUtils {
 
       const now = Math.floor(Date.now() / 1000);
       const threshold = thresholdMinutes * 60;
-      
+
       return decoded.exp - now <= threshold;
     } catch {
       return true;

@@ -815,7 +815,8 @@ export class DatabaseStorage implements IStorage {
     return client;
   }
 
-  async getFirmClients(firmId: number): Promise<Client[]> {
+  async getFirmClients(firmId: number): Promise<```text
+Client[]> {
     return await db.select().from(clients).where(eq(clients.firmId, firmId)).orderBy(clients.name);
   }
 
@@ -1868,7 +1869,7 @@ export class DatabaseStorage implements IStorage {
     userAgent: string;
   }): Promise<{ firm: any; user: any; redirectUrl: string }> {
     const { onboardingData, ipAddress, userAgent } = data;
-    
+
     try {
       // Create firm slug from name
       const firmSlug = onboardingData.firmInfo.name
@@ -1895,7 +1896,7 @@ export class DatabaseStorage implements IStorage {
       // Create the admin user
       const bcrypt = await import('bcrypt');
       const hashedPassword = await bcrypt.hash('tempPassword123!', 10);
-      
+
       const [adminUser] = await db
         .insert(users)
         .values({
@@ -2038,6 +2039,22 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(complianceAgreements)
       .where(eq(complianceAgreements.firmId, firmId));
+  }
+  
+  async getFirm(firmId: number): Promise<any> {
+    const [firm] = await db
+      .select()
+      .from(firms)
+      .where(eq(firms.id, firmId));
+    return firm;
+  }
+
+  async getFirmByTenant(tenantId: string): Promise<any> {
+    const [firm] = await db
+      .select()
+      .from(firms)
+      .where(eq(firms.subdomain, tenantId));
+    return firm;
   }
 }
 

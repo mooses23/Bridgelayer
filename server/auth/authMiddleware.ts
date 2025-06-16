@@ -44,7 +44,7 @@ export const jwtAuthMiddleware = async (
   try {
     // Extract JWT token from request
     const token = JWTUtils.extractTokenFromRequest(req);
-    
+
     if (!token) {
       res.status(401).json({ 
         error: 'Authentication required',
@@ -75,7 +75,7 @@ export const jwtAuthMiddleware = async (
         req.ip,
         req.get('User-Agent')
       );
-      
+
       res.status(403).json({
         error: 'Tenant mismatch',
         message: 'Access denied for this tenant'
@@ -103,7 +103,7 @@ export const jwtAuthMiddleware = async (
         req.ip,
         req.get('User-Agent')
       );
-      
+
       res.status(403).json({
         error: 'Firm mismatch',
         message: 'User firm has changed'
@@ -190,7 +190,7 @@ export const enforceTenantIsolation = (
 
   // Add tenant filter helper to request for database queries
   req.getTenantFilter = () => ({ firmId: req.tenant!.firmId });
-  
+
   next();
 };
 
@@ -203,12 +203,12 @@ export const optionalAuth = async (
   next: NextFunction
 ): Promise<void> => {
   const token = JWTUtils.extractTokenFromRequest(req);
-  
+
   if (token) {
     try {
       const payload = JWTUtils.verifyAccessToken(token);
       const user = await storage.getUser(payload.userId);
-      
+
       if (user && user.firmId === payload.firmId) {
         req.user = {
           ...payload,
@@ -216,7 +216,7 @@ export const optionalAuth = async (
           lastName: user.lastName,
           firm: user.firmId ? await storage.getFirm(user.firmId) : null
         };
-        
+
         req.tenant = {
           id: payload.tenantId,
           firmId: payload.firmId || 0

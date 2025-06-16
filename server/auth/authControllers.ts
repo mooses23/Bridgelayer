@@ -146,7 +146,7 @@ export class AuthControllers {
     try {
       // Extract refresh token from HTTP-only cookie
       const refreshToken = JWTUtils.extractRefreshTokenFromRequest(req);
-      
+
       if (!refreshToken) {
         res.status(401).json({
           error: 'Refresh token required',
@@ -262,7 +262,7 @@ export class AuthControllers {
   static async refreshToken(req: Request, res: Response): Promise<void> {
     try {
       const refreshToken = JWTUtils.extractRefreshTokenFromRequest(req);
-      
+
       if (!refreshToken) {
         res.status(401).json({
           error: 'No refresh token',
@@ -327,7 +327,7 @@ export class AuthControllers {
   static async getSession(req: Request, res: Response): Promise<void> {
     try {
       const token = JWTUtils.extractTokenFromRequest(req);
-      
+
       if (!token) {
         res.status(401).json({
           error: 'No session',
