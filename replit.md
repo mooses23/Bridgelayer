@@ -103,6 +103,14 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 20.1 - Logout Route Placement Fix Complete
+  - Removed `/logout` route from public routes section in RoleRouter.tsx
+  - Added `/logout` route to AdminLayout nested routes for admin users
+  - Added `/logout` route to FirmLayout nested routes for firm users (firm_admin and paralegal)
+  - Added `/logout` route to ClientLayout nested routes for client users
+  - Improved security by ensuring logout is only accessible to authenticated users within their respective layout contexts
+  - Each user role now accesses logout through their appropriate layout: /admin/logout, /logout, and /client/logout respectively
+
 - **June 15, 2025**: GHGH 20.6 - Wildcard Routes & Index Routes Refinement Complete
   - Replaced broad catch-all redirects with proper index routes and NotFoundPage components
   - Updated RoleRouter.tsx to use `<Route index element={<ComponentName/>}/>` for default routes

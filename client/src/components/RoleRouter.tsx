@@ -43,7 +43,6 @@ export default function RoleRouter() {
     <Routes>
       {/* Public Routes - Always accessible */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/logout" element={<LogoutPage />} />
       
       {/* Protected Routes */}
       {user ? (
@@ -54,6 +53,7 @@ export default function RoleRouter() {
               <AdminLayout>
                 <Routes>
                   <Route index element={<AdminDashboard />} />
+                  <Route path="/logout" element={<LogoutPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </AdminLayout>
@@ -77,6 +77,7 @@ export default function RoleRouter() {
                       <Route path="/documents" element={<DocumentsPage />} />
                       <Route path="/billing" element={<BillingPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/logout" element={<LogoutPage />} />
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                   </FirmDashboardLayout>
@@ -91,6 +92,7 @@ export default function RoleRouter() {
               <ClientLayout>
                 <Routes>
                   <Route index element={<ClientDashboard />} />
+                  <Route path="/logout" element={<LogoutPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </ClientLayout>
