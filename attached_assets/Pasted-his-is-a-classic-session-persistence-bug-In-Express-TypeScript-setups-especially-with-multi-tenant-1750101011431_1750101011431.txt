@@ -1,0 +1,69 @@
+his is a classic session persistence bug. In Express/TypeScript setups, especially with multi-tenant platforms, it’s usually caused by one (or a combination) of the following:
+
+1. Session Not Saved After Login
+
+If you set req.session.userId = user.id after login but don’t wait for the session store to persist the session before sending a response, the session may not be saved.
+Solution: Explicitly save the session before redirecting or sending the response.
+
+TypeScript
+req.session.userId = user.id;
+req.session.tenantId = user.tenantId;
+req.session.save((err) => {
+  if (err) {
+    // handle error (log, send error response, etc)
+    return res.status(500).json({ error: "Session save failed" });
+  }
+  res.redirect("/dashboard"); // or res.json({ success: true })
+});
+2. Session Store Misconfiguration
+
+MemoryStore (default) is for dev only and may reset on code changes or in serverless/replit restarts.
+For production, use a persistent store (Redis, Postgres, etc) and ensure it’s properly initialized.
+Example:
+
+TypeScript
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+
+app.use(session({
+  store: new (connectPgSimple(session))({ conString: process.env.DATABASE_URL }),
+  secret: process.env.SESSION_SECRET!,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: true, sameSite: "lax", maxAge: 1000 * 60 * 60 * 2 }
+}));
+3. Cookie Not Set or Not Returned
+
+Confirm the browser receives and stores the Set-Cookie header.
+Make sure all API requests use credentials: "include" or withCredentials: true.
+Cookie domain and path must match your frontend and backend domain/subdomain structure.
+4. Request/Response Lifecyle Errors
+
+If you send a response before modifying the session, changes won’t persist.
+Never call res.send/res.redirect until after the session is set and .save() callback finishes.
+5. CORS and Cookie Issues
+
+Cross-origin requests (frontend/backend on different subdomains) require correct CORS setup and matching cookie attributes.
+Backend must respond with Access-Control-Allow-Credentials: true and the exact origin.
+6. Sample Correct Login Route
+
+
+src/routes/auth.ts
+import { Router } from "express";
+const router = Router();
+
+router.post("/login", async (req, res) => {
+  // ... authenticate user
+  const user = await db.users.findByCredentials(req.body);
+7. Debug Checklist
+
+Log req.session before and after login.
+Add debug logging in session middleware and on all protected routes.
+Check the browser for the cookie after login and on page reload.
+8. Summary Table
+
+Symptom	Root Cause	Fix
+userId undefined after login	Not saving session before response	Use req.session.save() before sending response
+Session lost after reload	Using MemoryStore or stateless setup	Use persistent session store (e.g., connect-pg-simple/Redis)
+Cookie not set	Wrong domain/path/cookie config, CORS issue	Fix cookie attributes and CORS, use credentials: "include"
+If you need a ready-to-go Express/TypeScript login route, session middleware, or a debug logger, let me know!
