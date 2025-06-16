@@ -127,31 +127,19 @@ export const login = async (req: Request, res: Response) => {
       sessionId: req.sessionID
     });
     
-    // Force session save and regenerate
+    // Force session save without regeneration to maintain data
     await new Promise<void>((resolve, reject) => {
-      req.session.regenerate((err) => {
-        if (err) {
-          console.error('Session regenerate error:', err);
-          reject(err);
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error:', saveErr);
+          reject(saveErr);
         } else {
-          // Set session data after regeneration
-          req.session.userId = user.id;
-          req.session.userRole = user.role;
-          req.session.firmId = user.firmId || null;
-          
-          req.session.save((saveErr) => {
-            if (saveErr) {
-              console.error('Session save error:', saveErr);
-              reject(saveErr);
-            } else {
-              console.log('Session saved successfully:', {
-                userId: user.id,
-                sessionId: req.sessionID,
-                sessionData: req.session
-              });
-              resolve();
-            }
+          console.log('Session saved successfully:', {
+            userId: req.session.userId,
+            userRole: req.session.userRole,
+            sessionId: req.sessionID
           });
+          resolve();
         }
       });
     });

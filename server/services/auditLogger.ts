@@ -79,6 +79,7 @@ class AuditLogger {
     try {
       await storage.createAuditLog({
         firmId,
+        userId,
         actorId: userId,
         actorName: 'User',
         action: 'DOC_UPLOAD',
@@ -95,6 +96,7 @@ class AuditLogger {
     try {
       await storage.createAuditLog({
         firmId: targetFirmId,
+        userId: adminUserId,
         actorId: adminUserId,
         actorName: 'Admin',
         action: 'GHOST_MODE_ACCESS',

@@ -6,9 +6,8 @@ import {
   insertDocumentTypeTemplateSchema,
   insertPlatformSettingSchema
 } from "@shared/schema";
-import { jwtAuthMiddleware, requireAdmin } from "../auth/authMiddleware";
+import { adminAuthMiddleware } from "../auth/sessionMiddleware";
 import express from 'express';
-import { authenticateToken } from '../auth/authMiddleware';
 import { getSystemHealth, logManager } from "../utils";
 
 const router = express.Router();
