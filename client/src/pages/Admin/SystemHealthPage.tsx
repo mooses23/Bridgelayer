@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Spinner from "@/components/ui/spinner";
 import EmptyState from "@/components/ui/empty-state";
+import ApiClient from "@/lib/apiClient";
 import { 
   Activity, 
   AlertCircle, 
@@ -64,9 +65,7 @@ export default function SystemHealthPage() {
     refetch: refetchHealth 
   } = useQuery<SystemHealth>({
     queryKey: ['admin', 'system-health'],
-    queryFn: () => fetch('/api/admin/system-health', {
-      credentials: 'include'
-    }).then(res => res.json()),
+    queryFn: () => ApiClient.get('/api/admin/system-health').then(res => res.json()),
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
@@ -83,9 +82,7 @@ export default function SystemHealthPage() {
       if (logSource !== 'all') params.append('source', logSource);
       params.append('limit', '100');
 
-      return fetch(`/api/admin/logs?${params}`, {
-        credentials: 'include'
-      }).then(res => res.json());
+      return ApiClient.get(`/api/admin/logs?${params}`).then(res => res.json());
     },
     refetchInterval: 10000 // Refresh every 10 seconds
   });
@@ -202,12 +199,12 @@ export default function SystemHealthPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Error Rate</p>
                 <div className="flex items-center space-x-2">
-                  {(healthData?.logs.errorCount || 0) > 0 ? (
+                  {(healthData?.logs?.errorCount || 0) > 0 ? (
                     <AlertCircle className="w-5 h-5 text-red-500" />
                   ) : (
                     <CheckCircle className="w-5 h-5 text-green-500" />
                   )}
-                  <p className="text-2xl font-bold">{healthData?.logs.errorCount || 0}</p>
+                  <p className="text-2xl font-bold">{healthData?.logs?.errorCount || 0}</p>
                 </div>
               </div>
               <TrendingUp className="w-8 h-8 text-muted-foreground" />
@@ -260,19 +257,19 @@ export default function SystemHealthPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Total Logs</Label>
-                <p className="text-2xl font-bold">{healthData?.logs.total || 0}</p>
+                <p className="text-2xl font-bold">{healthData?.logs?.total || 0}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Last Hour</Label>
-                <p className="text-2xl font-bold">{healthData?.logs.lastHour || 0}</p>
+                <p className="text-2xl font-bold">{healthData?.logs?.lastHour || 0}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Warnings</Label>
-                <p className="text-2xl font-bold text-yellow-600">{healthData?.logs.warnCount || 0}</p>
+                <p className="text-2xl font-bold text-yellow-600">{healthData?.logs?.warnCount || 0}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Errors</Label>
-                <p className="text-2xl font-bold text-red-600">{healthData?.logs.errorCount || 0}</p>
+                <p className="text-2xl font-bold text-red-600">{healthData?.logs?.errorCount || 0}</p>
               </div>
             </div>
           </CardContent>
