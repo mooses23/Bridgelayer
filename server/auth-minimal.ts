@@ -90,6 +90,7 @@ export const requireAdmin = async (req: AuthenticatedRequest, res: Response, nex
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    console.log("Login attempt:", { email, password });
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
@@ -97,17 +98,29 @@ export const login = async (req: Request, res: Response) => {
 
     const user = await storage.getUserByEmail(email);
     if (!user) {
+      console.log("No user found for", email);
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
+    console.log("User found:", { id: user.id, email: user.email, hasPassword: !!user.password });
+    
+    const valid = await bcrypt.compare(password, user.password);
+    console.log("Password valid?", valid);
+    if (!valid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Set session
     req.session.userId = user.id;
     req.session.userRole = user.role;
+    
+    // Save session
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
     // Determine redirect path based on role and onboarding state
     let redirectPath = '/dashboard'; // default
@@ -125,8 +138,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     res.json({
-      success: true,
-      redirectPath,
+      message: "Logged in",
       user: {
         id: user.id,
         email: user.email,
