@@ -115,10 +115,10 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Set session data with explicit typing
-    (req.session as any).userId = user.id;
-    (req.session as any).userRole = user.role;
-    (req.session as any).firmId = user.firmId || null;
+    // Set session data with explicit typing and ensure persistence
+    req.session.userId = user.id;
+    req.session.userRole = user.role;
+    req.session.firmId = user.firmId || null;
     
     console.log('Setting session data:', {
       userId: user.id,
