@@ -1755,7 +1755,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment processing endpoints
   app.post("/api/billing/create-payment-intent", async (req, res) => {
     try {
-      const { invoiceId, amount, clientEmail } = req.body:
+      const { invoiceId, amount, clientEmail } = req.body;
 
       // Get firm billing settings to retrieve Stripe keys
       const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
@@ -2602,17 +2602,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = req.params.id;
       const user = req.user;
+      if (!user) {
+        return res.status(401).json({ error: 'User not authenticated' });
+      }
+      
       const tenantId = req.headers['x-tenant-id'];
 
       // Admin users can access any firm, others only their own or tenant-scoped firm
-      const allowedFirmId = tenantId || user.firm_id;
+      const allowedFirmId = tenantId || user.firmId;
 
       if (user.role !== 'admin' && allowedFirmId !== firmId) {
         return res.status(403).json({ error: 'Access denied' });
       }
 
-      // const firmStmt```typescript
- = db.prepare('SELECT * FROM firms WHERE id = ?');
+      // const firmStmt = db.prepare('SELECT * FROM firms WHERE id = ?');
       // const firm = firmStmt.get(firmId);
       const firm = await storage.getFirm(parseInt(firmId));
 
