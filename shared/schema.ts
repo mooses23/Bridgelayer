@@ -369,6 +369,22 @@ export const aiTriageResults = pgTable("ai_triage_results", {
   reviewedAt: timestamp("reviewed_at"),
 });
 
+// Audit logging table for compliance firewall
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(), // Fixed: added user_id column
+  actorId: integer("actor_id").references(() => users.id).notNull(),
+  actorName: text("actor_name").notNull(), // Store name for immutable record
+  action: text("action").notNull(), // DOC_UPLOAD, DOC_REVIEW_COMPLETED, CONFIG_CHANGE, etc.
+  resourceType: text("resource_type").notNull(), // 'document', 'user', 'firm', 'settings'
+  resourceId: text("resource_id"), // ID of the affected resource
+  details: jsonb("details"), // Additional context about the action
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,

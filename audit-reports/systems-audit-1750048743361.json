@@ -1,0 +1,552 @@
+{
+  "timestamp": "2025-06-16T04:39:03.299Z",
+  "overall_status": "WARNING",
+  "critical_issues": [],
+  "warnings": [
+    {
+      "section": "SECURITY",
+      "level": "WARNING",
+      "message": "No CORS configuration found",
+      "details": null,
+      "timestamp": "2025-06-16T04:39:03.316Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "section": "SECURITY",
+      "level": "RECOMMENDATION",
+      "message": "Consider implementing rate limiting",
+      "details": null,
+      "timestamp": "2025-06-16T04:39:03.319Z"
+    },
+    {
+      "section": "DEPENDENCIES",
+      "level": "RECOMMENDATION",
+      "message": "Consider adding security packages",
+      "details": {
+        "missing": [
+          "helmet",
+          "express-rate-limit",
+          "cors"
+        ]
+      },
+      "timestamp": "2025-06-16T04:39:03.358Z"
+    }
+  ],
+  "security_findings": [
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/routes.ts",
+      "details": {
+        "pattern": "/password/i",
+        "severity": "HIGH"
+      },
+      "timestamp": "2025-06-16T04:39:03.313Z"
+    },
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/routes.ts",
+      "details": {
+        "pattern": "/secret/i",
+        "severity": "HIGH"
+      },
+      "timestamp": "2025-06-16T04:39:03.313Z"
+    },
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/routes.ts",
+      "details": {
+        "pattern": "/api[_-]?key/i",
+        "severity": "HIGH"
+      },
+      "timestamp": "2025-06-16T04:39:03.313Z"
+    },
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/routes.ts",
+      "details": {
+        "pattern": "/token/i",
+        "severity": "MEDIUM"
+      },
+      "timestamp": "2025-06-16T04:39:03.314Z"
+    },
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/services/openai.ts",
+      "details": {
+        "pattern": "/api[_-]?key/i",
+        "severity": "HIGH"
+      },
+      "timestamp": "2025-06-16T04:39:03.315Z"
+    }
+  ],
+  "performance_metrics": {
+    "uploaded_files": {
+      "total_files": 2,
+      "total_size_mb": 0,
+      "firms_count": 3
+    },
+    "api_endpoints": {
+      "total_endpoints": 104,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/api/auth/login"
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/logout"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/session"
+        },
+        {
+          "method": "POST",
+          "path": "/api/firm"
+        },
+        {
+          "method": "GET",
+          "path": "/api/users"
+        },
+        {
+          "method": "GET",
+          "path": "/api/user/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/api/users"
+        },
+        {
+          "method": "GET",
+          "path": "/api/folders"
+        },
+        {
+          "method": "POST",
+          "path": "/api/folders"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/folders/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/api/documents"
+        },
+        {
+          "method": "GET",
+          "path": "/api/documents/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/api/documents/upload"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/documents/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/api/documents/:id/analyses"
+        },
+        {
+          "method": "GET",
+          "path": "/api/document-types"
+        },
+        {
+          "method": "GET",
+          "path": "/api/firms/:firmId/review-logs"
+        },
+        {
+          "method": "GET",
+          "path": "/api/firm/analysis-settings"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/firm/analysis-settings"
+        },
+        {
+          "method": "POST",
+          "path": "/api/onboarding/start"
+        },
+        {
+          "method": "POST",
+          "path": "/api/onboarding/configure"
+        },
+        {
+          "method": "GET",
+          "path": "/api/message-threads"
+        },
+        {
+          "method": "POST",
+          "path": "/api/message-threads"
+        },
+        {
+          "method": "GET",
+          "path": "/api/message-threads/:threadId/messages"
+        },
+        {
+          "method": "POST",
+          "path": "/api/messages/send"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/messages/:id/read"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/message-threads/:threadId/resolve"
+        },
+        {
+          "method": "POST",
+          "path": "/api/review/analyze"
+        },
+        {
+          "method": "GET",
+          "path": "/api/review/status/:firm_id/:filename"
+        },
+        {
+          "method": "GET",
+          "path": "/api/review/result/:firm_id/:filename"
+        },
+        {
+          "method": "GET",
+          "path": "/api/vertical/config/:firmId"
+        },
+        {
+          "method": "GET",
+          "path": "/api/vertical/document-types/:firmId"
+        },
+        {
+          "method": "POST",
+          "path": "/api/vertical/analyze"
+        },
+        {
+          "method": "GET",
+          "path": "/api/vertical/available"
+        },
+        {
+          "method": "GET",
+          "path": "/api/audit-logs"
+        },
+        {
+          "method": "POST",
+          "path": "/api/audit-logs"
+        },
+        {
+          "method": "GET",
+          "path": "/api/notifications"
+        },
+        {
+          "method": "GET",
+          "path": "/api/notifications/count"
+        },
+        {
+          "method": "POST",
+          "path": "/api/notifications"
+        },
+        {
+          "method": "GET",
+          "path": "/api/analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/settings"
+        },
+        {
+          "method": "GET",
+          "path": "/api/clients"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/clients"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/clients"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/cases"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/cases"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/time-logs"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/time-logs"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/billing/time-logs/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/invoices"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/invoices"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/invoices/:id/line-items"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/create-payment-intent"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/stripe-webhook"
+        },
+        {
+          "method": "POST",
+          "path": "/api/client-portal/login"
+        },
+        {
+          "method": "GET",
+          "path": "/api/client-portal/:clientId/invoices"
+        },
+        {
+          "method": "GET",
+          "path": "/api/client-portal/:clientId/payments"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/analytics/profitability"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/analytics/hourly-rates"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/generate-1099"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/alerts"
+        },
+        {
+          "method": "GET",
+          "path": "/api/time-entries"
+        },
+        {
+          "method": "POST",
+          "path": "/api/time-entries"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/time-entries/:id/lock"
+        },
+        {
+          "method": "GET",
+          "path": "/api/cases"
+        },
+        {
+          "method": "GET",
+          "path": "/api/invoices"
+        },
+        {
+          "method": "POST",
+          "path": "/api/invoices"
+        },
+        {
+          "method": "GET",
+          "path": "/api/invoices/:id/pdf"
+        },
+        {
+          "method": "POST",
+          "path": "/api/create-payment-intent"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/settings"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/billing/settings"
+        },
+        {
+          "method": "GET",
+          "path": "/api/firm-templates"
+        },
+        {
+          "method": "POST",
+          "path": "/api/generate-document"
+        },
+        {
+          "method": "GET",
+          "path": "/api/calendar/events"
+        },
+        {
+          "method": "POST",
+          "path": "/api/calendar/events"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/calendar/events/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/calendar/events/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/api/client-intakes"
+        },
+        {
+          "method": "POST",
+          "path": "/api/client-intakes"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/client-intakes/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/api/ai-triage"
+        },
+        {
+          "method": "POST",
+          "path": "/api/ai-triage/document/:documentId"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/ai-triage/:id/review"
+        },
+        {
+          "method": "GET",
+          "path": "/api/billing/audit-logs"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/billing/audit-logs/purge"
+        },
+        {
+          "method": "POST",
+          "path": "/api/billing/generate-tax-form"
+        },
+        {
+          "method": "GET",
+          "path": "/api/ai-triage"
+        },
+        {
+          "method": "POST",
+          "path": "/api/ai-triage/:id/review"
+        },
+        {
+          "method": "GET",
+          "path": "/api/calendar-events"
+        },
+        {
+          "method": "POST",
+          "path": "/api/calendar-events"
+        },
+        {
+          "method": "POST",
+          "path": "/api/calendar-events/:id/confirm"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/calendar-events/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/api/calendar-events/sync-google"
+        },
+        {
+          "method": "GET",
+          "path": "/api/communications"
+        },
+        {
+          "method": "POST",
+          "path": "/api/communications"
+        },
+        {
+          "method": "POST",
+          "path": "/api/communications/export"
+        },
+        {
+          "method": "GET",
+          "path": "/api/admin/firms"
+        },
+        {
+          "method": "GET",
+          "path": "/api/admin/ghost-session/current"
+        },
+        {
+          "method": "GET",
+          "path": "/api/admin/ghost-sessions"
+        },
+        {
+          "method": "POST",
+          "path": "/api/admin/ghost-session/start"
+        },
+        {
+          "method": "POST",
+          "path": "/api/admin/ghost-session/:id/end"
+        },
+        {
+          "method": "GET",
+          "path": "/api/admin/system-health"
+        },
+        {
+          "method": "GET",
+          "path": "/api/admin/logs"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/admin/logs"
+        }
+      ]
+    },
+    "dependencies": {
+      "total_dependencies": 82,
+      "total_dev_dependencies": 22
+    },
+    "verticals": {
+      "total_verticals": 4,
+      "verticals": [
+        "edusync",
+        "firmsync",
+        "hrsync",
+        "medsync"
+      ]
+    }
+  },
+  "audit_sections": {
+    "database": {
+      "status": "COMPLETED"
+    },
+    "audit_logging": {
+      "status": "COMPLETED"
+    },
+    "security": {
+      "status": "COMPLETED"
+    },
+    "filesystem": {
+      "status": "COMPLETED"
+    },
+    "api": {
+      "status": "COMPLETED"
+    },
+    "dependencies": {
+      "status": "COMPLETED"
+    },
+    "configuration": {
+      "status": "COMPLETED"
+    }
+  }
+}
