@@ -26,15 +26,19 @@ class AuditLogger {
     this.logs.push(entry);
     
     try {
-      await storage.createAuditLog({
-        firmId: firmId || 0,
-        actorId: userId,
-        actorName: 'User',
-        action: 'LOGIN',
-        resourceType: 'auth',
-        ipAddress,
-        userAgent
-      });
+      // Only create audit log if firmId exists (skip for admin users with no firm)
+      if (firmId) {
+        await storage.createAuditLog({
+          firmId,
+          userId,
+          actorId: userId,
+          actorName: 'User',
+          action: 'LOGIN',
+          resourceType: 'auth',
+          ipAddress,
+          userAgent
+        });
+      }
     } catch (error) {
       console.error('Failed to save login audit log:', error);
     }
@@ -53,15 +57,19 @@ class AuditLogger {
     this.logs.push(entry);
     
     try {
-      await storage.createAuditLog({
-        firmId: firmId || 0,
-        actorId: userId,
-        actorName: 'User',
-        action: 'LOGOUT',
-        resourceType: 'auth',
-        ipAddress,
-        userAgent
-      });
+      // Only create audit log if firmId exists (skip for admin users with no firm)
+      if (firmId) {
+        await storage.createAuditLog({
+          firmId,
+          userId,
+          actorId: userId,
+          actorName: 'User',
+          action: 'LOGOUT',
+          resourceType: 'auth',
+          ipAddress,
+          userAgent
+        });
+      }
     } catch (error) {
       console.error('Failed to save logout audit log:', error);
     }
@@ -144,6 +152,7 @@ class AuditLogger {
     try {
       await storage.createAuditLog({
         firmId: firmId || 0,
+        userId: userId,
         actorId: userId,
         actorName: 'System',
         action: 'USER_CREATED',
