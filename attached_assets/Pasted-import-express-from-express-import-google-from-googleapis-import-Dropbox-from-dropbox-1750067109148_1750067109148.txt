@@ -1,0 +1,113 @@
+import express from "express";
+import { google } from "googleapis";
+import { Dropbox } from "dropbox";
+import { getOneDriveAuthUrl, exchangeOneDriveCode, refreshOneDriveToken } from "../utils/onedrive";
+import { encrypt, decrypt } from "../utils/encryption";
+import { db } from "../db";
+import { getTenantIdFromRequest } from "../utils/tenant";
+
+const router = express.Router();
+
+// Google Drive
+router.get("/oauth/google/start", (req, res) => {
+  const tenantId = getTenantIdFromRequest(req);
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    `${process.env.BACKEND_URL}/oauth/google/callback`
+  );
+  const url = oauth2Client.generateAuthUrl({
+    access_type: "offline",
+    prompt: "consent",
+    scope: ["https://www.googleapis.com/auth/drive.file"],
+    state: tenantId,
+  });
+  res.redirect(url);
+});
+
+router.get("/oauth/google/callback", async (req, res) => {
+  const { code, state } = req.query; // state = tenantId
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    `${process.env.BACKEND_URL}/oauth/google/callback`
+  );
+  const { tokens } = await oauth2Client.getToken(code as string);
+  // Store encrypted tokens in DB, keyed by tenantId
+  await db.folderTokens.upsert({
+    where: { tenantId: state as string, provider: "google" },
+    update: { token: encrypt(JSON.stringify(tokens)) },
+    create: { tenantId: state as string, provider: "google", token: encrypt(JSON.stringify(tokens)) },
+  });
+  res.redirect("/dashboard?connected=google");
+});
+
+// Dropbox
+router.get("/oauth/dropbox/start", (req, res) => {
+  const tenantId = getTenantIdFromRequest(req);
+  const dbx = new Dropbox({ clientId: process.env.DROPBOX_CLIENT_ID });
+  const url = dbx.getAuthenticationUrl(
+    `${process.env.BACKEND_URL}/oauth/dropbox/callback`,
+    tenantId,
+    "code",
+    "offline",
+    undefined,
+    "none",
+    false
+  );
+  res.redirect(url);
+});
+
+router.get("/oauth/dropbox/callback", async (req, res) => {
+  const { code, state } = req.query; // state = tenantId
+  const dbx = new Dropbox({ clientId: process.env.DROPBOX_CLIENT_ID, clientSecret: process.env.DROPBOX_CLIENT_SECRET });
+  const tokenRes = await dbx.auth.getAccessTokenFromCode(`${process.env.BACKEND_URL}/oauth/dropbox/callback`, code as string);
+  await db.folderTokens.upsert({
+    where: { tenantId: state as string, provider: "dropbox" },
+    update: { token: encrypt(JSON.stringify(tokenRes.result)) },
+    create: { tenantId: state as string, provider: "dropbox", token: encrypt(JSON.stringify(tokenRes.result)) },
+  });
+  res.redirect("/dashboard?connected=dropbox");
+});
+
+// OneDrive
+router.get("/oauth/onedrive/start", (req, res) => {
+  const tenantId = getTenantIdFromRequest(req);
+  const url = getOneDriveAuthUrl(tenantId);
+  res.redirect(url);
+});
+
+router.get("/oauth/onedrive/callback", async (req, res) => {
+  const { code, state } = req.query; // state = tenantId
+  const tokenData = await exchangeOneDriveCode(code as string);
+  await db.folderTokens.upsert({
+    where: { tenantId: state as string, provider: "onedrive" },
+    update: { token: encrypt(JSON.stringify(tokenData)) },
+    create: { tenantId: state as string, provider: "onedrive", token: encrypt(JSON.stringify(tokenData)) },
+  });
+  res.redirect("/dashboard?connected=onedrive");
+});
+
+// Token refresh endpoints (example for Google)
+router.post("/oauth/google/refresh", async (req, res) => {
+  const { tenantId } = req.body;
+  const record = await db.folderTokens.findFirst({ where: { tenantId, provider: "google" } });
+  if (!record) return res.status(404).json({ error: "No token" });
+  const tokens = JSON.parse(decrypt(record.token));
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    `${process.env.BACKEND_URL}/oauth/google/callback`
+  );
+  oauth2Client.setCredentials(tokens);
+  const { credentials } = await oauth2Client.refreshAccessToken();
+  await db.folderTokens.update({
+    where: { tenantId, provider: "google" },
+    data: { token: encrypt(JSON.stringify(credentials)) },
+  });
+  res.json({ success: true });
+});
+
+// Add similar refresh endpoints for Dropbox and OneDrive as needed
+
+export default router;
