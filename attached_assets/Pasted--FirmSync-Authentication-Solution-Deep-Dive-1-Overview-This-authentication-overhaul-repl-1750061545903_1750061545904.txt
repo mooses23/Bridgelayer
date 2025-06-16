@@ -1,0 +1,202 @@
+# FirmSync Authentication Solution – Deep Dive
+
+## 1. **Overview**
+This authentication overhaul replaces any legacy or ad-hoc session logic with a robust, secure, and scalable system using **OAuth2** (for external providers) or **JWT (JSON Web Tokens)** for internal session management. It is fully **multi-tenant aware**: every auth action is tied to a specific tenant (law firm) and user, never mixed or leaked between tenants.
+
+---
+
+## 2. **Why JWT/OAuth2?**
+- **Stateless**: No need to store sessions in memory or DB—tokens are self-contained.
+- **Scalable**: Works well with serverless, multi-instance, or distributed backends.
+- **Interoperable**: Easily integrates with third-party SSO, cloud storage APIs, etc.
+- **Security Best Practices**: Tokens are signed (and optionally encrypted), reducing surface for attacks like session fixation or CSRF.
+
+---
+
+## 3. **How It Works (Step-by-Step)**
+
+### 3.1. **Login Request**
+
+**Frontend**:
+- User visits `/login`.
+- Enters credentials or clicks “Login with Google/Dropbox/OneDrive”.
+- If using SSO, redirects to the provider’s OAuth2 consent page.
+
+**Backend**:
+- Receives login request.
+- Verifies credentials (for native logins) or receives an OAuth2 code/token (for SSO).
+- **Crucially:** Extracts the user’s `tenantId` from the subdomain, login form, or SSO claim.
+- **Generates a JWT** with:
+  - `userId`
+  - `tenantId`
+  - `role` (user/admin)
+  - `iat`, `exp` (issued at, expires at)
+  - (optionally) minimal user profile info
+
+**JWT Example Payload:**
+```json
+{
+  "userId": "123",
+  "tenantId": "firm-abc",
+  "role": "admin",
+  "iat": 1718500000,
+  "exp": 1718503600
+}
+```
+
+- **Signs** the JWT with a strong secret (`process.env.JWT_SECRET`).
+- Returns the JWT to the frontend (preferably in an `HttpOnly` cookie for XSS safety).
+
+---
+
+### 3.2. **Frontend Token Storage and Usage**
+
+- The JWT is stored in a secure, `HttpOnly`, `SameSite=Strict` cookie (recommended) OR in-memory if you need SPA-style auth (never in `localStorage` for security).
+- On every subsequent API call, the cookie is sent automatically; if you use headers, set `Authorization: Bearer <token>`.
+
+---
+
+### 3.3. **API Request Handling**
+
+- **Backend** intercepts every API request with an `auth` middleware:
+  1. Reads the JWT from the cookie/header.
+  2. Verifies its signature and expiration.
+  3. Extracts `tenantId` and `userId`.
+  4. Checks that the request’s subdomain or context matches the `tenantId` in the token.
+  5. Attaches `req.user` (with all claims) for use in downstream controllers.
+
+**Example Express Middleware (TypeScript):**
+```typescript
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+
+export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "No token provided" });
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    // Optional: check that req.subdomain matches payload.tenantId
+    req.user = payload;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid or expired token" });
+  }
+}
+```
+
+---
+
+### 3.4. **Tenant Isolation**
+
+- **Every query** to the database is filtered/scoped by `tenantId` (e.g., `WHERE tenant_id = $1`).
+- All business logic uses `req.user.tenantId` to isolate data at every layer.
+- **Admin dashboard** uses their own `tenantId` context, ensuring no cross-firm access.
+
+---
+
+### 3.5. **Token Rotation and Revocation**
+
+- **Short Expiry**: Tokens have a short TTL (e.g., 15–30 mins).
+- **Refresh Flow**: Optionally, use refresh tokens (stored in HttpOnly cookies) to issue new JWTs without requiring login.
+- **Logout**: Deleting/overwriting the cookie or blacklisting the token (if using a DB for refresh tokens).
+- **Password Reset/Account Compromise**: Invalidate all user tokens by tracking a `sessionVersion` in the DB and embedding it in the JWT.
+
+---
+
+### 3.6. **Multi-Factor Authentication (MFA) and Password Reset**
+
+- **Password Reset**: Secure endpoint sends a time-limited, signed token (not a password or session) to user’s email.
+- **MFA**: After password, prompt for TOTP/SMS. Only issue JWT after both steps succeed.
+- **Rate Limiting**: All auth endpoints are protected against brute force.
+
+---
+
+### 3.7. **CORS and Rate Limiting**
+
+- **CORS**: Only allow frontend origins for your tenant subdomains and admin dashboard.
+- **Rate Limiting**: Use middleware (e.g., `express-rate-limit`) on all auth endpoints.
+
+---
+
+### 3.8. **Encryption and Secrets Management**
+
+- All secrets (JWT signing key, DB creds, API keys) are **never** exposed to the frontend.
+- Sensitive DB columns (e.g., API keys, refresh tokens) are encrypted using a server-side key.
+- All transport is HTTPS only.
+
+---
+
+### 3.9. **Disaster Recovery**
+
+- Automated, scheduled backups for user, session, and auth config tables.
+- Periodic restore drills and runbook documentation for incident response.
+
+---
+
+### 3.10. **User Experience**
+
+- **Login:** Fast, minimal friction—SSO or password, with tenant auto-detect from subdomain.
+- **Template/Document Usage:** Once authenticated, the user token is all that’s needed; user details are no longer redundantly fetched after the first page.
+- **Admin:** Can add, manage, and revoke user accounts and integrations within their firm only.
+
+---
+
+## 4. **Key Replit/DevOps Notes**
+
+- **Environment Variables:** Set `JWT_SECRET` and any OAuth client secrets in Replit’s secrets management, never in code.
+- **Testing:** Write unit tests for the auth middleware and integration tests for login/refresh/logout flows.
+- **Monitoring:** Log failed login attempts, suspicious token activity, and monitor for token replay.
+
+---
+
+## 5. **Extending This Auth System**
+
+- Add more providers (Microsoft, custom SSO) by registering them with Passport.js or your chosen auth library.
+- Add per-endpoint permission checks using roles in the JWT.
+- Integrate with your AI/document pipeline by forwarding only the minimal claims needed.
+
+---
+
+## 6. **Sample Directory/File Structure**
+
+```plaintext
+/backend
+  /auth
+    authMiddleware.ts
+    jwtUtils.ts
+    oauthHandlers.ts
+    mfa.ts
+  /routes
+    login.ts
+    resetPassword.ts
+    user.ts
+  /db
+    users.ts
+    tenants.ts
+  /utils
+    encryption.ts
+/frontend
+  /auth
+    LoginForm.tsx
+    useAuth.ts
+    ProtectedRoute.tsx
+.env  (never checked into git!)
+```
+
+---
+
+## 7. **Summary Checklist**
+
+- [x] JWT/OAuth2 session logic, tenant-aware
+- [x] Secure, encrypted, short-lived tokens
+- [x] All requests and queries scoped by tenant
+- [x] MFA and password reset flows
+- [x] CORS, rate limiting, HTTPS enforced
+- [x] Secrets never in client code
+- [x] Automated backups and recovery drills
+- [x] Modular, reusable code for easy extension
+
+---
+
+**This doc can be dropped directly into your agent’s knowledge base or shared with any dev onboarding to the project. If you need actual code samples for any section, just ask!**
