@@ -704,6 +704,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Document Analysis endpoint
+  app.post("/api/documents/analyze", requireAuth, upload.single('document'), async (req, res) => {
+    try {
+      const { DocumentAnalysisService } = await import('./services/documentAnalysisService.js');
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No document file provided" });
+      }
+
+      const { documentType, documentId } = req.body;
+      const tenantId = req.headers['x-tenant-id'] as string || 'default';
+      const userId = req.user?.id || DEMO_USER_ID;
+
+      if (!documentType) {
+        return res.status(400).json({ message: "Document type is required" });
+      }
+
+      // Extract text content from uploaded file
+      const content = await DocumentAnalysisService.extractTextFromFile(
+        req.file.buffer, 
+        req.file.mimetype
+      );
+
+      if (!content || content.trim().length < 10) {
+        return res.status(400).json({ message: "Document appears to be empty or unreadable" });
+      }
+
+      // Perform AI analysis
+      const analysisRequest = {
+        documentId: documentId ? parseInt(documentId) : 0,
+        documentType,
+        content,
+        fileName: req.file.originalname,
+        tenantId,
+        userId
+      };
+
+      const analysisResult = await DocumentAnalysisService.analyzeDocument(analysisRequest);
+
+      res.json({
+        success: true,
+        analysis: analysisResult,
+        fileName: req.file.originalname,
+        documentType,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Document analysis error:", error);
+      res.status(500).json({ 
+        message: "Document analysis failed",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.get("/api/documents/:id", async (req, res) => {
     try {
       const documentId = parseInt(req.params.id);
