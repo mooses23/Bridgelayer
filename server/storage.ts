@@ -82,7 +82,7 @@ import {
   adminGhostSessions,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, sql, isNull, inArray, ne, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Firm management
@@ -90,21 +90,21 @@ export interface IStorage {
   getFirm(id: number): Promise<Firm | undefined>;
   getFirmBySlug(slug: string): Promise<Firm | undefined>;
   updateFirm(id: number, updates: Partial<Firm>): Promise<Firm | undefined>;
-  
+
   // User management with multi-tenancy
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUsersByFirm(firmId: number): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
-  
+
   // Folder management
   createFolder(folder: InsertFolder): Promise<Folder>;
   getFirmFolders(firmId: number): Promise<Folder[]>;
   getFolderById(id: number, firmId: number): Promise<Folder | undefined>;
   updateFolder(id: number, updates: Partial<Folder>): Promise<Folder | undefined>;
   deleteFolder(id: number, firmId: number): Promise<boolean>;
-  
+
   // Document management with firm isolation
   createDocument(document: InsertDocument): Promise<Document>;
   getDocument(id: number, firmId: number): Promise<Document | undefined>;
@@ -112,65 +112,65 @@ export interface IStorage {
   getFolderDocuments(folderId: number, firmId: number): Promise<Document[]>;
   updateDocument(id: number, updates: Partial<Document>): Promise<Document | undefined>;
   deleteDocument(id: number, firmId: number): Promise<boolean>;
-  
+
   // Analysis management
   createAnalysis(analysis: InsertAnalysis): Promise<DocumentAnalysis>;
   getDocumentAnalyses(documentId: number): Promise<DocumentAnalysis[]>;
   getAnalysisByType(documentId: number, type: string): Promise<DocumentAnalysis | undefined>;
-  
+
   // Firm analysis settings
   getFirmAnalysisSettings(firmId: number): Promise<FirmAnalysisSettings | undefined>;
   updateFirmAnalysisSettings(firmId: number, settings: Partial<FirmAnalysisSettings>): Promise<FirmAnalysisSettings>;
   createFirmAnalysisSettings(settings: InsertFirmAnalysisSettings): Promise<FirmAnalysisSettings>;
-  
+
   // Message threads system
   createMessageThread(thread: InsertMessageThread): Promise<MessageThread>;
   getMessageThread(threadId: string): Promise<MessageThread | undefined>;
   getFirmMessageThreads(firmId: number): Promise<MessageThread[]>;
   updateMessageThread(threadId: string, updates: Partial<MessageThread>): Promise<MessageThread | undefined>;
   resolveMessageThread(threadId: string, resolvedBy: number): Promise<boolean>;
-  
+
   // Messages system
   createMessage(message: InsertMessage): Promise<Message>;
   getThreadMessages(threadId: string): Promise<Message[]>;
   getFirmMessages(firmId: number): Promise<Message[]>;
   markMessageAsRead(messageId: number, userId: number): Promise<boolean>;
   getUnreadMessageCount(userId: number): Promise<number>;
-  
+
   // System admin management
   createSystemAdmin(admin: InsertSystemAdmin): Promise<SystemAdmin>;
   getSystemAdmin(id: number): Promise<SystemAdmin | undefined>;
   getSystemAdminByEmail(email: string): Promise<SystemAdmin | undefined>;
-  
+
   // Admin panel operations - Firm management
   getAllFirms(): Promise<Firm[]>;
   getAllUsers(): Promise<User[]>;
   updateFirmVertical(firmId: number, vertical: string): Promise<Firm | undefined>;
-  
+
   // Admin panel operations - Integration management
   getAvailableIntegrations(): Promise<AvailableIntegration[]>;
   createAvailableIntegration(integration: InsertAvailableIntegration): Promise<AvailableIntegration>;
   updateAvailableIntegration(id: number, updates: Partial<AvailableIntegration>): Promise<AvailableIntegration | undefined>;
   getFirmIntegrations(firmId: number): Promise<FirmIntegration[]>;
   updateFirmIntegration(firmId: number, integrationName: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined>;
-  
+
   // Admin panel operations - Document type templates
   getDocumentTypeTemplates(): Promise<DocumentTypeTemplate[]>;
   createDocumentTypeTemplate(template: InsertDocumentTypeTemplate): Promise<DocumentTypeTemplate>;
   updateDocumentTypeTemplate(id: number, updates: Partial<DocumentTypeTemplate>): Promise<DocumentTypeTemplate | undefined>;
   deleteDocumentTypeTemplate(id: number): Promise<boolean>;
-  
+
   // Admin panel operations - Platform settings
   getPlatformSettings(): Promise<PlatformSetting[]>;
   updatePlatformSetting(key: string, value: any, adminId: number): Promise<PlatformSetting | undefined>;
   createPlatformSetting(setting: InsertPlatformSetting): Promise<PlatformSetting>;
-  
+
   // Audit logging operations
   createAuditLog(auditLog: InsertAuditLog): Promise<AuditLog>;
   getFirmAuditLogs(firmId: number, limit?: number): Promise<AuditLog[]>;
   getAuditLogsByAction(firmId: number, action: string): Promise<AuditLog[]>;
   getAuditLogsByDateRange(firmId: number, startDate: Date, endDate: Date): Promise<AuditLog[]>;
-  
+
   // Notification operations
   createNotification(notification: InsertNotification): Promise<Notification>;
   getUserNotifications(userId: number, firmId: number): Promise<Notification[]>;
@@ -178,21 +178,21 @@ export interface IStorage {
   getUnreadNotificationCount(userId: number, firmId: number): Promise<number>;
   getFirmNotifications(firmId: number): Promise<Notification[]>;
   deleteNotification(notificationId: number, userId: number): Promise<boolean>;
-  
+
   // Billing operations
   createClient(client: InsertClient): Promise<Client>;
   getFirmClients(firmId: number): Promise<Client[]>;
   getClient(id: number, firmId: number): Promise<Client | undefined>;
   updateClient(id: number, updates: Partial<Client>): Promise<Client | undefined>;
   deleteClient(id: number, firmId: number): Promise<boolean>;
-  
+
   createCase(caseData: InsertCase): Promise<Case>;
   getFirmCases(firmId: number): Promise<Case[]>;
   getClientCases(clientId: number, firmId: number): Promise<Case[]>;
   getCase(id: number, firmId: number): Promise<Case | undefined>;
   updateCase(id: number, updates: Partial<Case>): Promise<Case | undefined>;
   deleteCase(id: number, firmId: number): Promise<boolean>;
-  
+
   createTimeLog(timeLog: InsertTimeLog): Promise<TimeLog>;
   getFirmTimeLogs(firmId: number): Promise<TimeLog[]>;
   getUserTimeLogs(userId: number, firmId: number): Promise<TimeLog[]>;
@@ -201,28 +201,28 @@ export interface IStorage {
   deleteTimeLog(id: number, firmId: number): Promise<boolean>;
   lockTimeLog(id: number, firmId: number): Promise<boolean>;
   getUnbilledTimeLogs(firmId: number): Promise<TimeLog[]>;
-  
+
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
   getFirmInvoices(firmId: number): Promise<Invoice[]>;
   getClientInvoices(clientId: number, firmId: number): Promise<Invoice[]>;
   getInvoice(id: number, firmId: number): Promise<Invoice | undefined>;
   updateInvoice(id: number, updates: Partial<Invoice>): Promise<Invoice | undefined>;
   deleteInvoice(id: number, firmId: number): Promise<boolean>;
-  
+
   createInvoiceLineItem(lineItem: InsertInvoiceLineItem): Promise<InvoiceLineItem>;
   getInvoiceLineItems(invoiceId: number): Promise<InvoiceLineItem[]>;
   updateInvoiceLineItem(id: number, updates: Partial<InvoiceLineItem>): Promise<InvoiceLineItem | undefined>;
   deleteInvoiceLineItem(id: number): Promise<boolean>;
   reorderInvoiceLineItems(invoiceId: number, itemIds: number[]): Promise<boolean>;
-  
+
   getFirmBillingSettings(firmId: number): Promise<FirmBillingSettings | undefined>;
   updateFirmBillingSettings(firmId: number, settings: Partial<FirmBillingSettings>): Promise<FirmBillingSettings>;
   createFirmBillingSettings(settings: InsertFirmBillingSettings): Promise<FirmBillingSettings>;
-  
+
   getBillingPermissions(userId: number, firmId: number): Promise<BillingPermission | undefined>;
   updateBillingPermissions(userId: number, firmId: number, permissions: Partial<BillingPermission>): Promise<BillingPermission>;
   createBillingPermissions(permissions: InsertBillingPermission): Promise<BillingPermission>;
-  
+
   // Calendar Events
   createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
   getFirmCalendarEvents(firmId: number): Promise<CalendarEvent[]>;
@@ -230,7 +230,7 @@ export interface IStorage {
   updateCalendarEvent(id: number, updates: Partial<CalendarEvent>): Promise<CalendarEvent | undefined>;
   deleteCalendarEvent(id: number, firmId: number): Promise<boolean>;
   getUpcomingEvents(firmId: number, days: number): Promise<CalendarEvent[]>;
-  
+
   // Client Intakes
   createClientIntake(intake: InsertClientIntake): Promise<ClientIntake>;
   getFirmClientIntakes(firmId: number): Promise<ClientIntake[]>;
@@ -238,7 +238,7 @@ export interface IStorage {
   updateClientIntake(id: number, updates: Partial<ClientIntake>): Promise<ClientIntake | undefined>;
   deleteClientIntake(id: number, firmId: number): Promise<boolean>;
   getIntakesByStatus(firmId: number, status: string): Promise<ClientIntake[]>;
-  
+
   // AI Triage Results
   createAiTriageResult(result: InsertAiTriageResult): Promise<AiTriageResult>;
   getAiTriageResult(id: number, firmId: number): Promise<AiTriageResult | undefined>;
@@ -246,7 +246,7 @@ export interface IStorage {
   getTriageResultByDocument(documentId: number, firmId: number): Promise<AiTriageResult | undefined>;
   updateAiTriageResult(id: number, updates: Partial<AiTriageResult>): Promise<AiTriageResult | undefined>;
   getFirmTriageResults(firmId: number): Promise<AiTriageResult[]>;
-  
+
   // CRM Communication Logs
   createCommunicationLog(log: InsertCommunicationLog): Promise<CommunicationLog>;
   getFirmCommunicationLogs(firmId: number): Promise<CommunicationLog[]>;
@@ -255,14 +255,14 @@ export interface IStorage {
   getCommunicationLog(id: number, firmId: number): Promise<CommunicationLog | undefined>;
   updateCommunicationLog(id: number, updates: Partial<CommunicationLog>): Promise<CommunicationLog | undefined>;
   deleteCommunicationLog(id: number, firmId: number): Promise<boolean>;
-  
+
   // Admin Ghost Mode
   createAdminGhostSession(session: InsertAdminGhostSession): Promise<AdminGhostSession>;
   getActiveGhostSessions(adminUserId: number): Promise<AdminGhostSession[]>;
   getGhostSessionByToken(sessionToken: string): Promise<AdminGhostSession | undefined>;
   endGhostSession(sessionToken: string): Promise<boolean>;
   updateGhostSessionAuditTrail(sessionToken: string, auditTrail: any): Promise<AdminGhostSession | undefined>;
-  
+
   // Document Generation
   getFirmTemplates(firmId: number): Promise<any[]>;
   saveGeneratedDocument(data: {
@@ -530,13 +530,13 @@ export class DatabaseStorage implements IStorage {
       .insert(messages)
       .values(insertMessage)
       .returning();
-    
+
     // Update thread's updatedAt timestamp
     await db
       .update(messageThreads)
       .set({ updatedAt: new Date() })
       .where(eq(messageThreads.threadId, insertMessage.threadId));
-    
+
     return message;
   }
 
@@ -813,7 +813,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(clients).where(eq(clients.firmId, firmId)).orderBy(clients.name);
   }
 
-  async getClient(id: number, firmId: number): Promise<Client | undefined> {
+  async getClient(id: number, firmId: number, firmId: number): Promise<Client | undefined> {
     const [client] = await db.select().from(clients).where(and(eq(clients.id, id), eq(clients.firmId, firmId)));
     return client || undefined;
   }
@@ -1040,7 +1040,7 @@ export class DatabaseStorage implements IStorage {
       .from(timeLogs)
       .where(eq(timeLogs.firmId, firmId))
       .groupBy(timeLogs.caseId, timeLogs.clientId);
-    
+
     return analytics;
   }
 
@@ -1055,7 +1055,7 @@ export class DatabaseStorage implements IStorage {
       .from(timeLogs)
       .where(eq(timeLogs.firmId, firmId))
       .groupBy(timeLogs.userId);
-    
+
     return analytics;
   }
 
@@ -1152,7 +1152,7 @@ export class DatabaseStorage implements IStorage {
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + days);
-    
+
     return await db
       .select()
       .from(calendarEvents)
@@ -1180,7 +1180,7 @@ export class DatabaseStorage implements IStorage {
         loggedAt: entry.entryDate || new Date(),
       })
       .returning();
-    
+
     // Return with client and case info
     return await this.getTimeEntryWithDetails(timeEntry.id, entry.firmId);
   }
@@ -1211,7 +1211,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(cases, eq(timeLogs.caseId, cases.id))
       .where(eq(timeLogs.firmId, firmId))
       .orderBy(desc(timeLogs.loggedAt));
-    
+
     return entries.map(entry => ({
       ...entry,
       client: entry.clientId ? entry.client : null,
@@ -1244,9 +1244,9 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(clients, eq(timeLogs.clientId, clients.id))
       .leftJoin(cases, eq(timeLogs.caseId, cases.id))
       .where(and(eq(timeLogs.id, id), eq(timeLogs.firmId, firmId)));
-    
+
     if (!entry) return null;
-    
+
     return {
       ...entry,
       client: entry.clientId ? entry.client : null,
@@ -1264,7 +1264,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(and(eq(timeLogs.id, entryId), eq(timeLogs.firmId, firmId)))
       .returning();
-    
+
     return await this.getTimeEntryWithDetails(entry.id, firmId);
   }
 
@@ -1279,7 +1279,7 @@ export class DatabaseStorage implements IStorage {
   // Invoice Management
   async createInvoice(invoiceData: any): Promise<any> {
     const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
-    
+
     // Get unbilled time entries for the client/case
     const timeEntriesQuery = db
       .select()
@@ -1290,22 +1290,22 @@ export class DatabaseStorage implements IStorage {
         eq(timeLogs.isLocked, false),
         isNull(timeLogs.invoiceId)
       ));
-    
+
     if (invoiceData.caseId) {
       timeEntriesQuery.where(eq(timeLogs.caseId, parseInt(invoiceData.caseId)));
     }
-    
+
     const timeEntries = await timeEntriesQuery;
-    
+
     // Calculate totals
     const subtotal = timeEntries.reduce((sum, entry) => {
       return sum + Math.round((entry.hours / 100) * entry.billableRate);
     }, 0);
-    
+
     const taxRate = 0; // Get from firm settings
     const taxAmount = Math.round(subtotal * taxRate / 100);
     const total = subtotal + taxAmount;
-    
+
     // Create invoice
     const [invoice] = await db
       .insert(invoices)
@@ -1324,7 +1324,7 @@ export class DatabaseStorage implements IStorage {
         notes: invoiceData.notes,
       })
       .returning();
-    
+
     // Create line items from time entries
     if (timeEntries.length > 0) {
       const lineItems = timeEntries.map((entry, index) => ({
@@ -1336,16 +1336,16 @@ export class DatabaseStorage implements IStorage {
         amount: Math.round((entry.hours / 100) * entry.billableRate),
         sortOrder: index,
       }));
-      
+
       await db.insert(invoiceLineItems).values(lineItems);
-      
+
       // Update time entries to reference this invoice
       await db
         .update(timeLogs)
         .set({ invoiceId: invoice.id })
         .where(inArray(timeLogs.id, timeEntries.map(e => e.id)));
     }
-    
+
     return await this.getInvoiceWithDetails(invoice.id, invoiceData.firmId);
   }
 
@@ -1372,15 +1372,15 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(clients, eq(invoices.clientId, clients.id))
       .leftJoin(cases, eq(invoices.caseId, cases.id))
       .where(eq(invoices.firmId, firmId));
-    
+
     if (status === 'unpaid') {
       query = query.where(ne(invoices.status, 'paid'));
     } else if (status) {
       query = query.where(eq(invoices.status, status));
     }
-    
+
     const results = await query.orderBy(desc(invoices.createdAt));
-    
+
     return results.map(invoice => ({
       ...invoice,
       case: invoice.case?.name ? invoice.case : null,
@@ -1412,16 +1412,16 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(clients, eq(invoices.clientId, clients.id))
       .leftJoin(cases, eq(invoices.caseId, cases.id))
       .where(and(eq(invoices.id, id), eq(invoices.firmId, firmId)));
-    
+
     if (!invoice) return null;
-    
+
     // Get line items
     const lineItems = await db
       .select()
       .from(invoiceLineItems)
       .where(eq(invoiceLineItems.invoiceId, id))
       .orderBy(asc(invoiceLineItems.sortOrder));
-    
+
     return {
       ...invoice,
       case: invoice.case?.name ? invoice.case : null,
@@ -1436,7 +1436,7 @@ export class DatabaseStorage implements IStorage {
     if (!invoice) {
       throw new Error("Invoice not found");
     }
-    
+
     // PDF generation would go here using libraries like puppeteer or pdfkit
     // For demonstration, returning empty buffer
     return Buffer.from("PDF content would be generated here");
@@ -1448,7 +1448,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(firmBillingSettings)
       .where(eq(firmBillingSettings.firmId, firmId));
-    
+
     return settings || {
       paymentsEnabled: false,
       defaultPaymentTerms: 30,
@@ -1462,7 +1462,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(firmBillingSettings)
       .where(eq(firmBillingSettings.firmId, firmId));
-    
+
     if (existing) {
       const [updated] = await db
         .update(firmBillingSettings)
@@ -1739,6 +1739,50 @@ export class DatabaseStorage implements IStorage {
     return session;
   }
 
+    // Audit log operations
+  async createAuditLog(auditLog: InsertAuditLog): Promise<void> {
+    try {
+      await db.insert(auditLogs).values(auditLog).returning();
+    } catch (error) {
+      console.error('Failed to create audit log:', error);
+    }
+  }
+
+  async getFirmAuditLogs(firmId: number, limit: number = 100): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.firmId, firmId))
+      .orderBy(desc(auditLogs.timestamp))
+      .limit(limit);
+  }
+
+  async getAuditLogsByAction(firmId: number, action: string): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(and(eq(auditLogs.firmId, firmId), eq(auditLogs.action, action)))
+      .orderBy(desc(auditLogs.timestamp));
+  }
+
+  async getAuditLogsByDateRange(firmId: number, startDate: Date, endDate: Date): Promise<AuditLog[]> {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(and(
+        eq(auditLogs.firmId, firmId),
+        sql`${auditLogs.timestamp} >= ${startDate}`,
+        sql`${auditLogs.timestamp} <= ${endDate}`
+      ))
+      .orderBy(desc(auditLogs.timestamp));
+  }
+
+  // User operations
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
   // Document Generation Storage Methods
   async getFirmTemplates(firmId: number): Promise<any[]> {
     // Return empty array for now - templates can be added later
@@ -1775,7 +1819,7 @@ export class DatabaseStorage implements IStorage {
         }
       })
       .returning();
-    
+
     return document;
   }
 }

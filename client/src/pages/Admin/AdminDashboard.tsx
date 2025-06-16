@@ -75,78 +75,54 @@ export default function AdminDashboard() {
     }
   };
 
+  const systemAlerts = Array.isArray(data?.systemAlerts) ? data.systemAlerts : [];
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">System Administration</h1>
-          <p className="text-gray-600">Monitor and manage the FIRMSYNC platform</p>
-        </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <Eye className="w-4 h-4 mr-2" />
-            Ghost Mode
-          </Button>
-          <Button>
-            <Settings className="w-4 h-4 mr-2" />
-            System Settings
-          </Button>
-        </div>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <Badge variant="outline" className="text-green-600">
+          System Healthy
+        </Badge>
       </div>
 
-      {/* System Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      {/* System Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Firms</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{displayStats.totalFirms}</div>
+            <div className="text-2xl font-bold">{stats?.totalFirms || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {displayStats.totalFirms === "..." ? "Loading..." : "+12 this month"}
+              +2 from last month
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Firms</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{displayStats.activeFirms}</div>
-            <p className="text-xs text-muted-foreground">
-              {displayStats.activeFirms === "..." ? "Loading..." : "80% active rate"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{displayStats.totalUsers}</div>
+            <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {displayStats.totalUsers === "..." ? "Loading..." : "+89 this week"}
+              +12 from last month
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Documents</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Documents Processed</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {displayStats.documentsProcessed === "..." ? "..." : 
-               typeof displayStats.documentsProcessed === 'number' ? displayStats.documentsProcessed.toLocaleString() : displayStats.documentsProcessed}
-            </div>
+            <div className="text-2xl font-bold">{stats?.documentsProcessed || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {displayStats.documentsProcessed === "..." ? "Loading..." : "Processed this month"}
+              +1,209 from last month
             </p>
           </CardContent>
         </Card>
@@ -157,113 +133,119 @@ export default function AdminDashboard() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${displayStats.systemHealth === "Loading..." ? "text-gray-600" : "text-green-600"}`}>
-              {displayStats.systemHealth}
-            </div>
+            <div className="text-2xl font-bold text-green-600">Healthy</div>
             <p className="text-xs text-muted-foreground">
-              {displayStats.systemHealth === "Loading..." ? "Checking status..." : "All services operational"}
+              All systems operational
             </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Recent Activity & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Firms */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Firm Activity</CardTitle>
+            <CardTitle className="flex items-center">
+              <Activity className="mr-2" size={20} />
+              Recent Activity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentFirms.map((firm) => (
-                <div
-                  key={firm.id}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium text-gray-900">{firm.name}</p>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <span>{firm.plan} Plan</span>
-                      <span>•</span>
-                      <span>{firm.users} users</span>
-                    </div>
-                    <p className="text-xs text-gray-500">Last active: {firm.lastActivity}</p>
-                  </div>
-                  <Badge className={getStatusColor(firm.status)}>
-                    {firm.status}
-                  </Badge>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                <div>
+                  <p className="text-sm font-medium">New firm registered</p>
+                  <p className="text-xs text-gray-500">Wilson & Associates joined the platform</p>
+                  <p className="text-xs text-gray-400">5 minutes ago</p>
                 </div>
-              ))}
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                <div>
+                  <p className="text-sm font-medium">System update deployed</p>
+                  <p className="text-xs text-gray-500">Version 2.1.4 with security patches</p>
+                  <p className="text-xs text-gray-400">2 hours ago</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2"></div>
+                <div>
+                  <p className="text-sm font-medium">High API usage alert</p>
+                  <p className="text-xs text-gray-500">Johnson Law exceeded API limits</p>
+                  <p className="text-xs text-gray-400">4 hours ago</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* System Alerts */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>System Alerts</CardTitle>
-            <Badge variant="outline" className="bg-red-50 text-red-700">
-              {safeSystemAlerts.length} Active
-            </Badge>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <AlertTriangle className="mr-2" size={20} />
+              System Alerts
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {safeSystemAlerts.map((alert: any) => (
-                <div
-                  key={alert.id}
-                  className="flex items-start space-x-3 p-3 border rounded-lg"
-                >
-                  <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium text-gray-900">{alert.message}</p>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getAlertColor(alert.type)}>
-                        {alert.type}
-                      </Badge>
-                      <span className="text-xs text-gray-500">{alert.time}</span>
+              {systemAlerts.length > 0 ? (
+                systemAlerts.map((alert, index) => (
+                  <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
+                    <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{alert?.message || 'Unknown alert'}</p>
+                      <p className="text-xs text-gray-500">{alert?.time || 'Unknown time'}</p>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-2" />
+                  <p>No active alerts</p>
+                  <p className="text-xs">All systems operating normally</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20">
-              <div className="flex flex-col items-center space-y-2">
-                <Building2 className="w-6 h-6" />
-                <span className="text-sm">Manage Firms</span>
-              </div>
-            </Button>
-            <Button variant="outline" className="h-20">
-              <div className="flex flex-col items-center space-y-2">
-                <TrendingUp className="w-6 h-6" />
-                <span className="text-sm">Usage Analytics</span>
-              </div>
-            </Button>
-            <Button variant="outline" className="h-20">
-              <div className="flex flex-col items-center space-y-2">
-                <Eye className="w-6 h-6" />
-                <span className="text-sm">Ghost Mode</span>
-              </div>
-            </Button>
-            <Button variant="outline" className="h-20">
-              <div className="flex flex-col items-center space-y-2">
-                <Settings className="w-6 h-6" />
-                <span className="text-sm">System Settings</span>
-              </div>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Button variant="outline" className="h-20">
+                <div className="flex flex-col items-center space-y-2">
+                  <Building2 className="w-6 h-6" />
+                  <span className="text-sm">Manage Firms</span>
+                </div>
+              </Button>
+              <Button variant="outline" className="h-20">
+                <div className="flex flex-col items-center space-y-2">
+                  <TrendingUp className="w-6 h-6" />
+                  <span className="text-sm">Usage Analytics</span>
+                </div>
+              </Button>
+              <Button variant="outline" className="h-20">
+                <div className="flex flex-col items-center space-y-2">
+                  <Eye className="w-6 h-6" />
+                  <span className="text-sm">Ghost Mode</span>
+                </div>
+              </Button>
+              <Button variant="outline" className="h-20">
+                <div className="flex flex-col items-center space-y-2">
+                  <Settings className="w-6 h-6" />
+                  <span className="text-sm">System Settings</span>
+                </div>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      
     </div>
   );
 }

@@ -1,0 +1,118 @@
+
+import { storage } from '../storage.js';
+
+interface AuditLogEntry {
+  userId: number;
+  firmId: number | null;
+  action: string;
+  details?: any;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+class AuditLogger {
+  private logs: AuditLogEntry[] = [];
+
+  async logLogin(userId: number, firmId: number | null, ipAddress?: string, userAgent?: string) {
+    const entry: AuditLogEntry = {
+      userId,
+      firmId,
+      action: 'LOGIN',
+      details: { timestamp: new Date().toISOString() },
+      ipAddress,
+      userAgent
+    };
+    
+    this.logs.push(entry);
+    
+    try {
+      await storage.createAuditLog({
+        firmId: firmId || 0,
+        actorId: userId,
+        actorName: 'User',
+        action: 'LOGIN',
+        resourceType: 'auth',
+        ipAddress,
+        userAgent
+      });
+    } catch (error) {
+      console.error('Failed to save login audit log:', error);
+    }
+  }
+
+  async logLogout(userId: number, firmId: number | null, ipAddress?: string, userAgent?: string) {
+    const entry: AuditLogEntry = {
+      userId,
+      firmId,
+      action: 'LOGOUT',
+      details: { timestamp: new Date().toISOString() },
+      ipAddress,
+      userAgent
+    };
+    
+    this.logs.push(entry);
+    
+    try {
+      await storage.createAuditLog({
+        firmId: firmId || 0,
+        actorId: userId,
+        actorName: 'User',
+        action: 'LOGOUT',
+        resourceType: 'auth',
+        ipAddress,
+        userAgent
+      });
+    } catch (error) {
+      console.error('Failed to save logout audit log:', error);
+    }
+  }
+
+  async logDocumentUpload(userId: number, firmId: number, documentId: number, filename: string) {
+    try {
+      await storage.createAuditLog({
+        firmId,
+        actorId: userId,
+        actorName: 'User',
+        action: 'DOC_UPLOAD',
+        resourceType: 'document',
+        resourceId: documentId.toString(),
+        details: { filename }
+      });
+    } catch (error) {
+      console.error('Failed to save document upload audit log:', error);
+    }
+  }
+
+  async logGhostModeAccess(adminUserId: number, targetFirmId: number, ipAddress?: string) {
+    try {
+      await storage.createAuditLog({
+        firmId: targetFirmId,
+        actorId: adminUserId,
+        actorName: 'Admin',
+        action: 'GHOST_MODE_ACCESS',
+        resourceType: 'firm',
+        resourceId: targetFirmId.toString(),
+        ipAddress,
+        details: { ghostMode: true }
+      });
+    } catch (error) {
+      console.error('Failed to save ghost mode audit log:', error);
+    }
+  }
+
+  getLogs(userId?: number, firmId?: number, limit: number = 10) {
+    let filteredLogs = this.logs;
+    
+    if (userId) {
+      filteredLogs = filteredLogs.filter(log => log.userId === userId);
+    }
+    
+    if (firmId) {
+      filteredLogs = filteredLogs.filter(log => log.firmId === firmId);
+    }
+    
+    return filteredLogs.slice(-limit);
+  }
+}
+
+export const auditLogger = new AuditLogger();

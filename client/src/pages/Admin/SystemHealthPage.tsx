@@ -122,12 +122,12 @@ export default function SystemHealthPage() {
   // Ensure logsData is always an array
   const safeLogs = Array.isArray(logsData) ? logsData : [];
 
-  const filteredLogs = safeLogs.filter(
+  const filteredLogs = Array.isArray(logsData) ? logsData.filter(
     (log) =>
       searchTerm === "" ||
-      log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.source.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      log?.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log?.source?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
   if (healthLoading) {
     return (
