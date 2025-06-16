@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Outlet } from "react-router-dom";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Home, FileText, DollarSign, LogOut } from "lucide-react";
 
 export default function ClientLayout() {
@@ -59,7 +60,9 @@ export default function ClientLayout() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );

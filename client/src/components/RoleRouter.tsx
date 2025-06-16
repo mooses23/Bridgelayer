@@ -6,7 +6,7 @@ import { useTenant } from '@/context/TenantContext';
 // Public Pages
 import LoginPage from '@/pages/Public/LoginPage';
 import LogoutPage from '@/pages/Public/LogoutPage';
-import NotFoundPage from '@/pages/NotFoundPage';
+import NotFoundPage from '@/pages/Public/NotFoundPage';
 
 // Admin Pages
 import AdminLayout from '@/layouts/AdminLayout';
