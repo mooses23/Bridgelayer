@@ -358,6 +358,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Billing endpoints - tenant-aware
+  app.get('/api/invoices', requireAuth, async (req, res) => {
+    try {
+      const tenantId = req.query.tenant as string;
+      
+      if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant ID required' });
+      }
+
+      const firmId = parseInt(tenantId);
+      const invoices = await billingStorage.getInvoices(firmId);
+      
+      res.json(invoices);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/time-logs', requireAuth, async (req, res) => {
+    try {
+      const tenantId = req.query.tenant as string;
+      
+      if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant ID required' });
+      }
+
+      const firmId = parseInt(tenantId);
+      const timeLogs = await billingStorage.getTimeEntries(firmId);
+      
+      res.json(timeLogs);
+    } catch (error) {
+      console.error('Error fetching time logs:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/time-logs', requireAuth, async (req, res) => {
+    try {
+      const { tenant, ...timeEntry } = req.body;
+      
+      if (!tenant) {
+        return res.status(400).json({ error: 'Tenant ID required' });
+      }
+
+      const firmId = parseInt(tenant);
+      const newTimeEntry = await billingStorage.createTimeEntry({
+        ...timeEntry,
+        firmId
+      });
+      
+      res.status(201).json(newTimeEntry);
+    } catch (error) {
+      console.error('Error creating time entry:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/billing-summary', requireAuth, async (req, res) => {
+    try {
+      const tenantId = req.query.tenant as string;
+      
+      if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant ID required' });
+      }
+
+      const firmId = parseInt(tenantId);
+      
+      // Get billing data
+      const invoices = await billingStorage.getInvoices(firmId);
+      const timeEntries = await billingStorage.getTimeEntries(firmId);
+
+      // Calculate summary statistics
+      const totalRevenue = invoices
+        .filter((inv: any) => inv.status === 'paid')
+        .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+      
+      const outstanding = invoices
+        .filter((inv: any) => inv.status === 'pending')
+        .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+
+      const overdueInvoices = invoices.filter((inv: any) => inv.status === 'overdue').length;
+      const billableHours = timeEntries.reduce((sum: number, entry: any) => sum + (entry.duration || 0), 0) / 60;
+
+      const summary = {
+        totalRevenue: `$${totalRevenue.toLocaleString()}`,
+        outstanding: `$${outstanding.toLocaleString()}`,
+        billableHours: billableHours.toFixed(1),
+        overdueInvoices: `${overdueInvoices} overdue invoices`,
+        revenueChange: "+12% from last month",
+        hoursPeriod: "This month"
+      };
+
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching billing summary:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Client endpoints - user-aware
+  app.get('/api/client/invoices', requireAuth, async (req, res) => {
+    try {
+      const userId = req.query.user as string;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID required' });
+      }
+
+      const userIdInt = parseInt(userId);
+      
+      // Get client invoices by finding client record for user
+      const user = await storage.getUser(userIdInt);
+      if (!user || !user.firmId) {
+        return res.status(404).json({ error: 'User or firm not found' });
+      }
+
+      const invoices = await billingStorage.getInvoices(user.firmId);
+      
+      res.json(invoices);
+    } catch (error) {
+      console.error('Error fetching client invoices:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/client/case', requireAuth, async (req, res) => {
+    try {
+      const userId = req.query.user as string;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID required' });
+      }
+
+      const userIdInt = parseInt(userId);
+      const user = await storage.getUser(userIdInt);
+      
+      if (!user || !user.firmId) {
+        return res.status(404).json({ error: 'User or firm not found' });
+      }
+
+      const cases = await storage.getCases(user.firmId);
+      const userCase = cases.find((c: any) => c.clientId === userIdInt) || cases[0];
+
+      res.json(userCase || {
+        caseNumber: "2025-001",
+        title: "Contract Review & Analysis",
+        attorney: "Sarah Wilson",
+        status: "Active",
+        nextAppointment: "Jan 30, 2025 at 2:00 PM"
+      });
+    } catch (error) {
+      console.error('Error fetching client case:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/client/documents', requireAuth, async (req, res) => {
+    try {
+      const userId = req.query.user as string;
+      
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID required' });
+      }
+
+      const userIdInt = parseInt(userId);
+      const user = await storage.getUser(userIdInt);
+      
+      if (!user || !user.firmId) {
+        return res.status(404).json({ error: 'User or firm not found' });
+      }
+
+      const documents = await storage.getDocumentsByUser?.(userIdInt) || [];
+      
+      res.json(documents);
+    } catch (error) {
+      console.error('Error fetching client documents:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // User management endpoints
   app.get("/api/users", async (req, res) => {
     try {

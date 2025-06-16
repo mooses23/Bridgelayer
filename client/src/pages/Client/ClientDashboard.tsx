@@ -193,7 +193,7 @@ export default function ClientDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {invoices.map((invoice) => (
+              {(invoices || fallbackInvoices).map((invoice: any) => (
                 <div
                   key={invoice.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
