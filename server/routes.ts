@@ -946,8 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/firm/analysis-settings", async (req, res) => {
     try {
-      ```typescript
-const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includes fixes and improvements based on the code review.
+      const validatedData = insertFirmAnalysisSettingsSchema.parse({
         firmId: DEMO_FIRM_ID,
         ...req.body
       });
@@ -1041,7 +1040,7 @@ const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includ
             customInstructions: ''
           };
 
-          const configPath = path.join(configDir, `${docType}.json`);
+          const configPath = path.join(configDir, docType + '.json');
           await fs.writeFile(configPath, JSON.stringify(configData, null, 2));
         }
       }
@@ -1110,7 +1109,7 @@ const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includ
   app.post("/api/message-threads", async (req, res) => {
     try {
       const { title, filename, documentId } = req.body;
-      const threadId = `thread_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const threadId = "thread_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
       const threadData = {
         firmId: DEMO_FIRM_ID,
@@ -1150,7 +1149,7 @@ const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includ
 
       // Get current user info for sender details
       const currentUser = await storage.getUser(DEMO_USER_ID);
-      const senderName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "Unknown User";
+      const senderName = currentUser ? (currentUser.firstName + " " + currentUser.lastName) : "Unknown User";
 
       const messageData = {
         threadId,
@@ -1214,8 +1213,8 @@ const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includ
       // Construct file paths
       const firmDir = path.join(process.cwd(), 'firms', firm_id);
       const filePath = path.join(firmDir, 'files', filename);
-      const promptPath = path.join(firmDir, 'review_logs', `${path.parse(filename).name}_prompt.txt`);
-      const responsePath = path.join(firmDir, 'review_logs', `${path.parse(filename).name}_response.txt`);
+      const promptPath = path.join(firmDir, 'review_logs', path.parse(filename).name + '_prompt.txt');
+      const responsePath = path.join(firmDir, 'review_logs', path.parse(filename).name + '_response.txt');
 
       // Check if files exist
       try {
@@ -1810,13 +1809,12 @@ const validatedData = insertFirmAnalysisSettingsSchema.parse({This commit includ
   // Stripe payment processing endpoints
   app.post("/api/billing/create-payment-intent", async (req, res) => {
     try {
-      const { invoiceId, amount, clientEmail } = reqde code review and incorporating OAuth route registration.
-```typescript
-.body;
+      const { invoiceId, amount, clientEmail } = req.body;
 
       // Get firm billing settings to retrieve Stripe keys
       const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
-      if (!settings?.stripeEnabled || !settings.stripeSecretKey) {        return res.status(400).json({ message: "Stripe not configured for this firm" });
+      if (!settings?.stripeEnabled || !settings.stripeSecretKey) {
+        return res.status(400).json({ message: "Stripe not configured for this firm" });
       }
 
       const stripe = require('stripe')(settings.stripeSecretKey);
