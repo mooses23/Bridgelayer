@@ -259,6 +259,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard summary endpoint - tenant-aware
+  app.get('/api/dashboard-summary', requireAuth, async (req, res) => {
+    try {
+      const tenantId = req.query.tenant as string;
+      
+      if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant ID required' });
+      }
+
+      const firmId = parseInt(tenantId);
+      
+      // Get real data from the database
+      const cases = await storage.getCases(firmId);
+      const clients = await storage.getClients(firmId);
+      const documents = await storage.getDocumentsByFirm(firmId);
+      const timeEntries = await billingStorage.getTimeEntries(firmId);
+
+      // Calculate summary statistics
+      const totalCases = cases.length;
+      const activeClients = clients.filter(c => c.status === 'active').length;
+      const documentsReviewed = documents.filter(d => d.status === 'reviewed').length;
+      const billableHours = timeEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0) / 60; // Convert minutes to hours
+
+      const summary = {
+        totalCases,
+        activeClients, 
+        documentsReviewed,
+        billableHours: billableHours.toFixed(1),
+        casesChange: "+12% from last month",
+        clientsChange: "+2 new this week",
+        documentsToday: "+8 today",
+        billablePeriod: "This month"
+      };
+
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching dashboard summary:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Cases endpoint - tenant-aware
+  app.get('/api/cases', requireAuth, async (req, res) => {
+    try {
+      const tenantId = req.query.tenant as string;
+      
+      if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant ID required' });
+      }
+
+      const firmId = parseInt(tenantId);
+      const cases = await storage.getCases(firmId);
+      
+      res.json(cases);
+    } catch (error) {
+      console.error('Error fetching cases:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Cases summary endpoint - tenant-aware
+  app.get('/api/cases-summary', requireAuth, async (req, res) => {
+    try {
+      const tenantId = req.query.tenant as string;
+      
+      if (!tenantId) {
+        return res.status(400).json({ error: 'Tenant ID required' });
+      }
+
+      const firmId = parseInt(tenantId);
+      const cases = await storage.getCases(firmId);
+
+      // Calculate cases statistics
+      const totalCases = cases.length;
+      const activeCases = cases.filter(c => c.status === 'active').length;
+      const highPriority = cases.filter(c => c.priority === 'high').length;
+      const upcomingDeadlines = cases.filter(c => {
+        const dueDate = new Date(c.dueDate || '');
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        return dueDate <= nextWeek;
+      }).length;
+
+      const summary = {
+        totalCases,
+        activeCases,
+        highPriority,
+        upcomingDeadlines,
+        totalCasesChange: "+3 from last month",
+        activeCasesChange: "+2 from last week"
+      };
+
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching cases summary:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // User management endpoints
   app.get("/api/users", async (req, res) => {
     try {

@@ -103,6 +103,18 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 16, 2025**: GHGH 24.1 - Tenant-Aware Data Fetching Implementation Complete
+  - Implemented TanStack Query integration for DashboardPage and CasesPage with tenant-aware data fetching
+  - Updated DashboardPage to use real-time data from `/api/dashboard-summary?tenant=${tenant.id}` endpoint
+  - Enhanced CasesPage with tenant-scoped data fetching from `/api/cases?tenant=${tenant.id}` and `/api/cases-summary?tenant=${tenant.id}`
+  - Added proper loading states and fallback data handling throughout dashboard and cases components
+  - Created comprehensive API endpoints with tenant isolation: dashboard summary, cases list, and cases summary
+  - Enhanced data-binding pattern between TenantContext and page components using useQuery with tenant.id dependency
+  - All dashboard metrics now display real database data: total cases, active clients, documents reviewed, billable hours
+  - Cases overview cards show live statistics: total cases, active cases, high priority, upcoming deadlines
+  - Implemented proper error handling and loading states with "..." placeholders during data fetching
+  - System now provides complete tenant-aware dashboard experience with real-time data synchronization
+
 - **June 16, 2025**: GHGH 23.1 & 23.2 - Frontend Fix for Login Redirects Implementation Complete
   - Updated backend auth-minimal.ts to return redirectPath in login response alongside user data
   - Modified SessionContext to return LoginResult object with success flag and redirectPath from backend

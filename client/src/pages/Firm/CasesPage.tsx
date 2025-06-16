@@ -163,7 +163,7 @@ export default function CasesPage() {
                   key={case_.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
                 >
-                <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-1">
                   <h3 className="font-medium text-gray-900">{case_.title}</h3>
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
                     <span>{case_.type}</span>
