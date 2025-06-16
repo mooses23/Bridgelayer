@@ -1,0 +1,107 @@
+Here’s a proposal for a templated law-firm dashboard in FirmSync—an out-of-the-box, branded landing page that every newly onboarded firm immediately gets. This will fill the gap in our onboarding flow and give firms a fully-configured workspace the moment they finish setup.
+
+⸻
+
+1. Dashboard Goals & Principles
+	•	Instant Utility: Key information & actions visible at a glance.
+	•	Branded Experience: Firm logo + color theme from onboarding in the header.
+	•	Extensibility: Widgets (cards) can be reordered or toggled on/off per firm.
+	•	Consistency: Same layout for all firms, with data and branding swapped in.
+
+⸻
+
+2. Information Architecture & Sections
+
+Section	Purpose
+Header	Firm logo (left), FirmSync logo (right), global search, user menu.
+Sidebar Nav	Links to core modules: Matters, Documents, Forms, Calendar, Billing.
+Top-Level Widgets	Quick actions and snapshots:
+• New Matter card	“+ Create Matter” button.
+• Recent Matters	List of 5 most-recently accessed matters.
+• Upcoming Deadlines	Next 3 court dates or task due-dates.
+• Notifications	Unread messages, new document uploads, pending signatures.
+Secondary Widgets	Analytics & Integrations:
+• Case Status Chart	Doughnut showing “Active / Pending / Closed” counts (clickable).
+• Forms Access	Quick links to firm’s top 5 most-used forms.
+• Integrations	Status cards for DocuSign, QuickBooks, etc. (connected/disconnected).
+Footer	Version info, support link, privacy/legal.
+
+
+⸻
+
+3. Layout Wireframe (Desktop)
+
+┌───────────────────────────────────────────────────────────────────┐
+│ HEADER: [Logo]   [SEARCH BOX]             [User▼]  [FirmSync]   │
+├────────────┬──────────────────────────────┬──────────────────────┤
+│ SIDEBAR    │ TOP-LEVEL WIDGETS            │ SECONDARY WIDGETS    │
+│ • Matters  │ [ + Create Matter      ]    │ [ Case Status Chart] │
+│ • Docs     │ [Recent Matters (5)     ]    │ [ Forms Access (5) ] │
+│ • Forms    │ [Upcoming Deadlines (3) ]    │ [ Integrations     ] │
+│ • Calendar │ [Notifications (3)      ]    │                      │
+│ • Billing  │                              │                      │
+├────────────┴──────────────────────────────┴──────────────────────┤
+│ FOOTER: Version 1.0 • Help • Privacy                              │
+└───────────────────────────────────────────────────────────────────┘
+
+	•	Grid: Two columns (wide main + narrow sidebar).
+	•	Cards: Uniform card styling (rounded corners, soft shadow) for all widgets.
+	•	Responsive: On tablet/mobile, sidebar collapses to a hamburger menu; widgets stack vertically.
+
+⸻
+
+4. Component Breakdown
+	1.	Header Component
+	•	Props: logoUrl, firmName, themeColors
+	•	Children: <SearchBar />, <UserMenu />, <FirmSyncBadge />
+	2.	SidebarNav Component
+	•	Items driven by a JSON config per tenant (from onboarding).
+	•	Highlight active route.
+	3.	WidgetCard Component
+	•	Reusable card with title, body, and optional footerAction.
+	•	On hover: slight lift animation (Framer Motion).
+	•	Can be toggled on/off from a “Customize Dashboard” admin panel.
+	4.	Data Widgets
+	•	New Matter: Static button that opens /matters/new.
+	•	Recent Matters: Fetch GET /api/tenants/{id}/matters?sort=recent&limit=5.
+	•	Deadlines: Fetch GET /api/tenants/{id}/deadlines?upcoming=3.
+	•	Notifications: Real-time via WebSocket or polling GET /api/notifications?unread=true.
+	•	Case Status Chart: Use a simple chart component (Recharts) reading GET /api/stats/case-status.
+	•	Forms Access: Links built from firm’s selected templates in onboarding.
+	•	Integrations: Read integration statuses from /api/tenants/{id}/integrations.
+	5.	Footer Component
+	•	Static links + dynamic version number from build metadata.
+
+⸻
+
+5. Backend & Data Requirements
+	•	Tenant Settings Model
+	•	Store booleans for which widgets are enabled.
+	•	Store array of “topForms” IDs.
+	•	APIs
+	•	Ensure endpoints exist for each widget’s data (matters, deadlines, notifications, stats).
+	•	Real-time
+	•	Use a Pub/Sub or WebSocket channel for live notifications badge.
+	•	Branding
+	•	Tenant config holds logoUrl and primaryColor; header reads these at render time.
+
+⸻
+
+6. Implementation Notes
+	•	Tech Stack: React + TypeScript for frontend; reuse your existing shell/layout components.
+	•	State Management: Context or Redux slice for dashboardConfig.
+	•	Styling: Tailwind CSS (2xl rounded, soft shadows, p-2).
+	•	Accessibility: ARIA labels on navigation, alt text for logo, focus states on cards.
+	•	Testing: Unit tests for each widget’s data-fetch logic; E2E tests to verify full dashboard load for a fresh tenant.
+	•	Feature Flag: Roll out templated dashboard behind a feature flag so you can pilot with one tenant before organization-wide release.
+
+⸻
+
+Next Steps
+	1.	Define the tenant settings schema (add dashboardWidgets and topForms).
+	2.	Build the React layout using your FirmSync shell and inject the Header, Sidebar, and Dashboard grid.
+	3.	Implement each widget component one at a time, mocking data then wiring real APIs.
+	4.	Hook up branding so the firm’s logo and colors flow into the Header.
+	5.	Test end-to-end by onboarding a demo firm and verifying the dashboard spins up automatically.
+
+With this templated dashboard in place, every newly onboarded law firm will land on a fully-branded, data-driven workspace—no extra clicks required. Let me know where you’d like to dive in first!
