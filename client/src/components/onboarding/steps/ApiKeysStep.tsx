@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,65 +41,68 @@ export function ApiKeysStep({ data, updateData, onNext, onPrevious }: ApiKeysSte
 
   const handleOAuthConnect = async (provider: 'google' | 'dropbox' | 'onedrive') => {
     setConnecting(provider);
-    
+
     try {
       // Open OAuth popup
-      const popup = window.open(
-        `/api/oauth/${provider}/authorize`,
-        'oauth',
-        'width=600,height=600,scrollbars=yes,resizable=yes'
-      );
+      //const popup = window.open(
+      //  `/api/oauth/${provider}/authorize`,
+      //  'oauth',
+      //  'width=600,height=600,scrollbars=yes,resizable=yes'
+      //);
 
       // Listen for OAuth completion
-      const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          setConnecting(null);
-          
-          // Check if OAuth was successful
-          fetch(`/api/oauth/${provider}/status`)
-            .then(res => res.json())
-            .then(result => {
-              if (result.connected) {
-                updateData({ 
-                  storageProvider: provider,
-                  oauthTokens: { 
-                    ...data.oauthTokens, 
-                    [provider]: result.token 
-                  }
-                });
-                toast({
-                  title: "Connected!",
-                  description: `Successfully connected to ${STORAGE_PROVIDERS.find(p => p.id === provider)?.name}`,
-                  variant: "default"
-                });
-              } else {
-                toast({
-                  title: "Connection failed",
-                  description: "Please try again",
-                  variant: "destructive"
-                });
-              }
-            })
-            .catch(error => {
-              console.error('OAuth status check failed:', error);
-              toast({
-                title: "Connection failed",
-                description: "Please try again",
-                variant: "destructive"
-              });
-            });
-        }
-      }, 1000);
+      //const checkClosed = setInterval(() => {
+      //  if (popup?.closed) {
+      //    clearInterval(checkClosed);
+      //    setConnecting(null);
+
+      // Check if OAuth was successful
+      // fetch(`/api/oauth/${provider}/status`)
+      //   .then(res => res.json())
+      //   .then(result => {
+      //     if (result.connected) {
+      //       updateData({ 
+      //         storageProvider: provider,
+      //         oauthTokens: { 
+      //           ...data.oauthTokens, 
+      //           [provider]: result.token 
+      //         }
+      //       });
+      //       toast({
+      //         title: "Connected!",
+      //         description: `Successfully connected to ${STORAGE_PROVIDERS.find(p => p.id === provider)?.name}`,
+      //         variant: "default"
+      //       });
+      //     } else {
+      //       toast({
+      //         title: "Connection failed",
+      //         description: "Please try again",
+      //         variant: "destructive"
+      //       });
+      //     }
+      //   })
+      //   .catch(error => {
+      //     console.error('OAuth status check failed:', error);
+      //     toast({
+      //       title: "Connection failed",
+      //       description: "Please try again",
+      //       variant: "destructive"
+      //     });
+      //   });
+      // }
+      //}, 1000);
 
       // Cleanup after 5 minutes
-      setTimeout(() => {
-        clearInterval(checkClosed);
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-        setConnecting(null);
-      }, 300000);
+      //setTimeout(() => {
+      //  clearInterval(checkClosed);
+      //  if (popup && !popup.closed) {
+      //    popup.close();
+      //  }
+      //  setConnecting(null);
+      //}, 300000);
+      
+      // Redirect to OAuth start URL
+      window.location.href = `/api/oauth/${provider}/start`;
 
     } catch (error) {
       console.error('OAuth connection failed:', error);
@@ -158,7 +160,7 @@ export function ApiKeysStep({ data, updateData, onNext, onPrevious }: ApiKeysSte
                       <CardDescription>{provider.description}</CardDescription>
                     </div>
                   </div>
-                  
+
                   {isConnected ? (
                     <Check className="w-5 h-5 text-green-500" />
                   ) : (

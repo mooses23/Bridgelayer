@@ -2605,7 +2605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(401).json({ error: 'User not authenticated' });
       }
-      
+
       const tenantId = req.headers['x-tenant-id'];
 
       // Admin users can access any firm, others only their own or tenant-scoped firm
