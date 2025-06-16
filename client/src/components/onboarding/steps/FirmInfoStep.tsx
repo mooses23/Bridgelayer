@@ -56,8 +56,7 @@ export function FirmInfoStep({ data, updateData, onNext }: FirmInfoStepProps) {
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         toast({
-          title: "File too large",
-          description: "Please select an image under 5MB",
+          description: "File too large. Please select an image under 5MB",
           variant: "destructive"
         });
         return;

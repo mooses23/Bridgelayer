@@ -81,8 +81,7 @@ export function OnboardingWizard() {
       window.location.href = '/dashboard';
     } catch (error) {
       toast({
-        title: "Onboarding Failed",
-        description: "Please check your information and try again.",
+        description: "Onboarding Failed. Please check your information and try again.",
         variant: "destructive"
       });
     }

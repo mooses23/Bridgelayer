@@ -18,22 +18,11 @@ export class ApiClient {
     delete this.defaultHeaders[key];
   }
 
-  private static getToken(): string | null {
-    return localStorage.getItem('auth_token');
-  }
-
   static async fetch(url: string, options: RequestInit = {}): Promise<Response> {
-    const token = this.getToken();
-
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
-
-    // Add JWT token to Authorization header if available
-    if (token) {
-      (headers as any)['Authorization'] = `Bearer ${token}`;
-    }
 
     const config: RequestInit = {
       credentials: 'include',
@@ -44,10 +33,7 @@ export class ApiClient {
     try {
       const response = await fetch(url, config);
 
-      // If we get a 401, the token might be expired - remove it
-      if (response.status === 401) {
-        localStorage.removeItem('auth_token');
-        // Optionally redirect to login
+      // Session-based authentication - no token management needed
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
