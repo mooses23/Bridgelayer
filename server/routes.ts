@@ -309,13 +309,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/dashboard-summary', requireAuth, async (req, res) => {
     try {
       const tenantId = req.query.tenant as string;
-      
+
       if (!tenantId) {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
 
       const firmId = parseInt(tenantId);
-      
+
       // Get real data from the database
       const cases = await storage.getCases(firmId);
       const clients = await storage.getClients(firmId);
@@ -350,14 +350,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/cases', requireAuth, async (req, res) => {
     try {
       const tenantId = req.query.tenant as string;
-      
+
       if (!tenantId) {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
 
       const firmId = parseInt(tenantId);
       const cases = await storage.getCases(firmId);
-      
+
       res.json(cases);
     } catch (error) {
       console.error('Error fetching cases:', error);
@@ -369,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/cases-summary', requireAuth, async (req, res) => {
     try {
       const tenantId = req.query.tenant as string;
-      
+
       if (!tenantId) {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
@@ -408,14 +408,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/invoices', requireAuth, async (req, res) => {
     try {
       const tenantId = req.query.tenant as string;
-      
+
       if (!tenantId) {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
 
       const firmId = parseInt(tenantId);
       const invoices = await billingStorage.getInvoices(firmId);
-      
+
       res.json(invoices);
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -426,14 +426,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/time-logs', requireAuth, async (req, res) => {
     try {
       const tenantId = req.query.tenant as string;
-      
+
       if (!tenantId) {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
 
       const firmId = parseInt(tenantId);
       const timeLogs = await billingStorage.getTimeEntries(firmId);
-      
+
       res.json(timeLogs);
     } catch (error) {
       console.error('Error fetching time logs:', error);
@@ -444,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/time-logs', requireAuth, async (req, res) => {
     try {
       const { tenant, ...timeEntry } = req.body;
-      
+
       if (!tenant) {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
@@ -463,7 +463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validation.data,
         firmId
       });
-      
+
       res.status(201).json(newTimeEntry);
     } catch (error) {
       console.error('Error creating time entry:', error);
@@ -474,13 +474,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/billing-summary', requireAuth, async (req, res) => {
     try {
       const tenantId = req.query.tenant as string;
-      
+
       if (!tenantId) {
         return res.status(400).json({ error: 'Tenant ID required' });
       }
 
       const firmId = parseInt(tenantId);
-      
+
       // Get billing data
       const invoices = await billingStorage.getInvoices(firmId);
       const timeEntries = await billingStorage.getTimeEntries(firmId);
@@ -489,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalRevenue = invoices
         .filter((inv: any) => inv.status === 'paid')
         .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
-      
+
       const outstanding = invoices
         .filter((inv: any) => inv.status === 'pending')
         .reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
@@ -517,13 +517,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/client/invoices', requireAuth, async (req, res) => {
     try {
       const userId = req.query.user as string;
-      
+
       if (!userId) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
       const userIdInt = parseInt(userId);
-      
+
       // Get client invoices by finding client record for user
       const user = await storage.getUser(userIdInt);
       if (!user || !user.firmId) {
@@ -531,7 +531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const invoices = await billingStorage.getInvoices(user.firmId);
-      
+
       res.json(invoices);
     } catch (error) {
       console.error('Error fetching client invoices:', error);
@@ -542,14 +542,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/client/case', requireAuth, async (req, res) => {
     try {
       const userId = req.query.user as string;
-      
+
       if (!userId) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
       const userIdInt = parseInt(userId);
       const user = await storage.getUser(userIdInt);
-      
+
       if (!user || !user.firmId) {
         return res.status(404).json({ error: 'User or firm not found' });
       }
@@ -573,20 +573,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/client/documents', requireAuth, async (req, res) => {
     try {
       const userId = req.query.user as string;
-      
+
       if (!userId) {
         return res.status(400).json({ error: 'User ID required' });
       }
 
       const userIdInt = parseInt(userId);
       const user = await storage.getUser(userIdInt);
-      
+
       if (!user || !user.firmId) {
         return res.status(404).json({ error: 'User or firm not found' });
       }
 
       const documents = await storage.getDocumentsByUser?.(userIdInt) || [];
-      
+
       res.json(documents);
     } catch (error) {
       console.error('Error fetching client documents:', error);
@@ -1012,14 +1012,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/firm/onboarding", requireAuth, async (req, res) => {
     try {
       const user = req.user;
-      
+
       if (!user || !user.firmId) {
         return res.status(400).json({ message: "User must be associated with a firm" });
       }
 
       // Update firm onboarded status
       const updatedFirm = await storage.updateFirm(user.firmId, { onboarded: true });
-      
+
       if (!updatedFirm) {
         return res.status(404).json({ message: "Firm not found" });
       }
@@ -1467,8 +1467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: req.body.type,
         title: req.body.title,
         message: req.body.message,
-        resourceType: req.body.resourceType,
-        resourceId: req.body.resourceId,
+        resourceType: req.body.resourceId,
         priority: req.body.priority,
       });
 
@@ -1509,9 +1508,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create HTTP server but don't start listening - let index.ts handle that
-  // Register admin routes for BridgeLayer staff
-  registerAdminRoutes(app);
-
   const { createServer } = await import('http');
   // Billing API endpoints
   const DEMO_FIRM_ID = 1; // Using same firm ID as other endpoints
@@ -1757,8 +1753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get firm billing settings to retrieve Stripe keys
       const settings = await storage.getFirmBillingSettings(DEMO_FIRM_ID);
-      if (!settings?.stripeEnabled || !settings.stripeSecretKey) {
-        return res.status(400).json({ message: "Stripe not configured for this firm" });
+      if (!settings?.stripeEnabled || !settings.stripeSecretKey) {        return res.status(400).json({ message: "Stripe not configured for this firm" });
       }
 
       const stripe = require('stripe')(settings.stripeSecretKey);
@@ -2644,10 +2639,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/tenant/:subdomain', async (req, res) => {
     try {
       const { subdomain } = req.params;
-      
+
       // Get firm by slug (subdomain)
       const firm = await storage.getFirmBySlug(subdomain);
-      
+
       if (!firm) {
         return res.status(404).json({ error: 'Tenant not found' });
       }
@@ -2682,12 +2677,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { auditLogger } = await import('./services/auditLogger.js');
       const { limit = 10, userId, firmId } = req.query;
-      
+
       // Only admins can see all logs, users can only see their own
       const isAdmin = ['platform_admin', 'admin', 'super_admin'].includes(req.user?.role || '');
       const filterUserId = isAdmin ? (userId ? parseInt(userId as string) : undefined) : req.user?.id;
       const filterFirmId = isAdmin ? (firmId ? parseInt(firmId as string) : undefined) : req.user?.firmId;
-      
+
       const logs = auditLogger.getLogs(filterUserId, filterFirmId, parseInt(limit as string));
       res.json(logs);
     } catch (error) {
@@ -2700,7 +2695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/tenants', jwtAuthMiddleware, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
-      
+
       // Transform firms to tenant format with additional metadata
       const tenants = firms.map(firm => ({
         id: firm.id,
@@ -2724,12 +2719,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firms = await storage.getAllFirms();
       const users = await storage.getAllUsers();
-      
+
       const totalFirms = firms.length;
       const activeFirms = firms.filter(f => f.status === 'active' || !f.status).length;
       const totalUsers = users.length;
       const documentsProcessed = 45892; // This would come from actual document processing stats
-      
+
       const stats = {
         totalFirms,
         activeFirms,
@@ -2761,13 +2756,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { logManager } = await import("./logging.js");
       const { level, source, limit, since } = req.query;
-      
+
       const filters: any = {};
       if (level && level !== 'all') filters.level = level as string;
       if (source && source !== 'all') filters.source = source as string;
       if (limit) filters.limit = parseInt(limit as string);
       if (since) filters.since = new Date(since as string);
-      
+
       const logs = logManager.getLogs(filters);
       res.json(logs);
     } catch (error) {
@@ -2823,7 +2818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const firmId = parseInt(req.params.firmId);
       const adminUserId = req.user?.id;
-      
+
       if (!adminUserId) {
         return res.status(401).json({ error: 'Admin user ID required' });
       }
@@ -2849,13 +2844,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/ghost/current', requireAdmin, async (req, res) => {
     try {
       const adminUserId = req.user?.id;
-      
+
       if (!adminUserId) {
         return res.status(401).json({ error: 'Admin user ID required' });
       }
 
       const session = await storage.getCurrentGhostSession(adminUserId);
-      
+
       if (!session) {
         return res.json({ active: false });
       }
@@ -2875,13 +2870,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/ghost/exit', requireAdmin, async (req, res) => {
     try {
       const adminUserId = req.user?.id;
-      
+
       if (!adminUserId) {
         return res.status(401).json({ error: 'Admin user ID required' });
       }
 
       const session = await storage.endGhostSession(adminUserId);
-      
+
       res.json({ 
         success: true,
         message: 'Ghost mode deactivated'
@@ -2893,7 +2888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Comprehensive Onboarding System API Endpoints
-  
+
   // Save onboarding progress (auto-save)
   app.post('/api/admin/onboarding/save-progress', requireAdmin, async (req, res) => {
     try {
@@ -2927,9 +2922,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/onboarding/session/:sessionId', requireAdmin, async (req, res) => {
     try {
       const { sessionId } = req.params;
-      
+
       const session = await storage.getOnboardingSession(sessionId);
-      
+
       if (!session) {
         return res.status(404).json({ error: 'Session not found' });
       }
@@ -2952,7 +2947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate required fields
       const { firmInfo, branding, preferences } = onboardingData;
-      
+
       if (!firmInfo.name || !firmInfo.adminEmail || !firmInfo.acceptedTerms || !firmInfo.acceptedNDA) {
         return res.status(400).json({ 
           error: 'Missing required firm information',
@@ -3015,7 +3010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This would typically handle file uploads using multer
       // For now, we'll handle base64 encoded files from the frontend
       const { fileName, fileData, templateType, description } = req.body;
-      
+
       if (!fileName || !fileData || !templateType) {
         return res.status(400).json({ error: 'File name, data, and template type required' });
       }
@@ -3024,10 +3019,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 1. Save the file to cloud storage (S3, etc.)
       // 2. Get the file URL
       // 3. Save template metadata to database
-      
+
       // For demo purposes, we'll return a success response
       const fileUrl = `/uploads/templates/${fileName}`;
-      
+
       res.json({
         success: true,
         templateUrl: fileUrl,

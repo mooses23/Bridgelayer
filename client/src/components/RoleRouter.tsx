@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSession } from '@/contexts/SessionContext';
-
+import { useTenant } from '@/contexts/TenantContext';
 
 // Public Pages
 import LoginPage from '@/pages/Public/LoginPage';
@@ -47,7 +47,7 @@ export default function RoleRouter() {
     <Routes>
       {/* Public Routes - Always accessible */}
       <Route path="/login" element={<LoginPage />} />
-      
+
       {/* Protected Routes */}
       {user ? (
         <>
@@ -67,7 +67,7 @@ export default function RoleRouter() {
             <>
               {/* Onboarding route for firm users */}
               <Route path="/onboarding" element={<OnboardingPage />} />
-              
+
               {/* Main firm dashboard routes */}
               <Route path="/" element={<FirmDashboardLayout />}>
                 <Route index element={<TemplatedDashboard />} />
@@ -80,7 +80,7 @@ export default function RoleRouter() {
                 <Route path="logout" element={<LogoutPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
-              
+
               {/* Direct route for templated dashboard testing */}
               <Route path="/templated-dashboard" element={<TemplatedDashboard />} />
             </>

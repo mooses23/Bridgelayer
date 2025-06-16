@@ -44,20 +44,20 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const detectTenantFromSubdomain = (): string | null => {
     if (typeof window === 'undefined') return null;
-    
+
     const hostname = window.location.hostname;
-    
+
     // Handle localhost development
     if (hostname === 'localhost' || hostname.includes('127.0.0.1') || hostname.includes('replit.dev')) {
       return 'testfirm'; // Default tenant for development
     }
-    
+
     // Extract subdomain from hostname (e.g., 'acme' from 'acme.firmsync.com')
     const parts = hostname.split('.');
     if (parts.length >= 3) {
       return parts[0]; // Return first part as subdomain
     }
-    
+
     return null;
   };
 
@@ -65,27 +65,27 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const subdomain = detectTenantFromSubdomain();
-      
+
       if (!subdomain) {
         throw new Error('Unable to detect tenant from subdomain');
       }
-      
+
       const response = await fetch(`/api/tenant/${subdomain}`, {
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch tenant data: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setTenant(data.tenant);
     } catch (err) {
       console.error('Error fetching tenant data:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
-      
+
       // Fallback to default tenant for development
       setTenant({
         id: 1,
