@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { type Request, type Response, type NextFunction } from 'express';
 import { storage } from '../storage';
 
@@ -54,8 +55,8 @@ export function generateTokens(user: any) {
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
   const cookieOptions = {
     httpOnly: true,
-    secure: true, // Replit uses HTTPS
-    sameSite: 'lax' as const,
+    secure: false, // Development mode - internal requests
+    sameSite: 'none' as const, // Allow cross-origin transmission
     path: '/',
   };
 
@@ -146,7 +147,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const isValid = await storage.verifyPassword(password, user.password);
+    const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       console.log('❌ Invalid password for user:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
