@@ -161,18 +161,20 @@ export const firmBillingSettings = pgTable("firm_billing_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Audit logs table
+// Audit logs table - Fixed with all required columns
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
+  actorId: integer("actor_id").references(() => users.id).notNull(),
+  actorName: text("actor_name").notNull(),
   action: text("action").notNull(),
-  resourceType: text("resource_type"),
+  resourceType: text("resource_type").notNull(),
   resourceId: text("resource_id"),
   details: jsonb("details"),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
-  timestamp: timestamp("timestamp").defaultNow(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 
 // Client intakes table
@@ -369,21 +371,7 @@ export const aiTriageResults = pgTable("ai_triage_results", {
   reviewedAt: timestamp("reviewed_at"),
 });
 
-// Audit logging table for compliance firewall
-export const auditLogs = pgTable("audit_logs", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(), // Fixed: added user_id column
-  actorId: integer("actor_id").references(() => users.id).notNull(),
-  actorName: text("actor_name").notNull(), // Store name for immutable record
-  action: text("action").notNull(), // DOC_UPLOAD, DOC_REVIEW_COMPLETED, CONFIG_CHANGE, etc.
-  resourceType: text("resource_type").notNull(), // 'document', 'user', 'firm', 'settings'
-  resourceId: text("resource_id"), // ID of the affected resource
-  details: jsonb("details"), // Additional context about the action
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
-});
+
 
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({

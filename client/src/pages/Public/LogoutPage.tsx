@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useSession } from '@/contexts/SessionContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function LogoutPage() {
-  const { logout } = useAuth();
+  const { logout } = useSession();
   const navigate = useNavigate();
 
   useEffect(() => {
