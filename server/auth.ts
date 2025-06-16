@@ -100,7 +100,7 @@ export const login = async (req: Request, res: Response) => {
       rememberToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
-      
+
       rememberTokens.set(rememberToken, {
         userId: user.id,
         expiresAt,
@@ -143,7 +143,9 @@ export const getSession = async (req: Request, res: Response) => {
   }
 
   try {
-    const user = await storage.getUser(req.session.userId);
+    // Need to properly extract userId from session
+    const userId = req.session?.user?.id || req.session?.userId;
+    const user = await storage.getUser(userId);
     if (!user) {
       return res.status(401).json({ message: 'Invalid session' });
     }
@@ -188,7 +190,7 @@ export const verifyToken = async (req: Request, res: Response) => {
   }
 
   const tokenData = rememberTokens.get(token)!;
-  
+
   // Check if token is expired
   if (new Date() > tokenData.expiresAt) {
     rememberTokens.delete(token);

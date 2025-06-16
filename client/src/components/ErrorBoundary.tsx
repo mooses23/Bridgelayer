@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
-    
+
     // In production, you could send this to an error reporting service
     if (process.env.NODE_ENV === "production") {
       // Example: errorReportingService.captureException(error, { extra: errorInfo });
@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 An unexpected error occurred. Please try refreshing the page.
               </p>
-              
+
               {/* Show error details in development */}
               {process.env.NODE_ENV === "development" && this.state.error && (
                 <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 </div>
               )}
             </div>
-            
+
             <div className="space-y-3">
               <button
                 onClick={this.handleRetry}
@@ -68,7 +68,7 @@ export class ErrorBoundary extends Component<Props, State> {
               >
                 Try Again
               </button>
-              
+
               <button
                 onClick={() => window.location.href = "/"}
                 className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -81,7 +81,14 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return (
+      <div className="error-boundary">
+        {this.props.children}
+        <div className="error-fallback hidden">
+          <p>Something went wrong. Please refresh the page.</p>
+        </div>
+      </div>
+    );
   }
 }
 
@@ -114,7 +121,7 @@ export const InlineErrorFallback: React.FC<{ error: Error; resetError: () => voi
 export const useErrorHandler = () => {
   return (error: Error, errorInfo?: React.ErrorInfo) => {
     console.error("Manual error reported:", error, errorInfo);
-    
+
     if (process.env.NODE_ENV === "production") {
       // Send to error reporting service
     }

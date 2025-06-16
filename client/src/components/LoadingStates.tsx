@@ -16,9 +16,15 @@ export function PageLoader({ message = "Loading..." }: { message?: string }) {
 }
 
 // Button loading state
-export function ButtonLoader({ children, isLoading, ...props }: any) {
+export function ButtonLoader({ children, isLoading, onClick, ...props }: any) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (!isLoading && onClick) {
+      onClick(e);
+    }
+  };
+
   return (
-    <button {...props} disabled={isLoading || props.disabled}>
+    <button {...props} disabled={isLoading || props.disabled} onClick={handleClick}>
       {isLoading ? (
         <div className="flex items-center space-x-2">
           <Loader2 className="h-4 w-4 animate-spin" />
