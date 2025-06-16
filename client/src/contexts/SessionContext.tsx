@@ -36,29 +36,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const checkSession = async () => {
     setIsLoading(true);
     try {
-      const storedToken = localStorage.getItem('auth_token');
-      if (storedToken) {
-        setToken(storedToken);
-        const response = await fetch('/api/auth/verify', {
-          headers: {
-            'Authorization': `Bearer ${storedToken}`
-          }
-        });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData.user);
-        } else {
-          localStorage.removeItem('auth_token');
-          setToken(null);
-          setUser(null);
-        }
+      const response = await fetch('/api/auth/session', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const sessionData = await response.json();
+        setUser(sessionData.user);
       } else {
         setUser(null);
       }
     } catch (error) {
       console.error('Session check failed:', error);
-      localStorage.removeItem('auth_token');
-      setToken(null);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -78,18 +66,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const loginData = await response.json();
         console.log("✅ Login redirectPath:", loginData.redirectPath);
         
-        // Store JWT token in localStorage
-        if (loginData.token) {
-          localStorage.setItem('auth_token', loginData.token);
-          setToken(loginData.token);
-        }
-        
         setUser(loginData.user);
         return {
           success: true,
           redirectPath: loginData.redirectPath
         };
       } else {
+        const errorData = await response.json();
+        console.error('Login failed:', errorData.message);
         return { success: false };
       }
     } catch (error) {
@@ -100,19 +84,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        await fetch('/api/auth/logout', { 
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      }
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        credentials: 'include'
+      });
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      localStorage.removeItem('auth_token');
       setToken(null);
       setUser(null);
     }
