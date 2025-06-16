@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { storage } from '../storage';
+import jwt from 'jsonwebtoken';
 
 /**
  * Session-based Authentication Middleware
@@ -121,4 +122,48 @@ export const firmAuthMiddleware = async (
 
     next();
   });
+};
+
+export const sessionMiddleware = (req: any, res: any, next: any) => {
+  console.log('Session check:', {
+    sessionExists: !!req.session,
+    userId: req.session?.userId,
+    userRole: req.session?.userRole,
+    sessionId: req.sessionID,
+    sessionKeys: req.session ? Object.keys(req.session) : [],
+    cookies: req.headers.cookie,
+    fullSession: req.session
+  });
+
+  // Check for JWT token first (preferred method)
+  const token = req.cookies?.accessToken || req.headers.authorization?.replace('Bearer ', '');
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+      req.user = {
+        id: decoded.userId,
+        role: decoded.role,
+        firmId: decoded.firmId,
+        email: decoded.email
+      };
+      return next();
+    } catch (error) {
+      console.log('JWT verification failed:', error.message);
+    }
+  }
+
+  // Fallback to session-based auth
+  if (!req.session || !req.session.userId) {
+    console.log('❌ Authentication failed: No session or userId');
+    return res.status(401).json({ message: 'No active session' });
+  }
+
+  req.user = {
+    id: req.session.userId,
+    role: req.session.userRole,
+    firmId: req.session.firmId
+  };
+
+  next();
 };

@@ -121,7 +121,7 @@ export function OnboardingWizard() {
             data={formData}
             onComplete={handleComplete}
             onPrevious={handlePrevious}
-            isLoading={isLoading}
+            isLoading={isPending}
           />
         );
       default:

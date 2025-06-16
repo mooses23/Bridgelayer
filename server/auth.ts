@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { storage } from './storage';
+import jwt from 'jsonwebtoken';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -65,9 +66,51 @@ export const login = async (req: Request, res: Response) => {
     // Update last login
     await storage.updateUserLastLogin(user.id);
 
-    // Create session
+    // Set session data
     req.session.userId = user.id;
     req.session.userRole = user.role;
+    req.session.firmId = user.firmId;
+
+    console.log('Setting session data:', { 
+      userId: user.id, 
+      userRole: user.role, 
+      firmId: user.firmId 
+    });
+
+    // Also set JWT cookie for better persistence
+    const jwtToken = jwt.sign(
+      { 
+        userId: user.id, 
+        role: user.role, 
+        firmId: user.firmId,
+        email: user.email 
+      },
+      process.env.JWT_SECRET || 'fallback-secret',
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    await new Promise((resolve, reject) => {
+      req.session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+          reject(err);
+        } else {
+          console.log('✅ Session saved successfully:', {
+            userId: req.session.userId,
+            userRole: req.session.userRole,
+            sessionId: req.sessionID
+          });
+          resolve(true);
+        }
+      });
+    });
 
     // Prepare user data for response
     const userData = {
@@ -132,6 +175,7 @@ export const logout = async (req: Request, res: Response) => {
       return res.status(500).json({ message: 'Logout failed' });
     }
     res.clearCookie('connect.sid');
+    res.clearCookie('accessToken');
     res.json({ message: 'Logged out successfully' });
   });
 };
