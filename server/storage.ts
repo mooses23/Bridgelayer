@@ -88,6 +88,7 @@ export interface IStorage {
   // Firm management
   createFirm(firm: InsertFirm): Promise<Firm>;
   getFirm(id: number): Promise<Firm | undefined>;
+  getFirmById(id: number): Promise<Firm | undefined>;
   getFirmBySlug(slug: string): Promise<Firm | undefined>;
   updateFirm(id: number, updates: Partial<Firm>): Promise<Firm | undefined>;
 
@@ -287,6 +288,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFirm(id: number): Promise<Firm | undefined> {
+    const [firm] = await db.select().from(firms).where(eq(firms.id, id));
+    return firm || undefined;
+  }
+
+  async getFirmById(id: number): Promise<Firm | undefined> {
     const [firm] = await db.select().from(firms).where(eq(firms.id, id));
     return firm || undefined;
   }

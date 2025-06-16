@@ -235,6 +235,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tenant lookup by firmId for authenticated users
+  app.get('/api/tenant-by-id/:firmId', requireAuth, async (req, res) => {
+    try {
+      const firmId = parseInt(req.params.firmId);
+
+      if (!firmId || isNaN(firmId)) {
+        return res.status(400).json({ error: 'Valid firm ID is required' });
+      }
+
+      // Find firm by ID
+      const firm = await storage.getFirmById(firmId);
+
+      if (!firm) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+
+      // Return tenant data with features
+      const tenantData = {
+        id: firm.id,
+        name: firm.name,
+        slug: firm.slug,
+        onboarded: firm.onboarded,
+        plan: firm.plan,
+        features: {
+          billingEnabled: true,
+          aiDebug: false,
+          documentsEnabled: true,
+          intakeEnabled: true,
+          communicationsEnabled: true,
+          calendarEnabled: true,
+          adminGhostMode: false,
+          ...(firm.features || {})
+        }
+      };
+
+      res.json(tenantData);
+    } catch (error) {
+      console.error('Error fetching tenant by ID:', error);
+      res.status(500).json({ error: 'Failed to fetch tenant data' });
+    }
+  });
+
   // Firm management endpoints - require authentication
   app.get('/api/firm', requireAuth, async (req, res) => {
     try {

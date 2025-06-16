@@ -48,9 +48,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    fetch(`/api/tenant/${user.firmId}`, { credentials: "include" })
+    fetch(`/api/tenant-by-id/${user.firmId}`, { credentials: "include" })
       .then(r => r.json())
-      .then(data => setTenant(data.tenant))
+      .then(data => setTenant(data))
       .finally(() => setLoading(false));
   }, [user?.firmId, isLoading]);
 
