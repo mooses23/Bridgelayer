@@ -105,19 +105,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { expiresIn: '7d' }
       );
 
-      // Set secure cookies
+      // Set secure cookies with proper Replit configuration
       const isProduction = process.env.NODE_ENV === 'production';
-      res.cookie('accessToken', accessToken, {
+      const cookieOptions = {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'strict' : 'none',
+        secure: false, // Must be false for Replit development
+        sameSite: 'lax' as const, // Changed from 'none' to 'lax' for better compatibility
+        path: '/',
+        domain: undefined // Let browser handle domain automatically
+      };
+      
+      res.cookie('accessToken', accessToken, {
+        ...cookieOptions,
         maxAge: 2 * 60 * 60 * 1000 // 2 hours
       });
       
       res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'strict' : 'none',
+        ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
@@ -151,18 +155,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   app.post("/api/auth/logout", async (req, res) => {
     try {
-      // Clear JWT cookies
-      res.clearCookie('accessToken', {
+      // Clear JWT cookies with matching options
+      const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'none'
-      });
+        secure: false,
+        sameSite: 'lax' as const,
+        path: '/',
+        domain: undefined
+      };
       
-      res.clearCookie('refreshToken', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'none'
-      });
+      res.clearCookie('accessToken', cookieOptions);
+      res.clearCookie('refreshToken', cookieOptions);
 
       console.log('✅ Logout successful - cookies cleared');
 
@@ -255,14 +258,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { expiresIn: '2h' }
       );
 
-      // Set new access token cookie
-      const isProduction = process.env.NODE_ENV === 'production';
-      res.cookie('accessToken', newAccessToken, {
+      // Set new access token cookie with consistent settings
+      const cookieOptions = {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'strict' : 'none',
+        secure: false,
+        sameSite: 'lax' as const,
+        path: '/',
+        domain: undefined,
         maxAge: 2 * 60 * 60 * 1000 // 2 hours
-      });
+      };
+      
+      res.cookie('accessToken', newAccessToken, cookieOptions);
 
       console.log('✅ Token refreshed for user:', user.id);
 
