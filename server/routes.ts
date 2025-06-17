@@ -19,7 +19,10 @@ import { storage } from "./storage";
 import { billingStorage } from "./storage-billing";
 import { processDocument } from "./services/documentProcessor";
 import { registerAdminRoutes } from "./routes/admin";
-import { login, logout, getSession, requireAuth, requireAdmin, refreshToken } from "./auth/jwt-auth";
+import { JWTManager } from "./auth/core/jwt-manager";
+import { AdminAuthController } from "./auth/controllers/admin-auth-controller";
+import { OnboardingAuthController } from "./auth/controllers/onboarding-auth-controller";
+import { requireAuth, requireAdmin } from "./auth/middleware/auth-middleware";
 import OpenAI from "openai";
 import fs from "fs/promises";
 import path from "path";
@@ -36,7 +39,7 @@ const upload = multer({
   },
 });
 
-// Use session-based authentication system
+// Use modular authentication system
 const requireSystemAdmin = [requireAuth, requireAdmin];
 
 // Import Stripe for payment processing
@@ -52,11 +55,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import audit logger
   const { auditLogger } = await import('./services/auditLogger.js');
 
-  // JWT Authentication routes
-  app.post("/api/auth/login", login);
-  app.post("/api/auth/logout", logout);
-  app.get("/api/auth/session", getSession);
-  app.post("/api/auth/refresh", refreshToken);
+  // New Modular Authentication Routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      console.log('🔐 JWT Login attempt:', { email });
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Missing credentials' });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Verify password
+      const bcrypt = await import('bcrypt');
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Generate JWT tokens
+      const accessToken = JWTManager.generateAccessToken({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        firmId: user.firmId,
+        tenantId: user.firmId?.toString()
+      });
+
+      const refreshToken = JWTManager.generateRefreshToken({
+        userId: user.id,
+        tenantId: user.firmId?.toString(),
+        tokenVersion: 1
+      });
+
+      // Set secure cookies
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('accessToken', accessToken, JWTManager.getCookieOptions(isProduction));
+      res.cookie('refreshToken', refreshToken, JWTManager.getRefreshCookieOptions(isProduction));
+
+      // Determine redirect path
+      let redirectPath = '/dashboard';
+      if (['platform_admin', 'admin', 'super_admin'].includes(user.role)) {
+        redirectPath = '/admin';
+      } else if (user.firmId) {
+        const firm = await storage.getFirm(user.firmId);
+        redirectPath = firm?.onboarded ? '/dashboard' : '/onboarding';
+      }
+
+      console.log('✅ JWT Login successful:', { userId: user.id, role: user.role, redirectPath });
+
+      res.json({
+        message: 'Logged in',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          firmId: user.firmId
+        },
+        redirectPath
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ error: 'Authentication failed' });
+    }
+  });
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      const accessToken = JWTManager.extractTokenFromRequest(req);
+      const refreshToken = req.cookies?.refreshToken;
+
+      // Blacklist tokens
+      if (accessToken) JWTManager.blacklistToken(accessToken);
+      if (refreshToken) JWTManager.blacklistToken(refreshToken);
+
+      // Clear cookies
+      res.clearCookie('accessToken');
+      res.clearCookie('refreshToken');
+
+      res.json({ success: true, message: 'Logged out successfully' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ error: 'Logout failed' });
+    }
+  });
+  app.get("/api/auth/session", async (req, res) => {
+    try {
+      const token = JWTManager.extractTokenFromRequest(req);
+      
+      if (!token) {
+        return res.status(401).json({ message: 'No active session' });
+      }
+
+      const validation = await JWTManager.validateToken(token);
+      if (!validation.valid) {
+        return res.status(401).json({ message: 'Invalid session' });
+      }
+
+      const user = await storage.getUser(validation.payload.userId);
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          firmId: user.firmId
+        },
+        isAuthenticated: true
+      });
+    } catch (error) {
+      console.error('Session check error:', error);
+      res.status(500).json({ error: 'Session check failed' });
+    }
+  });
+  app.post("/api/auth/refresh", async (req, res) => {
+    try {
+      const refreshToken = req.cookies?.refreshToken;
+      
+      if (!refreshToken) {
+        return res.status(401).json({ error: 'No refresh token' });
+      }
+
+      const result = await JWTManager.rotateTokens(refreshToken);
+      
+      if (!result.success) {
+        return res.status(401).json({ error: 'Token refresh failed' });
+      }
+
+      // Set new tokens
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('accessToken', result.accessToken, JWTManager.getCookieOptions(isProduction));
+      res.cookie('refreshToken', result.newRefreshToken, JWTManager.getRefreshCookieOptions(isProduction));
+
+      res.json({ success: true, message: 'Tokens refreshed successfully' });
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      res.status(500).json({ error: 'Token refresh failed' });
+    }
+  });
+
+  // Onboarding Authentication Routes
+  app.post("/api/onboarding/init", OnboardingAuthController.initializeOnboarding);
+  app.get("/api/onboarding/validate/:subdomain", OnboardingAuthController.validateSubdomain);
+  app.put("/api/onboarding/:sessionId/progress", OnboardingAuthController.saveOnboardingProgress);
+  app.get("/api/onboarding/:sessionId/status", OnboardingAuthController.getOnboardingStatus);
+  app.post("/api/onboarding/:sessionId/complete", OnboardingAuthController.completeOnboarding);
 
   // Legacy OAuth callback (remove after migration)
   app.get('/api/auth/google/callback/legacy', async (req, res) => {
@@ -3188,10 +3342,7 @@ app.get('/api/tenant/config', async (req, res) => {
     }
   });
 
-  // Register authentication routes
-  app.post("/api/auth/login", login);
-  app.post("/api/auth/logout", logout);
-  app.get("/api/auth/session", getSession);
+  // Authentication routes already registered above
 
   const httpServer = createServer(app);
 
