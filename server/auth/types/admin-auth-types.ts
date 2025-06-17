@@ -1,26 +1,24 @@
 /**
- * Type definitions for Admin Authentication System
+ * TypeScript type definitions for Admin Authentication System
  */
 
 export namespace AdminAuthTypes {
-  // Admin user information
-  export interface AdminUser {
-    id: number;
-    email: string;
-    role: string;
-    permissions: string[];
-  }
-
   // Admin validation result
   export interface AdminValidationResult {
     valid: boolean;
     reason?: 'USER_NOT_FOUND' | 'INSUFFICIENT_ROLE' | 'INSUFFICIENT_PERMISSION' | 'TENANT_ACCESS_DENIED' | 'VALIDATION_ERROR';
-    adminUser?: AdminUser;
+    adminUser?: {
+      id: number;
+      email: string;
+      role: string;
+      permissions: string[];
+    };
   }
 
   // Authentication extraction result
   export interface AuthExtractionResult {
     success: boolean;
+    reason?: 'NO_VALID_AUTH' | 'EXTRACTION_ERROR';
     user?: {
       id: number;
       email: string;
@@ -29,19 +27,6 @@ export namespace AdminAuthTypes {
       role: string;
       firmId?: number | null;
     };
-    reason?: string;
-  }
-
-  // Admin action audit log entry
-  export interface AdminActionLog {
-    adminUserId: number;
-    action: string;
-    resource: string;
-    tenantId?: string;
-    ipAddress?: string;
-    userAgent?: string;
-    timestamp: Date;
-    metadata?: Record<string, any>;
   }
 
   // Ghost mode session
@@ -52,34 +37,33 @@ export namespace AdminAuthTypes {
     sessionToken: string;
     isActive: boolean;
     startedAt: Date;
-    endedAt?: Date;
     ipAddress?: string;
     userAgent?: string;
-    auditTrail: GhostAction[];
+    auditTrail: GhostAuditEntry[];
   }
 
-  // Ghost mode action
-  export interface GhostAction {
+  // Ghost mode audit entry
+  export interface GhostAuditEntry {
     timestamp: Date;
     action: string;
     resource: string;
-    data?: Record<string, any>;
+    data?: any;
   }
 
-  // Tenant access permissions
-  export interface TenantAccessContext {
-    tenantId: string;
-    permissions: string[];
-    restrictions?: string[];
-  }
+  // Admin permissions
+  export type AdminPermission = 
+    | 'read:all_tenants'
+    | 'write:all_tenants'
+    | 'ghost_mode'
+    | 'system_config'
+    | 'security_audit'
+    | 'read:own_tenant'
+    | 'write:own_tenant'
+    | 'user_management'
+    | 'read:tenant_data'
+    | 'write:tenant_data'
+    | 'firm_settings';
 
-  // Admin session context
-  export interface AdminSessionContext {
-    userId: number;
-    role: string;
-    permissions: string[];
-    tenantAccess: TenantAccessContext[];
-    ghostMode?: boolean;
-    sessionId: string;
-  }
+  // Admin roles
+  export type AdminRole = 'platform_admin' | 'admin' | 'super_admin';
 }
