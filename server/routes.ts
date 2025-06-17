@@ -79,8 +79,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      // Simple JWT token generation (bypass complex type issues for now)
-      const jwt = await import('jsonwebtoken');
+      // Simple JWT token generation with proper import handling
+      const jwtModule = await import('jsonwebtoken');
+      const jwt = jwtModule.default || jwtModule;
       const secret = process.env.JWT_SECRET || 'fallback-secret-key';
       
       const accessToken = jwt.sign(
@@ -180,7 +181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify JWT token
-      const jwt = await import('jsonwebtoken');
+      const jwtModule = await import('jsonwebtoken');
+      const jwt = jwtModule.default || jwtModule;
       const secret = process.env.JWT_SECRET || 'fallback-secret-key';
       
       try {
@@ -224,7 +226,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify refresh token
-      const jwt = await import('jsonwebtoken');
+      const jwtModule = await import('jsonwebtoken');
+      const jwt = jwtModule.default || jwtModule;
       const secret = process.env.JWT_SECRET || 'fallback-secret-key';
       
       const decoded = jwt.verify(refreshToken, secret) as any;
