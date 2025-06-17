@@ -19,8 +19,7 @@ import { storage } from "./storage";
 import { billingStorage } from "./storage-billing";
 import { processDocument } from "./services/documentProcessor";
 import { registerAdminRoutes } from "./routes/admin";
-import { login, logout, getSession, requireAuth, requireAdmin } from "./auth/jwt-auth";
-import session from "express-session";
+import { login, logout, getSession, requireAuth, requireAdmin, refreshToken } from "./auth/jwt-auth";
 import OpenAI from "openai";
 import fs from "fs/promises";
 import path from "path";
@@ -53,10 +52,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import audit logger
   const { auditLogger } = await import('./services/auditLogger.js');
 
-  // Session-based Authentication routes
+  // JWT Authentication routes
   app.post("/api/auth/login", login);
   app.post("/api/auth/logout", logout);
   app.get("/api/auth/session", getSession);
+  app.post("/api/auth/refresh", refreshToken);
 
   // Legacy OAuth callback (remove after migration)
   app.get('/api/auth/google/callback/legacy', async (req, res) => {

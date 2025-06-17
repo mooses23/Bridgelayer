@@ -53,16 +53,12 @@ export function generateTokens(user: any) {
 
 // Set auth cookies with proper Replit configuration
 export function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-  // Get the current domain from environment or request
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  const domain = isDevelopment ? undefined : `.${process.env.REPLIT_SLUG}.repl.co`;
-  
+  // Replit environment configuration
   const cookieOptions = {
     httpOnly: true,
-    secure: !isDevelopment, // HTTPS in production, HTTP in development
-    sameSite: 'lax' as const,
-    path: '/',
-    ...(domain && { domain }) // Only set domain in production
+    secure: false, // Replit development uses HTTP
+    sameSite: 'none' as const, // Required for cross-origin in Replit
+    path: '/'
   };
 
   res.cookie('auth_token', accessToken, {
@@ -78,8 +74,15 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
 
 // Clear auth cookies
 export function clearAuthCookies(res: Response) {
-  res.clearCookie('auth_token');
-  res.clearCookie('refresh_token');
+  const cookieOptions = {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'none' as const,
+    path: '/'
+  };
+  
+  res.clearCookie('auth_token', cookieOptions);
+  res.clearCookie('refresh_token', cookieOptions);
 }
 
 // Verify JWT token
@@ -117,8 +120,7 @@ export const requireAuth = async (req: AuthenticatedRequest, res: Response, next
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
-      firmId: user.firmId,
-      firm: user.firm
+      firmId: user.firmId
     };
 
     next();
@@ -168,8 +170,12 @@ export const login = async (req: Request, res: Response) => {
     let redirectPath = '/dashboard';
     if (user.role === 'admin' || user.role === 'platform_admin' || user.role === 'super_admin') {
       redirectPath = '/admin';
-    } else if (user.firmId && !user.firm?.onboardingComplete) {
-      redirectPath = '/onboarding';
+    } else if (user.firmId) {
+      // Check firm onboarding status
+      const firm = await storage.getFirm(user.firmId);
+      if (firm && !firm.onboarded) {
+        redirectPath = '/onboarding';
+      }
     }
 
     console.log('✅ JWT Login successful:', { userId: user.id, role: user.role, redirectPath });
