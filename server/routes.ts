@@ -19,7 +19,7 @@ import { storage } from "./storage";
 import { billingStorage } from "./storage-billing";
 import { processDocument } from "./services/documentProcessor";
 import { registerAdminRoutes } from "./routes/admin";
-import { login, logout, getSession, requireAuth, requireAdmin } from "./auth-minimal";
+import { login, logout, getSession, requireAuth, requireAdmin } from "./auth/jwt-auth";
 import session from "express-session";
 import OpenAI from "openai";
 import fs from "fs/promises";

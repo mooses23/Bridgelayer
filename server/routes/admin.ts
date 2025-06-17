@@ -6,14 +6,14 @@ import {
   insertDocumentTypeTemplateSchema,
   insertPlatformSettingSchema
 } from "@shared/schema";
-import { adminAuthMiddleware } from "../auth/sessionMiddleware";
+import { requireAuth, requireAdmin } from "../auth/jwt-auth";
 import express from 'express';
 import { getSystemHealth, logManager } from "../utils";
 
 const router = express.Router();
 
 // System Health endpoint
-router.get('/system-health', authenticateToken, async (req, res) => {
+router.get('/system-health', requireAuth, requireAdmin, async (req, res) => {
   try {
     const healthData = await getSystemHealth();
     logManager.log('info', 'System health data requested', { user: req.user?.id }, 'admin');
@@ -25,7 +25,7 @@ router.get('/system-health', authenticateToken, async (req, res) => {
 });
 
 // Logs endpoint for system health page
-router.get('/logs', authenticateToken, async (req, res) => {
+router.get('/logs', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { level, source, limit = 100 } = req.query;
 
