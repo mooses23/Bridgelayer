@@ -29,7 +29,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Check authentication requirement
   if (requireAuth && !user) {
-    return <Navigate to={fallback} replace />;
+    return <Redirect to={fallback} />;
   }
 
   // Check role requirements
@@ -39,7 +39,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       : hasRole(requireRole);
 
     if (!hasRequiredRole) {
-      return <Navigate to="/unauthorized" replace />;
+      return <Redirect to="/unauthorized" />;
     }
   }
 
@@ -82,7 +82,7 @@ export const TenantRoute: React.FC<TenantRouteProps> = ({ children, firmId }) =>
 
   // Regular users can only access their own firm
   if (firmId && user?.firmId !== firmId) {
-    return <Navigate to="/unauthorized" replace />;
+    return <Redirect to="/unauthorized" />;
   }
 
   return <>{children}</>;
