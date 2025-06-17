@@ -23,6 +23,7 @@ import { JWTManager } from "./auth/core/jwt-manager";
 import { AdminAuthController } from "./auth/controllers/admin-auth-controller";
 import { OnboardingAuthController } from "./auth/controllers/onboarding-auth-controller";
 import { requireAuth, requireAdmin } from "./auth/middleware/auth-middleware";
+import { authenticateJWT, requireFirmUser, requireTenantAccess, optionalAuth } from "./middleware/auth.js";
 import { createServer } from "http";
 import OpenAI from "openai";
 import fs from "fs/promises";

@@ -1,54 +1,89 @@
-
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useTenant } from '@/contexts/TenantContext';
-import { useSession } from '@/contexts/SessionContext';
-import { LoadingSpinner } from './LoadingSpinner';
+import { useAuth, useRole } from '../hooks/useAuth';
+import { Redirect } from 'wouter';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireRole?: string | string[];
   requireAuth?: boolean;
-  requireOnboarding?: boolean;
+  fallback?: string;
 }
 
-export function ProtectedRoute({ 
-  children, 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requireRole,
   requireAuth = true,
-  requireOnboarding = false 
-}: ProtectedRouteProps) {
-  const { tenantId, config, isLoading: tenantLoading, error } = useTenant();
-  const { user, isLoading: sessionLoading } = useSession();
+  fallback = '/login'
+}) => {
+  const { user, isLoading } = useAuth();
+  const { hasRole, hasAnyRole } = useRole();
 
-  // Show loading while checking tenant and session
-  if (tenantLoading || sessionLoading) {
+  // Show loading while checking authentication
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  // Handle tenant errors
-  if (error || (!config && tenantId)) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Failed to load firm configuration</p>
-          <p className="text-gray-600">Please check your URL and try again</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect to login if authentication is required but user is not logged in
+  // Check authentication requirement
   if (requireAuth && !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={fallback} replace />;
   }
 
-  // Redirect to onboarding if required but not complete
-  if (requireOnboarding && config && !config.onboardingComplete) {
-    return <Navigate to="/setup" replace />;
+  // Check role requirements
+  if (requireRole && user) {
+    const hasRequiredRole = Array.isArray(requireRole) 
+      ? hasAnyRole(requireRole)
+      : hasRole(requireRole);
+
+    if (!hasRequiredRole) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   return <>{children}</>;
+};
+
+// Specific role-based route components
+export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute requireRole={['platform_admin', 'admin', 'super_admin']}>
+    {children}
+  </ProtectedRoute>
+);
+
+export const FirmUserRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute requireRole={['firm_admin', 'paralegal']}>
+    {children}
+  </ProtectedRoute>
+);
+
+export const FirmAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ProtectedRoute requireRole="firm_admin">
+    {children}
+  </ProtectedRoute>
+);
+
+// Tenant-aware route component
+interface TenantRouteProps {
+  children: React.ReactNode;
+  firmId?: number;
 }
+
+export const TenantRoute: React.FC<TenantRouteProps> = ({ children, firmId }) => {
+  const { user } = useAuth();
+  const { isAdmin } = useRole();
+
+  // Admin users can access any tenant
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
+  // Regular users can only access their own firm
+  if (firmId && user?.firmId !== firmId) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <>{children}</>;
+};
