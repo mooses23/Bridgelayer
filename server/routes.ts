@@ -166,8 +166,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('✅ Logout successful - cookies cleared');
 
       res.json({ message: 'Logged out successfully' });
-
-      res.json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
       console.error('Logout error:', error);
       res.status(500).json({ error: 'Logout failed' });
@@ -175,14 +173,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   app.get("/api/auth/session", async (req, res) => {
     try {
-      const token = JWTManager.extractTokenFromRequest(req);
+      const accessToken = req.cookies?.accessToken;
       
-      if (!token) {
+      if (!accessToken) {
         return res.status(401).json({ message: 'No active session' });
       }
 
-      const validation = await JWTManager.validateToken(token);
-      if (!validation.valid) {
+      // Verify JWT token
+      const jwt = await import('jsonwebtoken');
+      const secret = process.env.JWT_SECRET || 'fallback-secret-key';
+      
+      try {
+        const decoded = jwt.verify(accessToken, secret) as any;
+        
+        // Get user data from database
+        const user = await storage.getUserById(decoded.userId);
+        if (!user) {
+          return res.status(401).json({ message: 'User not found' });
+        }
+
+        console.log('✅ Session validated:', { userId: user.id, role: user.role });
+
+        res.json({
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            firmId: user.firmId
+          }
+        });
+      } catch (jwtError) {
+        console.log('❌ JWT verification failed:', jwtError);
+        return res.status(401).json({ message: 'Invalid session token' });
+      }
+    } catch (error) {
+      console.error('Session check error:', error);
+      res.status(500).json({ error: 'Session validation failed' });
+    }
+  });
+
+  // JWT Token refresh endpoint
+  app.post("/api/auth/refresh", async (req, res) => {
+    try {
+      const refreshToken = req.cookies?.refreshToken;
+      
+      if (!refreshToken) {
+        return res.status(401).json({ error: 'No refresh token' });
+      }
+
+      // Verify refresh token
+      const jwt = await import('jsonwebtoken');
+      const secret = process.env.JWT_SECRET || 'fallback-secret-key';
+      
+      const decoded = jwt.verify(refreshToken, secret) as any;
+      
+      if (decoded.type !== 'refresh') {
+        return res.status(401).json({ error: 'Invalid token type' });
+      }
+
+      // Get user data
+      const user = await storage.getUserById(decoded.userId);
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+
+      // Generate new access token
+      const newAccessToken = jwt.sign(
+        {
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+          firmId: user.firmId,
+          type: 'access'
+        },
+        secret,
+        { expiresIn: '2h' }
+      );
+
+      // Set new access token cookie
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('accessToken', newAccessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'strict' : 'none',
+        maxAge: 2 * 60 * 60 * 1000 // 2 hours
+      });
+
+      console.log('✅ Token refreshed for user:', user.id);
+
+      res.json({ message: 'Token refreshed successfully' });
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      res.status(401).json({ error: 'Token refresh failed' });
+    }
+  });
+
+  // Legacy session endpoint for any remaining compatibility
+  app.get("/api/auth/legacy-session", async (req, res) => {
+    try {
+      const validation = await storage.getUserById(1); // Fallback check
+      if (!validation) {
         return res.status(401).json({ message: 'Invalid session' });
       }
 
