@@ -228,6 +228,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin create new firm endpoint
+  app.post("/api/admin/firms", requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const {
+        firmName,
+        firmSlug,
+        description,
+        website,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        practiceAreas,
+        firmSize,
+        adminFirstName,
+        adminLastName,
+        adminEmail,
+        adminRole,
+        enabledFeatures,
+        billingRate,
+        timezone
+      } = req.body;
+
+      // Create the firm
+      const newFirm = await storage.createFirm({
+        name: firmName,
+        slug: firmSlug,
+        description: description || null,
+        website: website || null,
+        email: email || null,
+        phone: phone || null,
+        address: address || null,
+        city: city || null,
+        state: state || null,
+        zipCode: zipCode || null,
+        onboarded: false,
+        plan: "professional",
+        features: {
+          billingEnabled: enabledFeatures.includes("billing"),
+          documentsEnabled: enabledFeatures.includes("documents"),
+          intakeEnabled: enabledFeatures.includes("intake"),
+          communicationsEnabled: enabledFeatures.includes("communications"),
+          calendarEnabled: enabledFeatures.includes("calendar"),
+          analyticsEnabled: enabledFeatures.includes("analytics"),
+          aiDebug: false,
+          adminGhostMode: false
+        }
+      });
+
+      // Create the admin user for the firm
+      const adminUser = await storage.createUser({
+        email: adminEmail,
+        password: "temp_password_123", // Will need to be changed on first login
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        role: adminRole || "firm_admin",
+        firmId: newFirm.id,
+        active: true
+      });
+
+      res.json({
+        message: "Firm created successfully",
+        firm: newFirm,
+        adminUser: {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.firstName,
+          lastName: adminUser.lastName,
+          role: adminUser.role
+        }
+      });
+    } catch (error) {
+      console.error("Error creating firm:", error);
+      res.status(500).json({ error: 'Failed to create firm' });
+    }
+  });
+
   // Cases endpoints
   app.get("/api/cases", requireAuth, async (req, res) => {
     try {

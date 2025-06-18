@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import FirmsPage from "@/pages/Admin/FirmsPage";
+import FirmOnboardingPage from "@/pages/Admin/FirmOnboardingPage";
 
 export default function AdminLayout() {
   console.log("[AdminLayout] LIVE");
@@ -128,7 +129,16 @@ export default function AdminLayout() {
         {/* Page content */}
         <main className="flex-1 p-6">
           <ErrorBoundary>
-            {currentPath === "/admin/firms" ? <FirmsPage /> : <AdminDashboard />}
+            {(() => {
+              if (currentPath === "/admin") return <AdminDashboard />;
+              if (currentPath === "/admin/firms") return <FirmsPage />;
+              if (currentPath === "/admin/firms/new") return <FirmOnboardingPage />;
+              if (currentPath === "/admin/usage") return <div>Usage Analytics Page</div>;
+              if (currentPath === "/admin/system-health") return <div>System Health Page</div>;
+              if (currentPath === "/admin/ghost") return <div>Ghost Mode Page</div>;
+              if (currentPath === "/admin/settings") return <div>System Settings Page</div>;
+              return <AdminDashboard />;
+            })()}
           </ErrorBoundary>
         </main>
       </div>
