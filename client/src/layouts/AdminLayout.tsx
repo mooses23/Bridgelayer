@@ -11,11 +11,13 @@ import {
   X, 
   LogOut,
   Home,
-  Activity
+  Activity,
+  Puzzle
 } from "lucide-react";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import FirmsPage from "@/pages/Admin/FirmsPage";
 import FirmOnboardingPage from "@/pages/Admin/FirmOnboardingPage";
+import IntegrationsPage from "@/pages/Admin/IntegrationsPage";
 
 export default function AdminLayout() {
   console.log("[AdminLayout] LIVE");
@@ -27,6 +29,7 @@ export default function AdminLayout() {
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: Home, current: currentPath === "/admin" },
     { name: "Firms", href: "/admin/firms", icon: Building2, current: currentPath === "/admin/firms" },
+    { name: "Integrations", href: "/admin/integrations", icon: Puzzle, current: currentPath === "/admin/integrations" },
     { name: "Usage Analytics", href: "/admin/usage", icon: BarChart3, current: currentPath === "/admin/usage" },
     { name: "System Health", href: "/admin/system-health", icon: Activity, current: currentPath === "/admin/system-health" },
     { name: "Ghost Mode", href: "/admin/ghost", icon: Eye, current: currentPath === "/admin/ghost" },
@@ -133,6 +136,7 @@ export default function AdminLayout() {
               if (currentPath === "/admin") return <AdminDashboard />;
               if (currentPath === "/admin/firms") return <FirmsPage />;
               if (currentPath === "/admin/firms/new") return <FirmOnboardingPage />;
+              if (currentPath === "/admin/integrations") return <IntegrationsPage />;
               if (currentPath === "/admin/usage") return <div>Usage Analytics Page</div>;
               if (currentPath === "/admin/system-health") return <div>System Health Page</div>;
               if (currentPath === "/admin/ghost") return <div>Ghost Mode Page</div>;
