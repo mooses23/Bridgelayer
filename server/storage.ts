@@ -264,10 +264,16 @@ export interface IStorage {
 
   // Admin Ghost Mode
   createAdminGhostSession(session: InsertAdminGhostSession): Promise<AdminGhostSession>;
+  createGhostSession(session: any): Promise<AdminGhostSession>;
   getActiveGhostSessions(adminUserId: number): Promise<AdminGhostSession[]>;
+  getGhostSessions(adminUserId: number): Promise<AdminGhostSession[]>;
   getGhostSessionByToken(sessionToken: string): Promise<AdminGhostSession | undefined>;
   endGhostSession(sessionToken: string): Promise<boolean>;
   updateGhostSessionAuditTrail(sessionToken: string, auditTrail: any): Promise<AdminGhostSession | undefined>;
+  
+  // Firm management
+  getAllFirms(): Promise<Firm[]>;
+  getUsersByFirmId(firmId: number): Promise<User[]>;
 
   // Document Generation
   getFirmTemplates(firmId: number): Promise<any[]>;
@@ -1783,6 +1789,22 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
+  }
+
+  // Firm management methods for Ghost Mode
+  async getAllFirms(): Promise<Firm[]> {
+    return await db
+      .select()
+      .from(firms)
+      .orderBy(asc(firms.name));
+  }
+
+  async getUsersByFirmId(firmId: number): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.firmId, firmId))
+      .orderBy(asc(users.firstName), asc(users.lastName));
   }
 
   // Document Generation Storage Methods

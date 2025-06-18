@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { createServer } from "http";
+import { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { authStrategyMiddleware } from "./auth/strategy-router";
 import { requireAuth, requireAdmin, requireFirmUser, requireTenantAccess } from "./auth/middleware/unified-auth-middleware";
@@ -374,6 +375,251 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error completing onboarding:', error);
       res.status(500).json({ error: 'Failed to complete onboarding' });
+    }
+  });
+
+  // Ghost Mode API Routes
+  app.get("/api/admin/firms", requireAdmin, async (req, res) => {
+    try {
+      const firms = await storage.getAllFirms();
+      
+      // Add user count and activity data for each firm
+      const firmsWithStats = await Promise.all(
+        firms.map(async (firm) => {
+          try {
+            const users = await storage.getUsersByFirmId(firm.id);
+            return {
+              ...firm,
+              userCount: users.length,
+              lastActivity: users.length > 0 ? 'Active' : 'No activity'
+            };
+          } catch (error) {
+            return {
+              ...firm,
+              userCount: 0,
+              lastActivity: 'No activity'
+            };
+          }
+        })
+      );
+
+      res.json(firmsWithStats);
+    } catch (error) {
+      console.error("Error fetching firms for ghost mode:", error);
+      res.status(500).json({ error: "Failed to fetch firms" });
+    }
+  });
+
+  app.get("/api/admin/ghost/current", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const sessions = await storage.getGhostSessions(user.id);
+      const currentSession = sessions.find(session => session.isActive);
+      
+      if (currentSession) {
+        const firm = await storage.getFirm(currentSession.targetFirmId);
+        res.json({
+          ...currentSession,
+          firmName: firm?.name || 'Unknown Firm'
+        });
+      } else {
+        res.json({ isActive: false });
+      }
+    } catch (error) {
+      console.error("Error fetching current ghost session:", error);
+      res.status(500).json({ error: "Failed to fetch ghost session" });
+    }
+  });
+
+  app.post("/api/admin/ghost/start", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { firmId, purpose, notes } = req.body;
+
+      if (!firmId || !purpose) {
+        return res.status(400).json({ error: "Firm ID and purpose are required" });
+      }
+
+      // Check if there's already an active session
+      const existingSessions = await storage.getGhostSessions(user.id);
+      const activeSession = existingSessions.find(session => session.isActive);
+      
+      if (activeSession) {
+        return res.status(400).json({ error: "You already have an active ghost session" });
+      }
+
+      // Create new ghost session
+      const sessionData = {
+        adminUserId: user.id,
+        targetFirmId: firmId,
+        sessionToken: crypto.randomUUID(),
+        isActive: true,
+        permissions: { read: true, write: false },
+        auditTrail: [{
+          action: 'session_started',
+          timestamp: new Date().toISOString(),
+          purpose,
+          notes
+        }],
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      };
+
+      const session = await storage.createGhostSession(sessionData);
+      
+      // Get firm name for response
+      const firm = await storage.getFirm(firmId);
+      
+      res.json({
+        ...session,
+        firmName: firm?.name || 'Unknown Firm'
+      });
+    } catch (error) {
+      console.error("Error starting ghost session:", error);
+      res.status(500).json({ error: "Failed to start ghost session" });
+    }
+  });
+
+  app.post("/api/admin/ghost/end/:sessionToken", requireAdmin, async (req, res) => {
+    try {
+      const { sessionToken } = req.params;
+      const success = await storage.endGhostSession(sessionToken);
+      
+      if (success) {
+        res.json({ message: "Ghost session ended successfully" });
+      } else {
+        res.status(404).json({ error: "Ghost session not found" });
+      }
+    } catch (error) {
+      console.error("Error ending ghost session:", error);
+      res.status(500).json({ error: "Failed to end ghost session" });
+    }
+  });
+
+  // Onboarding Templates API Routes
+  app.get("/api/admin/onboarding-templates", requireAdmin, async (req, res) => {
+    try {
+      // Mock templates data - in production this would come from database
+      const templates = [
+        {
+          id: 1,
+          name: "Personal Injury Law Firm",
+          description: "Complete template for personal injury practices with intake forms, case management, and client communications",
+          firmInfo: {
+            practiceAreas: ["Personal Injury", "Auto Accidents", "Slip & Fall"],
+            firmSize: "Small (2-10 attorneys)"
+          },
+          branding: {
+            primaryColor: "#DC2626",
+            secondaryColor: "#FEE2E2"
+          },
+          preferences: {
+            caseTypes: ["Motor Vehicle Accidents", "Premises Liability", "Medical Malpractice"],
+            defaultLanguage: "English"
+          },
+          integrations: ["DocuSign", "QuickBooks"],
+          documentTemplates: [
+            { name: "Client Intake Form", type: "intake" },
+            { name: "Retainer Agreement", type: "contract" },
+            { name: "Medical Records Request", type: "discovery" }
+          ],
+          createdAt: "2025-01-15T00:00:00Z",
+          isDefault: true
+        },
+        {
+          id: 2,
+          name: "Corporate Law Firm",
+          description: "Enterprise template for corporate law practices with contract management and business formation tools",
+          firmInfo: {
+            practiceAreas: ["Corporate Law", "Business Formation", "Contract Law"],
+            firmSize: "Medium (11-50 attorneys)"
+          },
+          branding: {
+            primaryColor: "#1D4ED8",
+            secondaryColor: "#DBEAFE"
+          },
+          preferences: {
+            caseTypes: ["Business Formation", "Contract Review", "Mergers & Acquisitions"],
+            defaultLanguage: "English"
+          },
+          integrations: ["Microsoft 365", "Slack", "DocuSign"],
+          documentTemplates: [
+            { name: "Operating Agreement", type: "corporate" },
+            { name: "NDA Template", type: "contract" },
+            { name: "Employment Agreement", type: "employment" }
+          ],
+          createdAt: "2025-01-10T00:00:00Z",
+          isDefault: false
+        },
+        {
+          id: 3,
+          name: "Family Law Practice",
+          description: "Specialized template for family law with divorce proceedings, custody agreements, and client support",
+          firmInfo: {
+            practiceAreas: ["Family Law", "Divorce", "Child Custody"],
+            firmSize: "Small (2-10 attorneys)"
+          },
+          branding: {
+            primaryColor: "#7C3AED",
+            secondaryColor: "#EDE9FE"
+          },
+          preferences: {
+            caseTypes: ["Divorce", "Child Custody", "Adoption", "Domestic Relations"],
+            defaultLanguage: "English"
+          },
+          integrations: ["Google Workspace", "DocuSign"],
+          documentTemplates: [
+            { name: "Divorce Petition", type: "family" },
+            { name: "Custody Agreement", type: "family" },
+            { name: "Financial Disclosure", type: "discovery" }
+          ],
+          createdAt: "2025-01-05T00:00:00Z",
+          isDefault: false
+        }
+      ];
+
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching onboarding templates:", error);
+      res.status(500).json({ error: "Failed to fetch onboarding templates" });
+    }
+  });
+
+  app.post("/api/admin/onboarding-templates/:templateId/clone", requireAdmin, async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      
+      // In production, this would clone the template in the database
+      // For now, return a mock cloned template
+      const clonedTemplate = {
+        id: Date.now(), // Temporary ID
+        name: `Cloned Template ${templateId}`,
+        description: "Cloned template for editing",
+        isClone: true,
+        originalTemplateId: parseInt(templateId)
+      };
+
+      res.json(clonedTemplate);
+    } catch (error) {
+      console.error("Error cloning template:", error);
+      res.status(500).json({ error: "Failed to clone template" });
+    }
+  });
+
+  app.get("/api/admin/template-preview/:templateId", requireAdmin, async (req, res) => {
+    try {
+      const { templateId } = req.params;
+      
+      // In production, this would fetch the full template data
+      // For now, redirect to a preview interface
+      res.json({ 
+        message: "Template preview functionality",
+        templateId,
+        previewUrl: `/admin/template-preview/${templateId}`
+      });
+    } catch (error) {
+      console.error("Error fetching template preview:", error);
+      res.status(500).json({ error: "Failed to fetch template preview" });
     }
   });
 
