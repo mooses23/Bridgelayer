@@ -26,13 +26,15 @@ const TenantContext = createContext<TenantContextType>({
   tenantId: '',
   config: null,
   isLoading: true,
-  error: null
+  error: null,
+  showFallback: false
 });
 
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFallback, setShowFallback] = useState(false);
 
   useEffect(() => {
     const detectTenant = async () => {
@@ -137,7 +139,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       tenantId: tenant?.id || '',
       config: tenant || null,
       isLoading: loading,
-      error
+      error,
+      showFallback
     }}>
       {children}
     </TenantContext.Provider>
