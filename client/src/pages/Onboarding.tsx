@@ -102,8 +102,9 @@ export default function Onboarding() {
 
   // Check if mandatory integrations are selected (storage + billing)
   const getMandatoryIntegrations = () => {
-    const storage = availableIntegrations.find(i => i.category === 'storage');
-    const billing = availableIntegrations.find(i => i.category === 'billing');
+    const integrations = Array.isArray(availableIntegrations) ? availableIntegrations : [];
+    const storage = integrations.find((i: any) => i.category === 'storage');
+    const billing = integrations.find((i: any) => i.category === 'billing');
     return { storage, billing };
   };
 
@@ -165,12 +166,12 @@ export default function Onboarding() {
             <CardTitle>
               {currentStep === 1 && "Tell us about your firm"}
               {currentStep === 2 && "Set up your team"}
-              {currentStep === 3 && "Configure your workflow"}
+              {currentStep === 3 && "Select Your Integrations"}
             </CardTitle>
             <CardDescription>
               {currentStep === 1 && "Basic information about your legal practice"}
               {currentStep === 2 && "Add team members and assign roles"}
-              {currentStep === 3 && "Choose your document analysis preferences"}
+              {currentStep === 3 && "Choose the tools your firm needs to connect with FirmSync"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -246,44 +247,134 @@ export default function Onboarding() {
 
             {currentStep === 3 && (
               <>
-                <div>
-                  <Label>Document Analysis Features</Label>
-                  <div className="mt-2 space-y-2">
-                    {[
-                      "Document Summarization",
-                      "Risk Analysis",
-                      "Clause Extraction",
-                      "Cross-Reference Checking",
-                      "Formatting Analysis"
-                    ].map((feature) => (
-                      <label key={feature} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          className="rounded border-gray-300"
-                          defaultChecked
-                        />
-                        <span className="text-sm">{feature}</span>
-                      </label>
-                    ))}
+                {integrationsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-2 text-gray-600">Loading available integrations...</p>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="reviewWorkflow">Default Review Workflow</Label>
-                  <Select onValueChange={(value) => setFormData({
-                    ...formData,
-                    preferences: {...formData.preferences, reviewWorkflow: value}
-                  })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select workflow" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="paralegal">Paralegal Review First</SelectItem>
-                      <SelectItem value="associate">Associate Review First</SelectItem>
-                      <SelectItem value="partner">Partner Review Required</SelectItem>
-                      <SelectItem value="automated">Automated Processing</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                ) : (
+                  <>
+                    {/* Mandatory Requirements Banner */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                      <div className="flex items-start space-x-3">
+                        <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                        <div>
+                          <h3 className="font-medium text-amber-800">Required Integrations</h3>
+                          <p className="text-sm text-amber-700 mt-1">
+                            Your firm must select one Storage integration and one Billing integration to complete setup.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Integration Categories */}
+                    <div className="space-y-6">
+                      {['storage', 'billing', 'communication', 'productivity', 'legal_tools'].map((category) => {
+                        const categoryIntegrations = Array.isArray(availableIntegrations) 
+                          ? availableIntegrations.filter((i: any) => i.category === category)
+                          : [];
+                        
+                        if (categoryIntegrations.length === 0) return null;
+
+                        const isMandatory = category === 'storage' || category === 'billing';
+                        const categoryTitle = {
+                          storage: 'Document Storage',
+                          billing: 'Billing & Time Tracking',
+                          communication: 'Communication Tools',
+                          productivity: 'Productivity Suite',
+                          legal_tools: 'Legal Research & Tools'
+                        }[category];
+
+                        return (
+                          <div key={category} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-medium text-gray-900 flex items-center space-x-2">
+                                <span>{categoryTitle}</span>
+                                {isMandatory && (
+                                  <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                    Required
+                                  </span>
+                                )}
+                              </h3>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {categoryIntegrations.map((integration: any) => {
+                                const isSelected = formData.selectedIntegrations.includes(integration.id);
+                                return (
+                                  <div
+                                    key={integration.id}
+                                    className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                      isSelected
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                    onClick={() => handleIntegrationToggle(integration.id)}
+                                  >
+                                    <div className="flex items-start space-x-3">
+                                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                        isSelected
+                                          ? 'border-blue-500 bg-blue-500'
+                                          : 'border-gray-300'
+                                      }`}>
+                                        {isSelected && <CheckSquare className="w-3 h-3 text-white" />}
+                                      </div>
+                                      <div className="flex-1">
+                                        <h4 className="font-medium text-gray-900">{integration.name}</h4>
+                                        <p className="text-sm text-gray-600 mt-1">{integration.description}</p>
+                                        {integration.features && (
+                                          <div className="mt-2 flex flex-wrap gap-1">
+                                            {integration.features.split(',').slice(0, 3).map((feature: string, idx: number) => (
+                                              <span key={idx} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
+                                                {feature.trim()}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Selection Summary */}
+                    {formData.selectedIntegrations.length > 0 && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                        <h3 className="font-medium text-blue-900">Selected Integrations</h3>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {formData.selectedIntegrations.map((integrationId) => {
+                            const integration = Array.isArray(availableIntegrations) 
+                              ? availableIntegrations.find((i: any) => i.id === integrationId)
+                              : null;
+                            return integration ? (
+                              <span key={integrationId} className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+                                {integration.name}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Validation Message */}
+                    {!isMandatoryRequirementMet() && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                        <div className="flex items-center space-x-2">
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                          <p className="text-sm text-red-700">
+                            Please select at least one Storage integration and one Billing integration to continue.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </>
             )}
 
@@ -300,7 +391,11 @@ export default function Onboarding() {
                   Next
                 </Button>
               ) : (
-                <Button onClick={handleComplete}>
+                <Button 
+                  onClick={handleComplete}
+                  disabled={!isMandatoryRequirementMet()}
+                  className={!isMandatoryRequirementMet() ? 'opacity-50 cursor-not-allowed' : ''}
+                >
                   Complete Setup
                 </Button>
               )}

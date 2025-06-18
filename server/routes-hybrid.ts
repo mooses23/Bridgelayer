@@ -313,6 +313,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get available integrations for onboarding selection
+  app.get("/api/integrations/available", async (req, res) => {
+    try {
+      const availableIntegrations = await storage.getPlatformIntegrations();
+      res.json(availableIntegrations);
+    } catch (error) {
+      console.error("Error fetching available integrations:", error);
+      res.status(500).json({ error: "Failed to fetch available integrations" });
+    }
+  });
+
   app.get("/api/integrations/firm", requireAuth, async (req, res) => {
     try {
       const user = req.user as any;
