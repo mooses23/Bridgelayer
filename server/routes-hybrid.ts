@@ -11,7 +11,10 @@ import { refreshJWTTokens } from "./auth/jwt-auth-clean";
 // JWT validation function matching working admin endpoints
 async function validateJWTAuth(req: any) {
   try {
-    const jwtToken = req.cookies.firmsync_access_token;
+    const jwtToken = req.cookies.accessToken;
+    console.log("🔍 JWT Debug - Token exists:", !!jwtToken);
+    console.log("🔍 JWT Debug - All cookies:", Object.keys(req.cookies || {}));
+    
     if (!jwtToken) {
       return { success: false, error: "No JWT token found" };
     }
@@ -19,9 +22,11 @@ async function validateJWTAuth(req: any) {
     const jwt = await import('jsonwebtoken');
     const secret = process.env.JWT_SECRET || 'firmsync-jwt-secret-change-in-production';
     const payload = jwt.verify(jwtToken, secret) as any;
+    console.log("🔍 JWT Debug - Payload:", { userId: payload?.userId, type: payload?.type, role: payload?.role });
     
     if (payload && payload.type === 'access') {
       const user = await storage.getUser(payload.userId);
+      console.log("🔍 JWT Debug - User found:", !!user, user?.role);
       if (user) {
         return { success: true, user };
       }
@@ -29,6 +34,7 @@ async function validateJWTAuth(req: any) {
     
     return { success: false, error: "Invalid token" };
   } catch (error) {
+    console.log("🔍 JWT Debug - Error:", error.message);
     return { success: false, error: "JWT validation failed" };
   }
 }
@@ -277,15 +283,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Integration Management Routes
-  app.get("/api/integrations/dashboard", async (req, res) => {
+  app.get("/api/integrations/dashboard", requireAuth, async (req, res) => {
     try {
-      // Use JWT authentication like other working admin endpoints
-      const authResult = await validateJWTAuth(req);
-      if (!authResult.success) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      const user = authResult.user;
+      const user = req.user;
       if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
