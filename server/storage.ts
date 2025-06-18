@@ -70,6 +70,7 @@ import {
   messages,
   systemAdmins,
   firmIntegrations,
+  platformIntegrations,
   platformSettings,
   documentTypeTemplates,
   availableIntegrations,
@@ -660,8 +661,8 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(availableIntegrations).orderBy(availableIntegrations.name);
   }
 
-  async getAllPlatformIntegrations(): Promise<AvailableIntegration[]> {
-    return await db.select().from(availableIntegrations).orderBy(availableIntegrations.name);
+  async getAllPlatformIntegrations(): Promise<any[]> {
+    return await db.select().from(platformIntegrations).orderBy(platformIntegrations.name);
   }
 
   async createAvailableIntegration(insertIntegration: InsertAvailableIntegration): Promise<AvailableIntegration> {

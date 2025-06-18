@@ -441,18 +441,21 @@ export const firmSettings = pgTable("firm_settings", {
 export const platformIntegrations = pgTable("platform_integrations", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  description: text("description").notNull(),
-  category: text("category").notNull(), // document-management, billing-payments, etc.
+  slug: text("slug"),
+  description: text("description"),
+  category: text("category").notNull(),
   provider: text("provider").notNull(),
   logoUrl: text("logo_url"),
   webhookUrl: text("webhook_url"),
   apiBaseUrl: text("api_base_url"),
   authType: text("auth_type").notNull(), // oauth2, api_key, webhook
+  status: text("status").default("active"),
+  version: text("version"),
   isActive: boolean("is_active").default(true),
   requiresApproval: boolean("requires_approval").default(false),
   planRestrictions: text("plan_restrictions").array(), // which plans can access
   configSchema: jsonb("config_schema"), // JSON schema for configuration
+  settings: jsonb("settings"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
