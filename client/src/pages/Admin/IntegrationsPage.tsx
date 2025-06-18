@@ -1,448 +1,462 @@
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Plus, 
-  Settings, 
-  ExternalLink, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle,
-  Search,
-  Filter,
-  Globe,
-  FileText,
-  CreditCard,
-  Mail,
-  Calendar,
-  Shield,
-  Database,
-  MessageSquare
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Settings, Users, BarChart3, AlertCircle, CheckCircle, Key, Shield, Activity, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
-interface Integration {
-  id: string;
+interface PlatformIntegration {
+  id: number;
   name: string;
   description: string;
   category: string;
   provider: string;
-  status: 'active' | 'inactive' | 'configured' | 'error';
-  icon: any;
-  configurable: boolean;
-  webhookUrl?: string;
-  apiKey?: string;
-  lastSync?: string;
-  firmCount?: number;
+  authType: string;
+  status: "active" | "inactive";
+  version: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const integrationCategories = [
-  { 
-    id: 'document-management', 
-    name: 'Document Management', 
-    icon: FileText,
-    description: 'Document storage, processing, and collaboration platforms'
-  },
-  { 
-    id: 'billing-payments', 
-    name: 'Billing & Payments', 
-    icon: CreditCard,
-    description: 'Payment processing, invoicing, and financial management'
-  },
-  { 
-    id: 'communications', 
-    name: 'Communications', 
-    icon: MessageSquare,
-    description: 'Email, messaging, and client communication tools'
-  },
-  { 
-    id: 'calendar-scheduling', 
-    name: 'Calendar & Scheduling', 
-    icon: Calendar,
-    description: 'Appointment scheduling and calendar synchronization'
-  },
-  { 
-    id: 'security-compliance', 
-    name: 'Security & Compliance', 
-    icon: Shield,
-    description: 'Authentication, encryption, and compliance monitoring'
-  },
-  { 
-    id: 'data-analytics', 
-    name: 'Data & Analytics', 
-    icon: Database,
-    description: 'Business intelligence, reporting, and data visualization'
-  },
-  { 
-    id: 'web-services', 
-    name: 'Web Services', 
-    icon: Globe,
-    description: 'External APIs, webhooks, and third-party services'
-  }
-];
+interface FirmIntegration {
+  id: number;
+  firmId: number;
+  integrationId: number;
+  name: string;
+  status: "active" | "inactive" | "error";
+  enabledBy: number;
+  apiCredentials: { hasApiKey: boolean } | null;
+  configuration: any;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
-const sampleIntegrations: Integration[] = [
-  {
-    id: 'docusign',
-    name: 'DocuSign',
-    description: 'Electronic signature and document workflow platform',
-    category: 'document-management',
-    provider: 'DocuSign Inc.',
-    status: 'active',
-    icon: FileText,
-    configurable: true,
-    firmCount: 247,
-    lastSync: '2025-06-18T07:30:00Z'
-  },
-  {
-    id: 'stripe',
-    name: 'Stripe',
-    description: 'Payment processing and subscription management',
-    category: 'billing-payments',
-    provider: 'Stripe Inc.',
-    status: 'configured',
-    icon: CreditCard,
-    configurable: true,
-    firmCount: 189,
-    lastSync: '2025-06-18T07:15:00Z'
-  },
-  {
-    id: 'sendgrid',
-    name: 'SendGrid',
-    description: 'Email delivery and marketing automation',
-    category: 'communications',
-    provider: 'Twilio SendGrid',
-    status: 'active',
-    icon: Mail,
-    configurable: true,
-    firmCount: 156,
-    lastSync: '2025-06-18T07:25:00Z'
-  },
-  {
-    id: 'calendly',
-    name: 'Calendly',
-    description: 'Appointment scheduling and calendar integration',
-    category: 'calendar-scheduling',
-    provider: 'Calendly LLC',
-    status: 'inactive',
-    icon: Calendar,
-    configurable: true,
-    firmCount: 78
-  },
-  {
-    id: 'okta',
-    name: 'Okta',
-    description: 'Identity and access management platform',
-    category: 'security-compliance',
-    provider: 'Okta Inc.',
-    status: 'configured',
-    icon: Shield,
-    configurable: true,
-    firmCount: 43,
-    lastSync: '2025-06-18T06:45:00Z'
-  },
-  {
-    id: 'tableau',
-    name: 'Tableau',
-    description: 'Business intelligence and data visualization',
-    category: 'data-analytics',
-    provider: 'Salesforce Inc.',
-    status: 'error',
-    icon: Database,
-    configurable: true,
-    firmCount: 32
-  }
-];
+interface IntegrationDashboard {
+  availableIntegrations: PlatformIntegration[];
+  enabledIntegrations: FirmIntegration[];
+  userPermissions: any[];
+  recentActivity: any[];
+}
 
 export default function IntegrationsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [integrations] = useState<Integration[]>(sampleIntegrations);
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [selectedIntegration, setSelectedIntegration] = useState<PlatformIntegration | null>(null);
+  const [isEnableDialogOpen, setIsEnableDialogOpen] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [configuration, setConfiguration] = useState("");
 
-  const filteredIntegrations = integrations.filter(integration => {
-    const matchesCategory = selectedCategory === 'all' || integration.category === selectedCategory;
-    const matchesSearch = integration.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         integration.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+  // Fetch integration dashboard data
+  const { data: dashboardData, isLoading } = useQuery<IntegrationDashboard>({
+    queryKey: ["/api/integrations/dashboard"],
   });
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'configured': return <Settings className="w-4 h-4 text-blue-500" />;
-      case 'inactive': return <XCircle className="w-4 h-4 text-gray-400" />;
-      case 'error': return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default: return <XCircle className="w-4 h-4 text-gray-400" />;
+  // Fetch platform integrations (admin only)
+  const { data: platformIntegrations } = useQuery<PlatformIntegration[]>({
+    queryKey: ["/api/integrations/platform"],
+  });
+
+  // Enable firm integration mutation
+  const enableIntegrationMutation = useMutation({
+    mutationFn: async (data: { integrationId: number; apiKey?: string; configuration?: any }) => {
+      return await apiRequest("/api/integrations/firm", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations/dashboard"] });
+      setIsEnableDialogOpen(false);
+      setApiKey("");
+      setConfiguration("");
+      toast({
+        title: "Integration Enabled",
+        description: "Integration has been successfully enabled for your firm.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Enable Failed",
+        description: error.message || "Failed to enable integration",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Disable firm integration mutation
+  const disableIntegrationMutation = useMutation({
+    mutationFn: async (integrationId: number) => {
+      return await apiRequest(`/api/integrations/firm/${integrationId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/integrations/dashboard"] });
+      toast({
+        title: "Integration Disabled",
+        description: "Integration has been disabled for your firm.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Disable Failed",
+        description: error.message || "Failed to disable integration",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEnableIntegration = () => {
+    if (!selectedIntegration) return;
+
+    const data: any = {
+      integrationId: selectedIntegration.id,
+    };
+
+    // Add API key if provided (except for OpenAI which is per-user)
+    if (apiKey && selectedIntegration.name !== "OpenAI") {
+      data.apiKey = apiKey;
     }
+
+    // Add configuration if provided
+    if (configuration) {
+      try {
+        data.configuration = JSON.parse(configuration);
+      } catch (e) {
+        toast({
+          title: "Invalid Configuration",
+          description: "Configuration must be valid JSON",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    enableIntegrationMutation.mutate(data);
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      'active': 'default',
-      'configured': 'secondary', 
-      'inactive': 'outline',
-      'error': 'destructive'
-    } as const;
-    
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
+  const getIntegrationStatus = (integration: PlatformIntegration) => {
+    const enabled = dashboardData?.enabledIntegrations.find(
+      (fi) => fi.integrationId === integration.id
+    );
+    return enabled?.status || "available";
+  };
+
+  const isIntegrationEnabled = (integration: PlatformIntegration) => {
+    return dashboardData?.enabledIntegrations.some(
+      (fi) => fi.integrationId === integration.id && fi.status === "active"
     );
   };
 
-  const handleConfigureIntegration = (integration: Integration) => {
-    setSelectedIntegration(integration);
-    setShowConfigModal(true);
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      "Document Management": "bg-blue-100 text-blue-800",
+      "Communication": "bg-green-100 text-green-800",
+      "Finance": "bg-purple-100 text-purple-800",
+      "Analytics": "bg-orange-100 text-orange-800",
+      "AI": "bg-red-100 text-red-800",
+      "Cloud Storage": "bg-gray-100 text-gray-800",
+    };
+    return colors[category as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-48 bg-gray-200 rounded animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Platform Integrations</h1>
-          <p className="text-gray-500 mt-2">
-            Manage third-party platform integrations for FirmSync. Configure connections to external services
-            categorized by their function type for streamlined legal operations.
+          <h1 className="text-3xl font-bold">Integrations</h1>
+          <p className="text-gray-600">
+            Manage platform integrations and firm-level API access
           </p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Add Integration
-        </Button>
+        <div className="flex space-x-2">
+          <Badge variant="outline">
+            {dashboardData?.enabledIntegrations.length || 0} Active
+          </Badge>
+          <Badge variant="outline">
+            {dashboardData?.availableIntegrations.length || 0} Available
+          </Badge>
+        </div>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search integrations..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            <option value="all">All Categories</option>
-            {integrationCategories.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
+      <Tabs defaultValue="available" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="available">Available Integrations</TabsTrigger>
+          <TabsTrigger value="enabled">Enabled Integrations</TabsTrigger>
+          <TabsTrigger value="activity">Activity Log</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="available" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dashboardData?.availableIntegrations.map((integration) => (
+              <Card key={integration.id} className="relative">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{integration.name}</CardTitle>
+                    <Badge className={getCategoryColor(integration.category)}>
+                      {integration.category}
+                    </Badge>
+                  </div>
+                  <CardDescription>{integration.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Provider:</span>
+                    <span className="font-medium">{integration.provider}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Auth Type:</span>
+                    <Badge variant="outline">{integration.authType}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Status:</span>
+                    <div className="flex items-center space-x-1">
+                      {getIntegrationStatus(integration) === "active" ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : getIntegrationStatus(integration) === "error" ? (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <Activity className="h-4 w-4 text-gray-400" />
+                      )}
+                      <span className="capitalize">{getIntegrationStatus(integration)}</span>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    {isIntegrationEnabled(integration) ? (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => disableIntegrationMutation.mutate(integration.id)}
+                        disabled={disableIntegrationMutation.isPending}
+                      >
+                        Disable Integration
+                      </Button>
+                    ) : (
+                      <Dialog open={isEnableDialogOpen} onOpenChange={setIsEnableDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setSelectedIntegration(integration)}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Enable Integration
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Enable {selectedIntegration?.name}</DialogTitle>
+                            <DialogDescription>
+                              Configure API credentials and settings for this integration.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            {selectedIntegration?.name !== "OpenAI" && (
+                              <div className="space-y-2">
+                                <Label htmlFor="apiKey">
+                                  API Key
+                                  {selectedIntegration?.authType === "API_KEY" && (
+                                    <span className="text-red-500">*</span>
+                                  )}
+                                </Label>
+                                <div className="flex items-center space-x-2">
+                                  <Key className="h-4 w-4 text-gray-500" />
+                                  <Input
+                                    id="apiKey"
+                                    type="password"
+                                    placeholder="Enter API key..."
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                  />
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                  This API key will be shared across all users in your firm.
+                                </p>
+                              </div>
+                            )}
+                            {selectedIntegration?.name === "OpenAI" && (
+                              <Alert>
+                                <Shield className="h-4 w-4" />
+                                <AlertDescription>
+                                  OpenAI API keys are configured per-user for security. Users will set their own keys in their profile settings.
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                            <div className="space-y-2">
+                              <Label htmlFor="configuration">Configuration (Optional)</Label>
+                              <Textarea
+                                id="configuration"
+                                placeholder='{"key": "value"}'
+                                value={configuration}
+                                onChange={(e) => setConfiguration(e.target.value)}
+                                rows={4}
+                              />
+                              <p className="text-sm text-gray-500">
+                                JSON configuration for integration-specific settings.
+                              </p>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsEnableDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleEnableIntegration}
+                              disabled={
+                                enableIntegrationMutation.isPending ||
+                                (selectedIntegration?.authType === "API_KEY" && 
+                                 selectedIntegration?.name !== "OpenAI" && 
+                                 !apiKey)
+                              }
+                            >
+                              {enableIntegrationMutation.isPending ? "Enabling..." : "Enable"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-          </select>
-        </div>
-      </div>
+          </div>
+        </TabsContent>
 
-      {/* Integration Categories Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {integrationCategories.map(category => {
-          const categoryIntegrations = integrations.filter(i => i.category === category.id);
-          const activeCount = categoryIntegrations.filter(i => i.status === 'active').length;
-          const Icon = category.icon;
-          
-          return (
-            <Card 
-              key={category.id} 
-              className={`cursor-pointer transition-colors ${
-                selectedCategory === category.id ? 'ring-2 ring-red-500 bg-red-50' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => setSelectedCategory(selectedCategory === category.id ? 'all' : category.id)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <Icon className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm text-gray-900 truncate">{category.name}</h3>
-                    <p className="text-xs text-gray-500">{activeCount}/{categoryIntegrations.length} active</p>
-                  </div>
-                </div>
+        <TabsContent value="enabled" className="space-y-6">
+          {dashboardData?.enabledIntegrations.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Settings className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Integrations Enabled</h3>
+                <p className="text-gray-500 text-center mb-4">
+                  Enable integrations from the Available tab to start connecting your firm's workflows.
+                </p>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
-
-      {/* Integrations List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredIntegrations.map(integration => {
-          const Icon = integration.icon;
-          return (
-            <Card key={integration.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <Icon className="w-6 h-6 text-gray-600" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">{integration.name}</CardTitle>
-                        {getStatusIcon(integration.status)}
+          ) : (
+            <div className="space-y-4">
+              {dashboardData?.enabledIntegrations.map((integration) => (
+                <Card key={integration.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          {integration.status === "active" ? (
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          ) : integration.status === "error" ? (
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                          ) : (
+                            <Activity className="h-5 w-5 text-gray-400" />
+                          )}
+                          <h3 className="font-medium">{integration.name}</h3>
+                        </div>
+                        <Badge variant={integration.status === "active" ? "default" : "destructive"}>
+                          {integration.status}
+                        </Badge>
+                        {integration.apiCredentials?.hasApiKey && (
+                          <Badge variant="outline">
+                            <Key className="h-3 w-3 mr-1" />
+                            API Key Set
+                          </Badge>
+                        )}
                       </div>
-                      <CardDescription className="text-sm">
-                        {integration.provider}
-                      </CardDescription>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Settings className="h-4 w-4 mr-1" />
+                          Configure
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => disableIntegrationMutation.mutate(integration.integrationId)}
+                          disabled={disableIntegrationMutation.isPending}
+                        >
+                          Disable
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  {getStatusBadge(integration.status)}
+                    {integration.errorMessage && (
+                      <Alert className="mt-4" variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{integration.errorMessage}</AlertDescription>
+                      </Alert>
+                    )}
+                    <div className="mt-4 text-sm text-gray-500">
+                      Enabled on {new Date(integration.createdAt).toLocaleDateString()}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Integration Activity</CardTitle>
+              <CardDescription>
+                Track integration usage and configuration changes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {dashboardData?.recentActivity.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <BarChart3 className="h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-500">No recent activity</p>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-gray-600 mb-4">{integration.description}</p>
-                
-                <div className="space-y-2 mb-4">
-                  {integration.firmCount && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Connected Firms:</span>
-                      <span className="font-medium">{integration.firmCount}</span>
-                    </div>
-                  )}
-                  {integration.lastSync && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Last Sync:</span>
-                      <span className="font-medium">
-                        {new Date(integration.lastSync).toLocaleString()}
+              ) : (
+                <div className="space-y-4">
+                  {dashboardData?.recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-center justify-between border-b pb-2">
+                      <div className="flex items-center space-x-3">
+                        <Activity className="h-4 w-4 text-gray-400" />
+                        <div>
+                          <p className="font-medium">{activity.action}</p>
+                          <p className="text-sm text-gray-500">{activity.details}</p>
+                        </div>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {new Date(activity.createdAt).toLocaleString()}
                       </span>
                     </div>
-                  )}
+                  ))}
                 </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1"
-                    onClick={() => handleConfigureIntegration(integration)}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Configure
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Docs
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {filteredIntegrations.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <Search className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No integrations found</h3>
-          <p className="text-gray-500">
-            Try adjusting your search terms or category filter.
-          </p>
-        </div>
-      )}
-
-      {/* Configuration Modal */}
-      {showConfigModal && selectedIntegration && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">Configure {selectedIntegration.name}</h2>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowConfigModal(false)}
-                >
-                  Close
-                </Button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="status">Status</Label>
-                    <select 
-                      id="status"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                      defaultValue={selectedIntegration.status}
-                    >
-                      <option value="active">Active</option>
-                      <option value="configured">Configured</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <select 
-                      id="category"
-                      className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                      defaultValue={selectedIntegration.category}
-                    >
-                      {integrationCategories.map(category => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="apiKey">API Key</Label>
-                  <Input 
-                    id="apiKey"
-                    type="password"
-                    placeholder="Enter API key..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="webhookUrl">Webhook URL</Label>
-                  <Input 
-                    id="webhookUrl"
-                    placeholder="https://your-app.com/webhooks/..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="config">Configuration JSON</Label>
-                  <Textarea 
-                    id="config"
-                    placeholder="Enter integration-specific configuration..."
-                    rows={4}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button className="flex-1">
-                    Save Configuration
-                  </Button>
-                  <Button variant="outline" className="flex-1">
-                    Test Connection
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
