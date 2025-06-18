@@ -3,6 +3,9 @@ import { useSession } from '@/contexts/SessionContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { useQuery } from '@tanstack/react-query';
 
+// Protected Route Components
+import { AdminRoute, FirmUserRoute, ClientRoute, PublicRoute } from '@/components/ProtectedRoute';
+
 // Public Pages
 import LoginPage from '@/pages/Public/LoginPage';
 import NotFoundPage from '@/pages/Public/NotFoundPage';
@@ -45,12 +48,20 @@ export default function RoleRouter() {
 
   // Admin users - redirect to admin panel
   if (['platform_admin', 'admin', 'super_admin'].includes(user.role)) {
-    return <AdminLayout />;
+    return (
+      <AdminRoute>
+        <AdminLayout />
+      </AdminRoute>
+    );
   }
 
   // Client users - redirect to client portal  
   if (user.role === 'client') {
-    return <ClientLayout />;
+    return (
+      <ClientRoute>
+        <ClientLayout />
+      </ClientRoute>
+    );
   }
 
   // Firm users - check onboarding status with fallbacks
@@ -70,11 +81,19 @@ export default function RoleRouter() {
 
     if (needsOnboarding) {
       console.log('🎯 Firm needs onboarding - showing onboarding flow');
-      return <OnboardingPage />;
+      return (
+        <FirmUserRoute>
+          <OnboardingPage />
+        </FirmUserRoute>
+      );
     }
 
     // Firm is properly onboarded, show dashboard
-    return <FirmDashboardLayout />;
+    return (
+      <FirmUserRoute>
+        <FirmDashboardLayout />
+      </FirmUserRoute>
+    );
   }
 
   // Fallback

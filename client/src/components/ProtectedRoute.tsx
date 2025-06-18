@@ -1,89 +1,141 @@
 import React from 'react';
-import { useAuth, useRole } from '../hooks/useAuth';
-import { Redirect } from 'wouter';
+import { useSession } from '@/contexts/SessionContext';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requireRole?: string | string[];
+  requiredRole?: string | string[];
   requireAuth?: boolean;
-  fallback?: string;
+  fallback?: React.ReactNode;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  requireRole,
+export function ProtectedRoute({ 
+  children, 
+  requiredRole, 
   requireAuth = true,
-  fallback = '/login'
-}) => {
-  const { user, isLoading } = useAuth();
-  const { hasRole, hasAnyRole } = useRole();
+  fallback 
+}: ProtectedRouteProps) {
+  const { user, isLoading, isAuthenticated } = useSession();
 
-  // Show loading while checking authentication
+  // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }
 
-  // Check authentication requirement
-  if (requireAuth && !user) {
-    return <Redirect to={fallback} />;
+  // If authentication is required but user is not authenticated
+  if (requireAuth && !isAuthenticated) {
+    if (fallback) {
+      return <>{fallback}</>;
+    }
+    // Redirect will be handled by RoleRouter
+    return null;
   }
 
-  // Check role requirements
-  if (requireRole && user) {
-    const hasRequiredRole = Array.isArray(requireRole) 
-      ? hasAnyRole(requireRole)
-      : hasRole(requireRole);
-
-    if (!hasRequiredRole) {
-      return <Redirect to="/unauthorized" />;
+  // If specific role is required, check user role
+  if (requiredRole && user) {
+    const userRole = user.role;
+    const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    
+    if (!allowedRoles.includes(userRole)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+            <p className="text-gray-600">You don't have permission to access this page.</p>
+          </div>
+        </div>
+      );
     }
   }
 
   return <>{children}</>;
-};
-
-// Specific role-based route components
-export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute requireRole={['platform_admin', 'admin', 'super_admin']}>
-    {children}
-  </ProtectedRoute>
-);
-
-export const FirmUserRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute requireRole={['firm_admin', 'paralegal']}>
-    {children}
-  </ProtectedRoute>
-);
-
-export const FirmAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ProtectedRoute requireRole="firm_admin">
-    {children}
-  </ProtectedRoute>
-);
-
-// Tenant-aware route component
-interface TenantRouteProps {
-  children: React.ReactNode;
-  firmId?: number;
 }
 
-export const TenantRoute: React.FC<TenantRouteProps> = ({ children, firmId }) => {
-  const { user } = useAuth();
-  const { isAdmin } = useRole();
+/**
+ * Admin-only route protection
+ */
+export function AdminRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute requiredRole={['admin', 'platform_admin', 'super_admin']}>
+      {children}
+    </ProtectedRoute>
+  );
+}
 
-  // Admin users can access any tenant
-  if (isAdmin) {
-    return <>{children}</>;
-  }
+/**
+ * Firm user route protection (admin and paralegal)
+ */
+export function FirmUserRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute requiredRole={['firm_admin', 'firm_owner', 'paralegal']}>
+      {children}
+    </ProtectedRoute>
+  );
+}
 
-  // Regular users can only access their own firm
-  if (firmId && user?.firmId !== firmId) {
-    return <Redirect to="/unauthorized" />;
-  }
+/**
+ * Firm admin only route protection
+ */
+export function FirmAdminRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute requiredRole={['firm_admin', 'firm_owner']}>
+      {children}
+    </ProtectedRoute>
+  );
+}
 
-  return <>{children}</>;
-};
+/**
+ * Client route protection
+ */
+export function ClientRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute requiredRole="client">
+      {children}
+    </ProtectedRoute>
+  );
+}
+
+/**
+ * Multi-tenant route protection with firm validation
+ */
+export function TenantRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useSession();
+  
+  return (
+    <ProtectedRoute 
+      requiredRole={['firm_admin', 'firm_owner', 'paralegal', 'client']}
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Firm Access Required</h1>
+            <p className="text-gray-600">You must be associated with a firm to access this page.</p>
+          </div>
+        </div>
+      }
+    >
+      {user?.firmId ? children : (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">No Firm Association</h1>
+            <p className="text-gray-600">Your account is not associated with any firm.</p>
+          </div>
+        </div>
+      )}
+    </ProtectedRoute>
+  );
+}
+
+/**
+ * Public route that doesn't require authentication
+ */
+export function PublicRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute requireAuth={false}>
+      {children}
+    </ProtectedRoute>
+  );
+}
