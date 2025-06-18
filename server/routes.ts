@@ -200,6 +200,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin firms management endpoint
+  app.get("/api/admin/firms", requireAdmin, async (req, res) => {
+    try {
+      const firms = await storage.getAllFirms();
+      
+      // Enhance firms with additional metadata for admin view
+      const enhancedFirms = await Promise.all(firms.map(async (firm) => {
+        const users = await storage.getUsersByFirmId(firm.id);
+        const documents = await storage.getDocumentsByFirmId(firm.id);
+        
+        return {
+          ...firm,
+          userCount: users.length,
+          documentsCount: documents.length,
+          casesCount: 0, // Will be implemented when cases system is added
+          onboardingProgress: firm.onboarded ? 100 : 25,
+          lastActivity: "Recently",
+          createdAt: firm.createdAt || new Date().toISOString()
+        };
+      }));
+
+      res.json(enhancedFirms);
+    } catch (error) {
+      console.error("Error fetching firms for admin:", error);
+      res.status(500).json({ error: 'Failed to fetch firms' });
+    }
+  });
+
   // Cases endpoints
   app.get("/api/cases", requireAuth, async (req, res) => {
     try {

@@ -96,8 +96,10 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUsersByFirm(firmId: number): Promise<User[]>;
+  getUsersByFirmId(firmId: number): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
+  getAllFirms(): Promise<Firm[]>;
 
   // Folder management
   createFolder(folder: InsertFolder): Promise<Folder>;

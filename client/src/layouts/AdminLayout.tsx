@@ -14,21 +14,22 @@ import {
   Activity
 } from "lucide-react";
 import AdminDashboard from "@/pages/Admin/AdminDashboard";
+import FirmsPage from "@/pages/Admin/FirmsPage";
 
 export default function AdminLayout() {
   console.log("[AdminLayout] LIVE");
-  const location = useLocation();
+  const [currentPath] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  console.log("Navigated to", location.pathname);
+  console.log("Navigated to", currentPath);
 
   const navigation = [
-    { name: "Dashboard", href: "/admin", icon: Home, current: location.pathname === "/admin" },
-    { name: "Firms", href: "/admin/firms", icon: Building2, current: location.pathname === "/admin/firms" },
-    { name: "Usage Analytics", href: "/admin/usage", icon: BarChart3, current: location.pathname === "/admin/usage" },
-    { name: "System Health", href: "/admin/system-health", icon: Activity, current: location.pathname === "/admin/system-health" },
-    { name: "Ghost Mode", href: "/admin/ghost", icon: Eye, current: location.pathname === "/admin/ghost" },
-    { name: "System Settings", href: "/admin/settings", icon: Settings, current: location.pathname === "/admin/settings" },
+    { name: "Dashboard", href: "/admin", icon: Home, current: currentPath === "/admin" },
+    { name: "Firms", href: "/admin/firms", icon: Building2, current: currentPath === "/admin/firms" },
+    { name: "Usage Analytics", href: "/admin/usage", icon: BarChart3, current: currentPath === "/admin/usage" },
+    { name: "System Health", href: "/admin/system-health", icon: Activity, current: currentPath === "/admin/system-health" },
+    { name: "Ghost Mode", href: "/admin/ghost", icon: Eye, current: currentPath === "/admin/ghost" },
+    { name: "System Settings", href: "/admin/settings", icon: Settings, current: currentPath === "/admin/settings" },
   ];
 
   return (
@@ -127,7 +128,7 @@ export default function AdminLayout() {
         {/* Page content */}
         <main className="flex-1 p-6">
           <ErrorBoundary>
-            <AdminDashboard />
+            {currentPath === "/admin/firms" ? <FirmsPage /> : <AdminDashboard />}
           </ErrorBoundary>
         </main>
       </div>
