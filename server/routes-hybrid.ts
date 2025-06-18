@@ -8,6 +8,31 @@ import { requireAuth, requireAdmin, requireFirmUser, requireTenantAccess } from 
 import { hybridLogin, hybridLogout, hybridSessionCheck, hybridAuthStatus } from "./auth/hybrid-controller";
 import { refreshJWTTokens } from "./auth/jwt-auth-clean";
 
+// JWT validation function matching working admin endpoints
+async function validateJWTAuth(req: any) {
+  try {
+    const jwtToken = req.cookies.accessToken;
+    if (!jwtToken) {
+      return { success: false, error: "No JWT token found" };
+    }
+
+    const jwt = await import('jsonwebtoken');
+    const secret = process.env.JWT_SECRET || 'firmsync-jwt-secret-change-in-production';
+    const payload = jwt.verify(jwtToken, secret) as any;
+    
+    if (payload && payload.type === 'access') {
+      const user = await storage.getUser(payload.userId);
+      if (user) {
+        return { success: true, user };
+      }
+    }
+    
+    return { success: false, error: "Invalid token" };
+  } catch (error) {
+    return { success: false, error: "JWT validation failed" };
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply authentication strategy middleware to all routes
   app.use(authStrategyMiddleware);
@@ -252,9 +277,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Integration Management Routes
-  app.get("/api/integrations/dashboard", requireAuth, async (req, res) => {
+  app.get("/api/integrations/dashboard", async (req, res) => {
     try {
-      const user = req.user as any;
+      // Use JWT authentication like other working admin endpoints
+      const authResult = await validateJWTAuth(req);
+      if (!authResult.success) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const user = authResult.user;
       
       // For admin users, provide platform-wide view (firmId = null)
       // For firm users, show their firm-specific integrations
