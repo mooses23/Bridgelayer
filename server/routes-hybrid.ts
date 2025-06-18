@@ -316,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get available integrations for onboarding selection
   app.get("/api/integrations/available", async (req, res) => {
     try {
-      const availableIntegrations = await storage.getPlatformIntegrations();
+      const availableIntegrations = await storage.getAllPlatformIntegrations();
       res.json(availableIntegrations);
     } catch (error) {
       console.error("Error fetching available integrations:", error);
@@ -368,10 +368,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (integrationCredentials) {
             await storage.enableFirmIntegration({
               firmId: user.firmId,
-              integrationName: integrationId,
+              integrationId: integrationId,
               apiCredentials: integrationCredentials,
-              enabledBy: user.id,
-              enabledAt: new Date()
+              enabledBy: user.id
             });
           }
         }
