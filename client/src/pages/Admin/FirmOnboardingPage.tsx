@@ -22,6 +22,15 @@ import {
   MapPin
 } from "lucide-react";
 
+interface IntakeFormField {
+  id: string;
+  type: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'radio' | 'checkbox';
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  options?: string[];
+}
+
 interface FirmOnboardingData {
   // Firm Information
   firmName: string;
@@ -44,6 +53,15 @@ interface FirmOnboardingData {
   adminLastName: string;
   adminEmail: string;
   adminRole: string;
+  
+  // Integrations
+  selectedIntegrations: string[];
+  integrationConfigs: Record<string, any>;
+  
+  // Forum Intake
+  intakeFormTitle: string;
+  intakeFormDescription: string;
+  intakeFormFields: IntakeFormField[];
   
   // Features & Settings
   enabledFeatures: string[];
@@ -83,10 +101,19 @@ const AVAILABLE_FEATURES = [
   { id: "analytics", label: "Practice Analytics", description: "Business intelligence and reporting" }
 ];
 
+const AVAILABLE_INTEGRATIONS = [
+  { id: "docusign", name: "DocuSign", category: "Document Management", description: "Electronic signature and document workflow" },
+  { id: "quickbooks", name: "QuickBooks", category: "Accounting", description: "Financial management and invoicing" },
+  { id: "google_workspace", name: "Google Workspace", category: "Productivity", description: "Email, calendar, and document collaboration" },
+  { id: "slack", name: "Slack", category: "Communication", description: "Team messaging and collaboration" },
+  { id: "microsoft_365", name: "Microsoft 365", category: "Productivity", description: "Office suite and email platform" },
+  { id: "dropbox", name: "Dropbox", category: "Storage", description: "Cloud file storage and sharing" }
+];
+
 export default function FirmOnboardingPage() {
   const [, navigate] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 6;
   
   const [formData, setFormData] = useState<FirmOnboardingData>({
     firmName: "",
@@ -105,6 +132,16 @@ export default function FirmOnboardingPage() {
     adminLastName: "",
     adminEmail: "",
     adminRole: "firm_admin",
+    selectedIntegrations: [],
+    integrationConfigs: {},
+    intakeFormTitle: "Client Intake Form",
+    intakeFormDescription: "Please provide the following information to help us serve you better.",
+    intakeFormFields: [
+      { id: "1", type: "text", label: "Full Name", placeholder: "Enter your full name", required: true },
+      { id: "2", type: "email", label: "Email Address", placeholder: "Enter your email", required: true },
+      { id: "3", type: "phone", label: "Phone Number", placeholder: "Enter your phone number", required: false },
+      { id: "4", type: "textarea", label: "Case Description", placeholder: "Briefly describe your legal matter", required: true }
+    ],
     enabledFeatures: ["documents", "billing", "intake"],
     billingRate: "",
     timezone: "America/New_York"
@@ -429,6 +466,143 @@ export default function FirmOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
+              <h3 className="text-lg font-medium mb-4">Integration Setup</h3>
+              <p className="text-sm text-gray-600 mb-4">Select third-party services to integrate with your firm</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {AVAILABLE_INTEGRATIONS.map((integration) => (
+                  <div
+                    key={integration.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      formData.selectedIntegrations.includes(integration.id)
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => {
+                      const selected = formData.selectedIntegrations.includes(integration.id);
+                      updateFormData({
+                        selectedIntegrations: selected
+                          ? formData.selectedIntegrations.filter(id => id !== integration.id)
+                          : [...formData.selectedIntegrations, integration.id]
+                      });
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-medium">{integration.name}</h4>
+                        <p className="text-sm text-gray-500">{integration.category}</p>
+                        <p className="text-sm text-gray-600 mt-1">{integration.description}</p>
+                      </div>
+                      {formData.selectedIntegrations.includes(integration.id) && (
+                        <CheckCircle className="h-5 w-5 text-blue-500" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">Client Intake Form Configuration</h3>
+              <p className="text-sm text-gray-600 mb-4">Customize your client intake form</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Form Builder */}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="intakeTitle">Form Title</Label>
+                    <Input
+                      id="intakeTitle"
+                      value={formData.intakeFormTitle}
+                      onChange={(e) => updateFormData({ intakeFormTitle: e.target.value })}
+                      placeholder="Enter form title"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="intakeDescription">Form Description</Label>
+                    <Textarea
+                      id="intakeDescription"
+                      value={formData.intakeFormDescription}
+                      onChange={(e) => updateFormData({ intakeFormDescription: e.target.value })}
+                      placeholder="Enter form description"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Form Fields</Label>
+                    <div className="space-y-2 mt-2">
+                      {formData.intakeFormFields.map((field, index) => (
+                        <div key={field.id} className="flex items-center justify-between p-3 border rounded">
+                          <div>
+                            <span className="font-medium">{field.label}</span>
+                            <span className="text-sm text-gray-500 ml-2">({field.type})</span>
+                            {field.required && <Badge variant="secondary" className="ml-2">Required</Badge>}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const newFields = formData.intakeFormFields.filter((_, i) => i !== index);
+                              updateFormData({ intakeFormFields: newFields });
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Preview */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Form Preview</h4>
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <h5 className="font-medium mb-2">{formData.intakeFormTitle}</h5>
+                    <p className="text-sm text-gray-600 mb-4">{formData.intakeFormDescription}</p>
+                    
+                    <div className="space-y-3">
+                      {formData.intakeFormFields.map((field) => (
+                        <div key={field.id}>
+                          <Label>
+                            {field.label}
+                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                          </Label>
+                          {field.type === 'textarea' ? (
+                            <Textarea placeholder={field.placeholder} disabled />
+                          ) : field.type === 'select' ? (
+                            <Select disabled>
+                              <SelectTrigger>
+                                <SelectValue placeholder={field.placeholder} />
+                              </SelectTrigger>
+                            </Select>
+                          ) : (
+                            <Input 
+                              type={field.type === 'phone' ? 'tel' : field.type}
+                              placeholder={field.placeholder} 
+                              disabled 
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div>
               <Label>Platform Features</Label>
               <p className="text-sm text-gray-600 mb-4">Choose which features to enable for this firm</p>
               <div className="space-y-4">
@@ -468,7 +642,9 @@ export default function FirmOnboardingPage() {
       case 1: return "Firm Information";
       case 2: return "Practice Configuration";
       case 3: return "Administrator Setup";
-      case 4: return "Feature Selection";
+      case 4: return "Integration Setup";
+      case 5: return "Client Intake Configuration";
+      case 6: return "Feature Selection";
       default: return "";
     }
   };
