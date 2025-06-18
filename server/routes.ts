@@ -57,6 +57,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Import audit logger
   const { auditLogger } = await import('./services/auditLogger.js');
 
+  // Registration endpoint for new firms
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { firmName, subdomain, firstName, lastName, adminEmail, adminPassword } = req.body;
+      console.log('📝 Registration attempt:', { firmName, subdomain, adminEmail });
+
+      if (!firmName || !subdomain || !firstName || !lastName || !adminEmail || !adminPassword) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+
+      // Check if firm slug already exists
+      const existingFirm = await storage.getFirmBySlug(subdomain);
+      if (existingFirm) {
+        return res.status(400).json({ error: 'Subdomain already taken' });
+      }
+
+      // Check if admin email already exists
+      const existingUser = await storage.getUserByEmail(adminEmail);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+
+      // Hash password
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+      // Create firm
+      const newFirm = await storage.createFirm({
+        name: firmName,
+        slug: subdomain,
+        status: 'active',
+        plan: 'trial',
+        onboarded: false,
+        settings: {}
+      });
+
+      // Create admin user
+      const newUser = await storage.createUser({
+        email: adminEmail,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        role: 'firm_admin',
+        firmId: newFirm.id,
+        status: 'active'
+      });
+
+      console.log('✅ Registration successful:', { firmId: newFirm.id, userId: newUser.id });
+
+      res.json({
+        message: 'Registration successful',
+        firm: {
+          id: newFirm.id,
+          name: newFirm.name,
+          slug: newFirm.slug
+        },
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName
+        },
+        redirectTo: '/onboarding'
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ error: 'Registration failed' });
+    }
+  });
+
   // Simplified JWT Authentication Routes
   app.post("/api/auth/login", async (req, res) => {
     try {

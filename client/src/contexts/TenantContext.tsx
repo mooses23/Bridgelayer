@@ -19,6 +19,7 @@ interface TenantContextType {
   config: TenantConfig | null;
   isLoading: boolean;
   error: string | null;
+  showFallback: boolean;
 }
 
 const TenantContext = createContext<TenantContextType>({

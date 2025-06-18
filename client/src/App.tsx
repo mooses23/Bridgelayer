@@ -3,6 +3,7 @@ import { Router, Route, Switch } from 'wouter';
 import { Toaster } from '@/components/ui/toaster';
 import RoleRouter from '@/components/RoleRouter';
 import NotFoundPage from '@/components/NotFoundPage';
+import RegisterPage from '@/pages/Public/RegisterPage';
 import { SessionProvider } from '@/contexts/SessionContext';
 import { TenantProvider } from '@/contexts/TenantContext';
 
@@ -18,6 +19,7 @@ function App() {
           <Router>
             <div className="min-h-screen bg-gray-50">
               <Switch>
+                <Route path="/register" component={RegisterPage} />
                 <Route path="*" component={RoleRouter} />
               </Switch>
               <Toaster />
