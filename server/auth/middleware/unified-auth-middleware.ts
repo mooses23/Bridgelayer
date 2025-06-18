@@ -48,10 +48,11 @@ export const requireAdmin = async (req: AuthStrategyRequest, res: Response, next
     
     case 'jwt':
       // First authenticate with JWT, then check admin role
-      return requireJWTAuth(req, res, (err) => {
-        if (err) return next(err);
-        return requireJWTAdmin(req, res, next);
-      });
+      await requireJWTAuth(req, res, () => {});
+      if (!req.user) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      return requireJWTAdmin(req, res, next);
     
     case 'hybrid':
       // For hybrid routes, use session auth by default for admin access
