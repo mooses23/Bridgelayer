@@ -83,14 +83,53 @@ export default function IntegrationsPage() {
   const [apiKey, setApiKey] = useState("");
   const [configuration, setConfiguration] = useState("");
 
-  // Fetch integration dashboard data
-  const { data: dashboardData, isLoading } = useQuery<IntegrationDashboard>({
+  // Fetch integration dashboard data with proper credentials
+  const { data: dashboardData, isLoading, error } = useQuery<IntegrationDashboard>({
     queryKey: ["/api/integrations/dashboard"],
+    queryFn: async () => {
+      const response = await fetch('/api/integrations/dashboard', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log("🔍 IntegrationsPage Dashboard Data:", { dashboardData, isLoading, error });
+  }, [dashboardData, isLoading, error]);
+
   // Fetch platform integrations (admin only)
-  const { data: platformIntegrations } = useQuery<PlatformIntegration[]>({
+  const { data: platformIntegrations, isLoading: platformLoading } = useQuery<PlatformIntegration[]>({
     queryKey: ["/api/integrations/available"],
+    queryFn: async () => {
+      const response = await fetch('/api/integrations/available', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
   const enableIntegrationMutation = useMutation({
@@ -168,10 +207,49 @@ export default function IntegrationsPage() {
     }
   };
 
-  if (isLoading) {
+  // Show loading state while either query is loading
+  if (isLoading || platformLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Integrations</h1>
+            <p className="text-gray-600">Loading integration data...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading integrations...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if queries failed
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Integrations</h1>
+            <p className="text-gray-600">Error loading integration data</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to Load Integrations</h3>
+            <p className="text-gray-500 text-center mb-4">
+              Unable to fetch integration data. Please check your connection and try again.
+            </p>
+            <Button onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/integrations/dashboard"] })}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
