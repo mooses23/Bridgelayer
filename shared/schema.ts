@@ -277,15 +277,7 @@ export const systemAdmins = pgTable("system_admins", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const firmIntegrations = pgTable("firm_integrations", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  integrationType: text("integration_type").notNull(),
-  settings: jsonb("settings"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Old firmIntegrations table removed - using new comprehensive integration architecture below
 
 export const platformSettings = pgTable("platform_settings", {
   id: serial("id").primaryKey(),
@@ -709,11 +701,7 @@ export const insertSystemAdminSchema = createInsertSchema(systemAdmins).omit({
   createdAt: true,
 });
 
-export const insertFirmIntegrationSchema = createInsertSchema(firmIntegrations).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Old insertFirmIntegrationSchema removed - duplicate definition resolved
 
 export const insertPlatformSettingSchema = createInsertSchema(platformSettings).omit({
   id: true,
@@ -735,6 +723,35 @@ export const insertFirmSettingsSchema = createInsertSchema(firmSettings).omit({
     id: true,
     createdAt: true,
     updatedAt: true,
+});
+
+export const insertPlatformIntegrationSchema = createInsertSchema(platformIntegrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFirmIntegrationSchema = createInsertSchema(firmIntegrations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserIntegrationPermissionSchema = createInsertSchema(userIntegrationPermissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertIntegrationAuditLogSchema = createInsertSchema(integrationAuditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertIntegrationRateLimitSchema = createInsertSchema(integrationRateLimits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 // Types
@@ -802,3 +819,15 @@ export type InsertAvailableIntegration = z.infer<typeof insertAvailableIntegrati
 export type AvailableIntegration = typeof availableIntegrations.$inferSelect;
 export type InsertFirmSettings = z.infer<typeof insertFirmSettingsSchema>;
 export type FirmSettings = typeof firmSettings.$inferSelect;
+
+// New Integration Architecture Types
+export type InsertPlatformIntegration = z.infer<typeof insertPlatformIntegrationSchema>;
+export type PlatformIntegration = typeof platformIntegrations.$inferSelect;
+export type InsertFirmIntegration = z.infer<typeof insertFirmIntegrationSchema>;
+export type FirmIntegration = typeof firmIntegrations.$inferSelect;
+export type InsertUserIntegrationPermission = z.infer<typeof insertUserIntegrationPermissionSchema>;
+export type UserIntegrationPermission = typeof userIntegrationPermissions.$inferSelect;
+export type InsertIntegrationAuditLog = z.infer<typeof insertIntegrationAuditLogSchema>;
+export type IntegrationAuditLog = typeof integrationAuditLogs.$inferSelect;
+export type InsertIntegrationRateLimit = z.infer<typeof insertIntegrationRateLimitSchema>;
+export type IntegrationRateLimit = typeof integrationRateLimits.$inferSelect;
