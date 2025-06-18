@@ -1,194 +1,421 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, LogOut, Building2, Users, Activity } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Search, 
+  Eye, 
+  EyeOff,
+  Building2, 
+  Users, 
+  Activity, 
+  Shield,
+  AlertTriangle,
+  FileText,
+  Edit3,
+  Copy,
+  Play
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+
+interface Firm {
+  id: number;
+  name: string;
+  slug: string;
+  status: string;
+  plan: string;
+  onboarded: boolean;
+  userCount?: number;
+  lastActivity?: string;
+}
+
+interface GhostSession {
+  id: number;
+  adminUserId: number;
+  targetFirmId: number;
+  firmName: string;
+  sessionToken: string;
+  isActive: boolean;
+  startedAt: string;
+  purpose: string;
+  notes?: string;
+}
+
+interface OnboardingTemplate {
+  id: number;
+  name: string;
+  description: string;
+  firmInfo: any;
+  branding: any;
+  preferences: any;
+  integrations: any;
+  documentTemplates: any[];
+  createdAt: string;
+  isDefault: boolean;
+}
 
 export default function GhostModePage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFirm, setSelectedFirm] = useState<Firm | null>(null);
+  const [isGhostDialogOpen, setIsGhostDialogOpen] = useState(false);
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [sessionPurpose, setSessionPurpose] = useState("support");
+  const [sessionNotes, setSessionNotes] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<OnboardingTemplate | null>(null);
+  
   const queryClient = useQueryClient();
 
-  const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
-    queryKey: ["tenants"],
-    queryFn: () => fetch("/api/tenants", { credentials: "include" }).then(r => r.json()),
+  // Fetch available firms
+  const { data: firms = [], isLoading: firmsLoading } = useQuery({
+    queryKey: ["/api/admin/firms"],
+    queryFn: () => fetch("/api/admin/firms", { credentials: "include" }).then(r => r.json()),
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: currentGhostSession } = useQuery({
-    queryKey: ["ghost-session"],
+  // Fetch current ghost session
+  const { data: currentSession } = useQuery({
+    queryKey: ["/api/admin/ghost/current"],
     queryFn: () => fetch("/api/admin/ghost/current", { credentials: "include" }).then(r => r.json()),
     staleTime: 1 * 60 * 1000,
   });
 
-  const ghostMutation = useMutation({
-    mutationFn: (firmId: number) =>
-      fetch(`/api/admin/ghost/${firmId}`, { method: "POST", credentials: "include" })
-        .then(r => r.json()),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ghost-session"] });
+  // Fetch onboarding templates
+  const { data: onboardingTemplates = [], isLoading: templatesLoading } = useQuery({
+    queryKey: ["/api/admin/onboarding-templates"],
+    queryFn: () => fetch("/api/admin/onboarding-templates", { credentials: "include" }).then(r => r.json()),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Start ghost session mutation
+  const startGhostMutation = useMutation({
+    mutationFn: (data: { firmId: number; purpose: string; notes: string }) =>
+      fetch("/api/admin/ghost/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data)
+      }).then(r => r.json()),
+    onSuccess: (session) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ghost/current"] });
+      setIsGhostDialogOpen(false);
+      // Redirect to firm dashboard in ghost mode
+      window.open(`/dashboard?ghost=${session.sessionToken}`, '_blank');
     },
   });
 
-  const exitGhostMutation = useMutation({
-    mutationFn: () =>
-      fetch("/api/admin/ghost/exit", { method: "POST", credentials: "include" })
-        .then(r => r.json()),
+  // End ghost session mutation
+  const endGhostMutation = useMutation({
+    mutationFn: (sessionToken: string) =>
+      fetch(`/api/admin/ghost/end/${sessionToken}`, {
+        method: "POST",
+        credentials: "include"
+      }).then(r => r.json()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ghost-session"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ghost/current"] });
     },
   });
 
-  const filteredTenants = tenants.filter((tenant: any) =>
-    tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tenant.slug.toLowerCase().includes(searchTerm.toLowerCase())
+  // Clone template for editing mutation
+  const cloneTemplateMutation = useMutation({
+    mutationFn: (templateId: number) =>
+      fetch(`/api/admin/onboarding-templates/${templateId}/clone`, {
+        method: "POST",
+        credentials: "include"
+      }).then(r => r.json()),
+    onSuccess: (clonedTemplate) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/onboarding-templates"] });
+      // Redirect to template editor
+      window.open(`/admin/template-editor/${clonedTemplate.id}`, '_blank');
+    },
+  });
+
+  const filteredFirms = firms.filter((firm: Firm) =>
+    firm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    firm.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleGhostMode = (firmId: number) => {
-    ghostMutation.mutate(firmId);
+  const handleStartGhost = () => {
+    if (!selectedFirm) return;
+    startGhostMutation.mutate({
+      firmId: selectedFirm.id,
+      purpose: sessionPurpose,
+      notes: sessionNotes
+    });
   };
 
-  const handleExitGhost = () => {
-    exitGhostMutation.mutate();
+  const handleEndGhost = () => {
+    if (currentSession?.sessionToken) {
+      endGhostMutation.mutate(currentSession.sessionToken);
+    }
+  };
+
+  const handleCloneTemplate = (template: OnboardingTemplate) => {
+    cloneTemplateMutation.mutate(template.id);
+  };
+
+  const handlePreviewTemplate = (template: OnboardingTemplate) => {
+    // Open template in preview mode
+    window.open(`/admin/template-preview/${template.id}`, '_blank');
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ghost Mode</h1>
-          <p className="text-muted-foreground">
-            Access any tenant's environment for support and debugging
+          <h1 className="text-2xl font-bold text-gray-900">Ghost Mode</h1>
+          <p className="text-gray-600">
+            Simulate firm experiences and manage onboarding templates
           </p>
         </div>
-        {currentGhostSession?.active && (
-          <Button 
-            onClick={handleExitGhost}
-            variant="destructive"
-            disabled={exitGhostMutation.isPending}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Exit Ghost Mode
-          </Button>
+        
+        {currentSession?.isActive && (
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="bg-orange-100 text-orange-800">
+              Ghost Session Active: {currentSession.firmName}
+            </Badge>
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleEndGhost}
+              disabled={endGhostMutation.isPending}
+            >
+              <EyeOff className="h-4 w-4 mr-1" />
+              End Session
+            </Button>
+          </div>
         )}
       </div>
 
-      {currentGhostSession?.active && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-orange-800 flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              Currently in Ghost Mode
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-orange-900">
-                  {currentGhostSession.firmName}
-                </p>
-                <p className="text-sm text-orange-700">
-                  Session started: {new Date(currentGhostSession.startedAt).toLocaleString()}
-                </p>
-              </div>
-              <Badge variant="outline" className="bg-orange-100 text-orange-800">
-                Ghost Active
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Tabs defaultValue="firms" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="firms">Firm Ghost Mode</TabsTrigger>
+          <TabsTrigger value="templates">Onboarding Templates</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Tenant</CardTitle>
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by firm name or slug..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {tenantsLoading ? (
-            <div className="text-center py-6">Loading tenants...</div>
-          ) : (
-            <div className="space-y-3">
-              {filteredTenants.map((tenant: any) => (
-                <div
-                  key={tenant.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="w-5 h-5 text-gray-500" />
-                      <div>
-                        <p className="font-medium text-gray-900">{tenant.name}</p>
-                        <p className="text-sm text-gray-600">
-                          {tenant.slug} • {tenant.plan || "Professional"} Plan
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {tenant.userCount || 0} users
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Activity className="w-4 h-4" />
-                        {tenant.status || "Active"}
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => handleGhostMode(tenant.id)}
-                      disabled={ghostMutation.isPending || currentGhostSession?.active}
-                      size="sm"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      {ghostMutation.isPending ? "Accessing..." : "Ghost Mode"}
-                    </Button>
-                  </div>
+        <TabsContent value="firms" className="space-y-6">
+          {/* Active Ghost Session Alert */}
+          {currentSession?.isActive && (
+            <Alert className="border-orange-200 bg-orange-50">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Active Ghost Session:</strong> You are currently simulating {currentSession.firmName}. 
+                All actions are being audited and logged for compliance.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Search and Filter */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5" />
+                Find Firm
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="search">Search Firms</Label>
+                  <Input
+                    id="search"
+                    placeholder="Search by firm name or subdomain..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-              ))}
-              {filteredTenants.length === 0 && !tenantsLoading && (
-                <div className="text-center py-6 text-gray-500">
-                  No tenants found matching your search.
+                <div className="flex items-end">
+                  <Dialog open={isGhostDialogOpen} onOpenChange={setIsGhostDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button disabled={!selectedFirm || !!currentSession?.isActive}>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Start Ghost Mode
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Start Ghost Mode Session</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            Ghost mode provides secure firm simulation with full audit trail. 
+                            All actions are logged for compliance.
+                          </AlertDescription>
+                        </Alert>
+                        
+                        <div>
+                          <Label htmlFor="purpose">Purpose</Label>
+                          <select
+                            id="purpose"
+                            value={sessionPurpose}
+                            onChange={(e) => setSessionPurpose(e.target.value)}
+                            className="w-full mt-1 p-2 border rounded-md"
+                          >
+                            <option value="support">Technical Support</option>
+                            <option value="training">User Training</option>
+                            <option value="testing">System Testing</option>
+                            <option value="debugging">Bug Investigation</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="notes">Session Notes</Label>
+                          <textarea
+                            id="notes"
+                            value={sessionNotes}
+                            onChange={(e) => setSessionNotes(e.target.value)}
+                            placeholder="Reason for ghost mode access..."
+                            className="w-full mt-1 p-2 border rounded-md h-20"
+                          />
+                        </div>
+                        
+                        <div className="flex gap-2 pt-4">
+                          <Button 
+                            onClick={handleStartGhost}
+                            disabled={startGhostMutation.isPending}
+                            className="flex-1"
+                          >
+                            <Play className="h-4 w-4 mr-2" />
+                            Start Session
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={() => setIsGhostDialogOpen(false)}
+                            className="flex-1"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Firms List */}
+          <div className="grid gap-4">
+            {firmsLoading ? (
+              <div className="text-center py-8">Loading firms...</div>
+            ) : (
+              filteredFirms.map((firm: Firm) => (
+                <Card 
+                  key={firm.id} 
+                  className={`cursor-pointer transition-colors ${
+                    selectedFirm?.id === firm.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() => setSelectedFirm(firm)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <Building2 className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{firm.name}</h3>
+                          <p className="text-sm text-gray-600">{firm.slug}.firmsync.com</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Users className="w-4 h-4" />
+                            {firm.userCount || 0} users
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Activity className="w-4 h-4" />
+                            {firm.lastActivity || 'No recent activity'}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={firm.status === 'active' ? 'default' : 'secondary'}>
+                            {firm.status}
+                          </Badge>
+                          <Badge variant="outline">
+                            {firm.plan}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="templates" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Law Firm Onboarding Templates
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                View and edit template configurations for client onboarding demonstrations
+              </p>
+            </CardHeader>
+            <CardContent>
+              {templatesLoading ? (
+                <div className="text-center py-8">Loading templates...</div>
+              ) : (
+                <div className="grid gap-4">
+                  {onboardingTemplates.map((template: OnboardingTemplate) => (
+                    <Card key={template.id} className="hover:bg-gray-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-gray-900">{template.name}</h3>
+                              {template.isDefault && (
+                                <Badge variant="outline" className="bg-green-100 text-green-800">
+                                  Default
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 mt-1">{template.description}</p>
+                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                              <span>Created: {new Date(template.createdAt).toLocaleDateString()}</span>
+                              <span>Document Templates: {template.documentTemplates?.length || 0}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePreviewTemplate(template)}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Preview
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCloneTemplate(template)}
+                              disabled={cloneTemplateMutation.isPending}
+                            >
+                              <Copy className="h-4 w-4 mr-1" />
+                              Clone & Edit
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Ghost Mode Guidelines</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900">Security Notice</h4>
-            <p className="text-sm text-blue-800 mt-1">
-              Ghost mode sessions are logged and monitored. Only use for legitimate support and debugging purposes.
-            </p>
-          </div>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Access tenant data only as needed for support resolution</li>
-            <li>• Document all actions taken during ghost mode sessions</li>
-            <li>• Exit ghost mode immediately after completing support tasks</li>
-            <li>• Never modify tenant data without explicit permission</li>
-          </ul>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

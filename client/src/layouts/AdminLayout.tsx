@@ -18,6 +18,7 @@ import AdminDashboard from "@/pages/Admin/AdminDashboard";
 import FirmsPage from "@/pages/Admin/FirmsPage";
 import FirmOnboardingPage from "@/pages/Admin/FirmOnboardingPage";
 import IntegrationsPage from "@/pages/Admin/IntegrationsPage";
+import GhostModePage from "@/pages/Admin/GhostModePage";
 
 export default function AdminLayout() {
   console.log("[AdminLayout] LIVE");
@@ -139,7 +140,7 @@ export default function AdminLayout() {
               if (currentPath === "/admin/integrations") return <IntegrationsPage />;
               if (currentPath === "/admin/usage") return <div>Usage Analytics Page</div>;
               if (currentPath === "/admin/system-health") return <div>System Health Page</div>;
-              if (currentPath === "/admin/ghost") return <div>Ghost Mode Page</div>;
+              if (currentPath === "/admin/ghost") return <GhostModePage />;
               if (currentPath === "/admin/settings") return <div>System Settings Page</div>;
               return <AdminDashboard />;
             })()}
