@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation, useRoute } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,8 @@ import {
   Brain,
   X,
   Phone,
-  MapPin
+  MapPin,
+  Upload
 } from "lucide-react";
 
 interface IntakeFormField {
@@ -566,209 +567,68 @@ export default function FirmOnboardingPage() {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium mb-4">AI Assistant Configuration</h3>
-              <p className="text-sm text-gray-600 mb-4">Configure AI analysis settings based on your firm profile and upload document templates for enhanced prompts</p>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Document Template Upload */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Document Templates</h4>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Upload template documents</p>
-                    <Button variant="outline" size="sm">
-                      Choose Files
-                    </Button>
-                  </div>
-                  
-                  {formData.documentTemplates.length > 0 && (
-                    <div className="space-y-2">
-                      {formData.documentTemplates.map((template) => (
-                        <div key={template.id} className="flex items-center justify-between p-2 border rounded">
-                          <div>
-                            <span className="text-sm font-medium">{template.name}</span>
-                            <span className="text-xs text-gray-500 ml-2">({template.type})</span>
-                          </div>
-                          <Button variant="ghost" size="sm">
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Base Prompt Display */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Enhanced Prompt Preview</h4>
-                  <div className="border rounded-lg p-4 bg-gray-50 h-64 overflow-y-auto">
-                    <div className="text-sm text-gray-600">
-                      <div className="font-medium mb-2">TRUST LAYER ENHANCER</div>
-                      <p className="mb-3">You are FIRMSYNC's AI Legal Assistant. Provide evidence-based analysis with specific citations...</p>
-                      
-                      <div className="font-medium mb-2">RISK PROFILE BALANCER</div>
-                      <p className="mb-3">Current Risk Level: {formData.riskTolerance.toUpperCase()}</p>
-                      
-                      <div className="font-medium mb-2">ANALYSIS MODULES</div>
-                      <ul className="mb-3">
-                        {Object.entries(formData.analysisModules).filter(([_, enabled]) => enabled).map(([module]) => (
-                          <li key={module} className="text-blue-600">• {module.charAt(0).toUpperCase() + module.slice(1)} Analysis</li>
-                        ))}
-                      </ul>
-                      
-                      {formData.customPromptInstructions && (
-                        <>
-                          <div className="font-medium mb-2">CUSTOM INSTRUCTIONS</div>
-                          <p className="mb-3 bg-yellow-100 p-2 rounded">{formData.customPromptInstructions}</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Configuration Controls */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Analysis Settings</h4>
-                  
-                  <div>
-                    <Label htmlFor="reviewPriorities">Review Priorities</Label>
-                    <Select 
-                      value={formData.reviewPriorities} 
-                      onValueChange={(value: 'speed' | 'thoroughness' | 'balanced') => 
-                        updateFormData({ reviewPriorities: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="speed">Speed (Quick Review)</SelectItem>
-                        <SelectItem value="balanced">Balanced (Standard)</SelectItem>
-                        <SelectItem value="thoroughness">Thoroughness (Deep Analysis)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="riskTolerance">Risk Tolerance</Label>
-                    <Select 
-                      value={formData.riskTolerance} 
-                      onValueChange={(value: 'conservative' | 'moderate' | 'aggressive') => 
-                        updateFormData({ riskTolerance: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="conservative">Conservative</SelectItem>
-                        <SelectItem value="moderate">Moderate</SelectItem>
-                        <SelectItem value="aggressive">Aggressive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Analysis Modules</Label>
-                    <div className="space-y-2 mt-2">
-                      {Object.entries(formData.analysisModules).map(([module, enabled]) => (
-                        <div key={module} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={module}
-                            checked={enabled}
-                            onCheckedChange={(checked) => 
-                              updateFormData({
-                                analysisModules: {
-                                  ...formData.analysisModules,
-                                  [module]: !!checked
-                                }
-                              })
-                            }
-                          />
-                          <Label htmlFor={module} className="text-sm">
-                            {module.charAt(0).toUpperCase() + module.slice(1)} Analysis
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="customInstructions">Custom Instructions</Label>
-                    <Textarea
-                      id="customInstructions"
-                      value={formData.customPromptInstructions}
-                      onChange={(e) => updateFormData({ customPromptInstructions: e.target.value })}
-                      placeholder="Enter firm-specific AI analysis instructions..."
-                      rows={4}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 6:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium mb-4">AI Assistant Configuration</h3>
               <p className="text-sm text-gray-600 mb-4">Configure AI analysis settings based on your firm profile: {formData.firmName} specializing in {formData.practiceAreas.join(', ')}</p>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Document Template Upload */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Enhanced Prompt Preview with Document Template Toggle */}
                 <div className="space-y-4">
-                  <h4 className="font-medium">Document Templates</h4>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">Upload template documents</p>
-                    <Button variant="outline" size="sm">
-                      Choose Files
-                    </Button>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Enhanced Prompt Preview</h4>
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="enableTemplateUpload" className="text-sm">Document Templates</Label>
+                      <Checkbox
+                        id="enableTemplateUpload"
+                        checked={formData.enableDocumentTemplates || false}
+                        onCheckedChange={(checked) => 
+                          updateFormData({ enableDocumentTemplates: !!checked })
+                        }
+                      />
+                    </div>
                   </div>
                   
-                  {formData.documentTemplates.length > 0 && (
-                    <div className="space-y-2">
-                      {formData.documentTemplates.map((template) => (
-                        <div key={template.id} className="flex items-center justify-between p-2 border rounded">
-                          <div>
-                            <span className="text-sm font-medium">{template.name}</span>
-                            <span className="text-xs text-gray-500 ml-2">({template.type})</span>
-                          </div>
-                          <Button variant="ghost" size="sm">
-                            <X className="h-3 w-3" />
-                          </Button>
+                  {/* Document Template Upload (conditionally shown) */}
+                  {formData.enableDocumentTemplates && (
+                    <div className="border rounded-lg p-4 bg-blue-50">
+                      <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 text-center">
+                        <Upload className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+                        <p className="text-sm text-blue-600 mb-2">Upload template documents for enhanced AI prompts</p>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          multiple
+                          accept=".pdf,.doc,.docx,.txt"
+                          onChange={handleFileUpload}
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="border-blue-300 text-blue-600 hover:bg-blue-100"
+                        >
+                          Choose Files
+                        </Button>
+                      </div>
+                      
+                      {formData.documentTemplates.length > 0 && (
+                        <div className="space-y-2 mt-3">
+                          {formData.documentTemplates.map((template) => (
+                            <div key={template.id} className="flex items-center justify-between p-2 border border-blue-200 rounded bg-white">
+                              <div>
+                                <span className="text-sm font-medium text-blue-800">{template.name}</span>
+                                <span className="text-xs text-blue-500 ml-2">({template.type})</span>
+                              </div>
+                              <Button variant="ghost" size="sm" onClick={() => removeTemplate(template.id)}>
+                                <X className="h-3 w-3 text-blue-600" />
+                              </Button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
-                  
-                  <div className="text-xs text-gray-500">
-                    <p className="font-medium mb-1">Document Types Based on Practice Areas:</p>
-                    <ul className="space-y-1">
-                      {formData.practiceAreas.map(area => {
-                        const typeMap = {
-                          'Corporate Law': 'Corporate Agreements, M&A Documents',
-                          'Real Estate': 'Purchase Agreements, Leases, Deeds',
-                          'Employment Law': 'Employment Contracts, NDAs',
-                          'Intellectual Property': 'Patent Applications, Licensing',
-                          'Estate Planning': 'Wills, Trust Agreements',
-                          'Litigation': 'Discovery Documents, Settlements'
-                        };
-                        return (
-                          <li key={area} className="text-blue-600">
-                            • {typeMap[area as keyof typeof typeMap] || 'General Legal Documents'}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                </div>
 
-                {/* Enhanced Prompt Preview */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Enhanced Prompt Preview</h4>
-                  <div className="border rounded-lg p-4 bg-gray-50 h-64 overflow-y-auto">
+                  <div className="border rounded-lg p-4 bg-gray-50 h-80 overflow-y-auto">
                     <div className="text-sm text-gray-600">
                       <div className="font-medium mb-2 text-blue-700">FIRMSYNC AI LEGAL ASSISTANT</div>
                       <p className="mb-3 bg-blue-50 p-2 rounded">Firm: {formData.firmName} | Practice: {formData.practiceAreas.join(', ')} | Size: {formData.firmSize}</p>
@@ -777,7 +637,7 @@ export default function FirmOnboardingPage() {
                       <p className="mb-3">Evidence-based analysis with specific citations. Professional paralegal-level assistance focusing on {formData.practiceAreas[0] || 'legal'} documentation...</p>
                       
                       <div className="font-medium mb-2">RISK PROFILE BALANCER</div>
-                      <p className="mb-3">Current Risk Level: <span className="font-semibold text-red-600">{formData.riskTolerance.toUpperCase()}</span> | Review Priority: <span className="font-semibold text-green-600">{formData.reviewPriorities.toUpperCase()}</span></p>
+                      <p className="mb-3">Current Risk Level: <span className="font-semibold text-red-600">{formData.riskTolerance}%</span> | Review Priority: <span className="font-semibold text-green-600">{formData.reviewPriorities.toUpperCase()}</span></p>
                       
                       <div className="font-medium mb-2">ENABLED ANALYSIS MODULES</div>
                       <ul className="mb-3">
@@ -785,6 +645,20 @@ export default function FirmOnboardingPage() {
                           <li key={module} className="text-blue-600">• {module.charAt(0).toUpperCase() + module.slice(1)} Analysis</li>
                         ))}
                       </ul>
+                      
+                      {formData.enableDocumentTemplates && formData.documentTemplates.length > 0 && (
+                        <>
+                          <div className="font-medium mb-2 text-purple-700">DOCUMENT TEMPLATES INTEGRATION</div>
+                          <div className="mb-3 bg-purple-50 p-2 rounded border-l-4 border-purple-400">
+                            <p className="text-xs">Enhanced with {formData.documentTemplates.length} firm-specific templates:</p>
+                            <ul className="text-xs mt-1">
+                              {formData.documentTemplates.map(template => (
+                                <li key={template.id} className="text-purple-600">• {template.name} ({template.type})</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </>
+                      )}
                       
                       {formData.customPromptInstructions && (
                         <>
@@ -823,10 +697,10 @@ export default function FirmOnboardingPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="riskTolerance">Risk Tolerance</Label>
+                    <Label htmlFor="riskTolerance">Risk Tolerance (%)</Label>
                     <Select 
                       value={formData.riskTolerance} 
-                      onValueChange={(value: 'conservative' | 'moderate' | 'aggressive') => 
+                      onValueChange={(value: string) => 
                         updateFormData({ riskTolerance: value })
                       }
                     >
@@ -834,9 +708,10 @@ export default function FirmOnboardingPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="conservative">Conservative</SelectItem>
-                        <SelectItem value="moderate">Moderate</SelectItem>
-                        <SelectItem value="aggressive">Aggressive</SelectItem>
+                        <SelectItem value="25">25% (Conservative)</SelectItem>
+                        <SelectItem value="50">50% (Moderate)</SelectItem>
+                        <SelectItem value="75">75% (Aggressive)</SelectItem>
+                        <SelectItem value="90">90% (High Risk)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -883,6 +758,7 @@ export default function FirmOnboardingPage() {
                       <p>• Practice Areas: {formData.practiceAreas.length} selected</p>
                       <p>• Integrations: {formData.selectedIntegrations.length} connected</p>
                       <p>• Features: {formData.enabledFeatures.length} enabled</p>
+                      <p>• Templates: {formData.enableDocumentTemplates ? formData.documentTemplates.length : 0} uploaded</p>
                       <p>• Admin: {formData.adminFirstName} {formData.adminLastName}</p>
                     </div>
                   </div>
