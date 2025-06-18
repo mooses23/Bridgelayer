@@ -88,7 +88,7 @@ export default function IntegrationsPage() {
 
   // Fetch platform integrations (admin only)
   const { data: platformIntegrations } = useQuery<PlatformIntegration[]>({
-    queryKey: ["/api/integrations/platform"],
+    queryKey: ["/api/integrations/available"],
   });
 
   const enableIntegrationMutation = useMutation({

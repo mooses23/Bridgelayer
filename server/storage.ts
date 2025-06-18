@@ -160,6 +160,7 @@ export interface IStorage {
   // Admin panel operations - Integration management
   getAvailableIntegrations(): Promise<AvailableIntegration[]>;
   getAllPlatformIntegrations(): Promise<AvailableIntegration[]>;
+  getAllFirmIntegrations(): Promise<FirmIntegration[]>;
   createAvailableIntegration(integration: InsertAvailableIntegration): Promise<AvailableIntegration>;
   updateAvailableIntegration(id: number, updates: Partial<AvailableIntegration>): Promise<AvailableIntegration | undefined>;
   getFirmIntegrations(firmId: number): Promise<FirmIntegration[]>;
@@ -682,6 +683,10 @@ export class DatabaseStorage implements IStorage {
 
   async getFirmIntegrations(firmId: number): Promise<FirmIntegration[]> {
     return await db.select().from(firmIntegrations).where(eq(firmIntegrations.firmId, firmId));
+  }
+
+  async getAllFirmIntegrations(): Promise<FirmIntegration[]> {
+    return await db.select().from(firmIntegrations).orderBy(desc(firmIntegrations.enabledAt));
   }
 
   async enableFirmIntegration(integration: InsertFirmIntegration): Promise<FirmIntegration> {

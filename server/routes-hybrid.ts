@@ -324,6 +324,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get integration dashboard data for admin
+  app.get("/api/integrations/dashboard", requireAdmin, async (req, res) => {
+    try {
+      const availableIntegrations = await storage.getAllPlatformIntegrations();
+      
+      const dashboardData = {
+        availableIntegrations,
+        enabledIntegrations: [],
+        userPermissions: [],
+        recentActivity: []
+      };
+
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching integration dashboard:", error);
+      res.status(500).json({ error: "Failed to fetch integration dashboard" });
+    }
+  });
+
   app.get("/api/integrations/firm", requireAuth, async (req, res) => {
     try {
       const user = req.user as any;
