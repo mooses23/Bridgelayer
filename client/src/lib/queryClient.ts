@@ -52,7 +52,7 @@ export const getQueryFn: <T>(options: {
         return null;
       }
 
-      return await parseApiResponse<T>(res);
+      return await parseApiResponse(res);
     } catch (error) {
       if (error instanceof AuthenticationError && unauthorizedBehavior === "returnNull") {
         return null;
@@ -69,11 +69,27 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: (failureCount, error) => {
+        // Don't retry on authentication/authorization errors
+        if (error instanceof AuthenticationError || (error as any)?.status === 403) {
+          return false;
+        }
+        // Retry network errors up to 3 times
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error) => {
+        // Don't retry on client errors (4xx)
+        if ((error as any)?.status >= 400 && (error as any)?.status < 500) {
+          return false;
+        }
+        // Retry server errors up to 2 times
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
   },
 });
