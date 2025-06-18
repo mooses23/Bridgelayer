@@ -99,6 +99,7 @@ export interface IStorage {
 
   // User management with multi-tenancy
   getUser(id: number): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUsersByFirm(firmId: number): Promise<User[]>;
   getUsersByFirmId(firmId: number): Promise<User[]>;
@@ -334,7 +335,9 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-
+  async getUserById(id: number): Promise<User | undefined> {
+    return this.getUser(id);
+  }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
