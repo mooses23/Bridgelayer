@@ -23,7 +23,18 @@ app.use(helmet({
 
 // CORS configuration for Replit session-based authentication
 app.use(cors({
-  origin: true, // Allow all origins in development
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all Replit domains
+    if (origin.includes('.replit.dev') || origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    
+    // Allow all origins in development
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
@@ -90,9 +101,9 @@ app.use(session({
   rolling: true,
   cookie: {
     secure: false, // Set to false for Replit development environment
-    httpOnly: true, // HttpOnly for security
+    httpOnly: false, // Set to false for cross-origin debugging in Replit
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Changed from 'none' to 'lax' for better compatibility
+    sameSite: 'none', // Required for cross-origin requests in Replit
     domain: undefined // Let browser handle domain automatically
   }
 }));
