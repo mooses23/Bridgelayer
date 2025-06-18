@@ -286,6 +286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = authResult.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       
       // For admin users, provide platform-wide view (firmId = null)
       // For firm users, show their firm-specific integrations
@@ -365,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const integrations = await storage.getFirmIntegrations(user.firmId);
+      const integrations = (user.firmId && typeof user.firmId === 'number') ? await storage.getFirmIntegrations(user.firmId) : [];
       
       // Remove API credentials from response for security
       const sanitizedIntegrations = integrations.map(integration => ({
