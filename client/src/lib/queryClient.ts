@@ -1,5 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import ApiClient from "./apiClient";
+import { authInterceptor } from "./auth-interceptor";
+import { parseApiResponse, handleAuthError, AuthenticationError } from "./error-handler";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -18,13 +20,18 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await ApiClient.fetch(url, {
-    method,
-    body: data ? JSON.stringify(data) : undefined,
-  });
+  try {
+    const res = await authInterceptor.request(url, {
+      method,
+      body: data ? JSON.stringify(data) : undefined,
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    handleAuthError(error as Error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -38,14 +45,22 @@ export const getQueryFn: <T>(options: {
       throw new Error('Invalid query key provided');
     }
 
-    const res = await ApiClient.get(queryKey[0] as string);
+    try {
+      const res = await authInterceptor.get(queryKey[0] as string);
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      return await parseApiResponse<T>(res);
+    } catch (error) {
+      if (error instanceof AuthenticationError && unauthorizedBehavior === "returnNull") {
+        return null;
+      }
+      
+      handleAuthError(error as Error);
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
