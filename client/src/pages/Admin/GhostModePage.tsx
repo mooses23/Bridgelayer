@@ -39,7 +39,7 @@ const navigationItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/admin/ghost" },
   { id: "cases", label: "Cases", icon: Briefcase, path: "/admin/ghost/cases" },
   { id: "clients", label: "Clients", icon: Users, path: "/admin/ghost/clients" },
-  { id: "intake", label: "Intake", icon: FileText, path: "/admin/ghost/intake" },
+  { id: "calendar", label: "Calendar", icon: Calendar, path: "/admin/ghost/calendar" },
   { id: "documents", label: "Documents", icon: FolderOpen, path: "/admin/ghost/documents" },
   { id: "paralegal", label: "Paralegal+", icon: BarChart3, path: "/admin/ghost/paralegal" },
   { id: "billing", label: "Billing", icon: DollarSign, path: "/admin/ghost/billing" },
@@ -70,8 +70,8 @@ export default function GhostModePage() {
         return <FirmCasesContent />;
       case "clients":
         return <FirmClientsContent />;
-      case "intake":
-        return <FirmIntakeContent />;
+      case "calendar":
+        return <FirmCalendarContent />;
       case "documents":
         return <FirmDocumentsContent />;
       case "paralegal":
@@ -277,8 +277,8 @@ export default function GhostModePage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-          <p className="text-muted-foreground">Manage client relationships and information</p>
+          <h1 className="text-3xl font-bold tracking-tight">Clients & Intake</h1>
+          <p className="text-muted-foreground">Manage client relationships and process new inquiries</p>
         </div>
         <Button>
           <Users className="w-4 h-4 mr-2" />
@@ -297,10 +297,10 @@ export default function GhostModePage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Active Matters</CardTitle>
+            <CardTitle className="text-sm">Pending Intake</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">31</div>
+            <div className="text-2xl font-bold text-orange-600">8</div>
           </CardContent>
         </Card>
         <Card>
@@ -320,6 +320,70 @@ export default function GhostModePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Client Intake Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Client Intake Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Pending Reviews</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">8</div>
+                <p className="text-sm text-muted-foreground">New inquiries</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Scheduled Consultations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">5</div>
+                <p className="text-sm text-muted-foreground">This week</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Converted Clients</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">12</div>
+                <p className="text-sm text-muted-foreground">This month</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Recent Intake Forms</h3>
+            {[
+              { name: "Jennifer Martinez", type: "Personal Injury", status: "New", urgency: "High", date: "Today" },
+              { name: "Robert Chen", type: "Business Formation", status: "Reviewed", urgency: "Medium", date: "Yesterday" },
+              { name: "Amanda Foster", type: "Estate Planning", status: "Scheduled", urgency: "Low", date: "2 days ago" },
+            ].map((intake, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">{intake.name}</h4>
+                  <p className="text-sm text-muted-foreground">{intake.type} • {intake.date}</p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Badge variant={intake.urgency === "High" ? "destructive" : intake.urgency === "Medium" ? "default" : "secondary"}>
+                    {intake.urgency}
+                  </Badge>
+                  <Badge variant="outline">{intake.status}</Badge>
+                  <Button variant="ghost" size="sm">Review</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -350,6 +414,157 @@ export default function GhostModePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const FirmCalendarContent = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
+          <p className="text-muted-foreground">Court dates, deadlines, and appointments</p>
+        </div>
+        <Button>
+          <Calendar className="w-4 h-4 mr-2" />
+          Add Event
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Today's Events</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">3</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">This Week</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Urgent Deadlines</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">5</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Court Appearances</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">7</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Upcoming Deadlines */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-red-600" />
+            Upcoming Deadlines
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { title: "Smith v. Jones - Discovery Response", date: "Today", time: "5:00 PM", type: "Filing Deadline", priority: "High" },
+              { title: "Williams Estate - Probate Hearing", date: "Tomorrow", time: "10:00 AM", type: "Court Appearance", priority: "High" },
+              { title: "Johnson Property - Closing Documents", date: "Jan 20", time: "2:00 PM", type: "Meeting", priority: "Medium" },
+              { title: "Davis Employment - Mediation", date: "Jan 22", time: "9:00 AM", type: "Mediation", priority: "Medium" },
+            ].map((event, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">{event.title}</h4>
+                  <p className="text-sm text-muted-foreground">{event.date} at {event.time} • {event.type}</p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Badge variant={event.priority === "High" ? "destructive" : "default"}>
+                    {event.priority}
+                  </Badge>
+                  <Button variant="ghost" size="sm">View</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI-Suggested Events */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-blue-600" />
+            AI-Suggested Calendar Events
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">Based on document analysis and case patterns</p>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { title: "Smith v. Jones - Expert Witness Deposition Deadline", suggestion: "Based on discovery schedule in case documents", date: "Jan 30", confidence: "High" },
+              { title: "Williams Estate - Tax Filing Deadline", suggestion: "Extracted from estate planning documents", date: "Apr 15", confidence: "Medium" },
+              { title: "Johnson Property - Title Search Follow-up", suggestion: "Standard real estate transaction timeline", date: "Jan 25", confidence: "Medium" },
+            ].map((suggestion, index) => (
+              <div key={index} className="flex items-center justify-between p-4 border border-blue-200 rounded-lg bg-blue-50">
+                <div className="flex-1">
+                  <h4 className="font-medium text-blue-900">{suggestion.title}</h4>
+                  <p className="text-sm text-blue-700">{suggestion.suggestion}</p>
+                  <p className="text-xs text-blue-600 mt-1">Suggested for {suggestion.date}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="text-blue-700 border-blue-300">
+                    {suggestion.confidence} Confidence
+                  </Badge>
+                  <Button variant="outline" size="sm" className="text-blue-700 border-blue-300">
+                    Add to Calendar
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Calendar Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Calendar Sync Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-sm">Google Calendar</span>
+              </div>
+              <Badge variant="secondary">Connected</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="text-sm">Outlook Calendar</span>
+              </div>
+              <Badge variant="secondary">Connected</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                <span className="text-sm">Court Calendar System</span>
+              </div>
+              <Badge variant="outline">Not Connected</Badge>
+            </div>
           </div>
         </CardContent>
       </Card>
