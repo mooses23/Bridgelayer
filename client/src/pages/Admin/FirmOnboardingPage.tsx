@@ -134,7 +134,7 @@ const AVAILABLE_INTEGRATIONS = [
 export default function FirmOnboardingPage() {
   const [, navigate] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 6;
+  const totalSteps = 5;
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<FirmOnboardingData>({
@@ -461,60 +461,6 @@ export default function FirmOnboardingPage() {
       case 3:
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="adminFirstName">First Name *</Label>
-                <Input
-                  id="adminFirstName"
-                  value={formData.adminFirstName}
-                  onChange={(e) => updateFormData({ adminFirstName: e.target.value })}
-                  placeholder="John"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="adminLastName">Last Name *</Label>
-                <Input
-                  id="adminLastName"
-                  value={formData.adminLastName}
-                  onChange={(e) => updateFormData({ adminLastName: e.target.value })}
-                  placeholder="Smith"
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="adminEmail">Admin Email *</Label>
-              <Input
-                id="adminEmail"
-                type="email"
-                value={formData.adminEmail}
-                onChange={(e) => updateFormData({ adminEmail: e.target.value })}
-                placeholder="admin@yourfirm.com"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="adminRole">Admin Role</Label>
-              <Select value={formData.adminRole} onValueChange={(value) => updateFormData({ adminRole: value })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="firm_admin">Firm Administrator</SelectItem>
-                  <SelectItem value="managing_partner">Managing Partner</SelectItem>
-                  <SelectItem value="senior_partner">Senior Partner</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
             <div>
               <h3 className="text-lg font-medium mb-4">Integration Setup</h3>
               <p className="text-sm text-gray-600 mb-4">Select third-party services to integrate with your firm</p>
@@ -553,7 +499,7 @@ export default function FirmOnboardingPage() {
           </div>
         );
 
-      case 5:
+      case 4:
         return (
           <div className="space-y-6">
             <div>
@@ -587,7 +533,7 @@ export default function FirmOnboardingPage() {
           </div>
         );
 
-      case 6:
+      case 5:
         return (
           <div className="space-y-6">
             <div>
