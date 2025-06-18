@@ -37,6 +37,18 @@ export async function seedAuthData() {
       });
     }
 
+    // Create Replit demo firm that matches current subdomain
+    let replitDemoFirm = await storage.getFirmBySlug("6da4d5f1-ea5d-4edf-a396-c2c16e58af64-00-2hm05yfgpvj33");
+    if (!replitDemoFirm) {
+      replitDemoFirm = await storage.createFirm({
+        name: "Demo Legal Firm",
+        slug: "6da4d5f1-ea5d-4edf-a396-c2c16e58af64-00-2hm05yfgpvj33",
+        plan: "professional",
+        status: "active",
+        onboarded: false // Not onboarded so we can test onboarding flow
+      });
+    }
+
     // Create test users with hashed passwords
     const adminPassword = await bcrypt.hash("admin123", 10);
     const ownerPassword = await bcrypt.hash("test123", 10);
@@ -71,6 +83,18 @@ export async function seedAuthData() {
       lastName: "Paralegal",
       role: "paralegal",
       firmId: legalEdgeFirm.id,
+      status: "active"
+    });
+
+    // Demo user for Replit demo firm
+    const demoPassword = await bcrypt.hash("demo123", 10);
+    const demoUser = await storage.createUser({
+      email: "demo@demo.com",
+      password: demoPassword,
+      firstName: "Demo",
+      lastName: "User",
+      role: "firm_admin",
+      firmId: replitDemoFirm.id,
       status: "active"
     });
 

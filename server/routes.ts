@@ -335,6 +335,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public Firm Registration Endpoint
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { firmName, subdomain, adminEmail, adminPassword, firstName, lastName } = req.body;
+      
+      if (!firmName || !subdomain || !adminEmail || !adminPassword || !firstName || !lastName) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+
+      // Check if subdomain is available
+      const existingFirm = await storage.getFirmBySlug(subdomain);
+      if (existingFirm) {
+        return res.status(409).json({ error: 'Subdomain already taken' });
+      }
+
+      // Check if email is available
+      const existingUser = await storage.getUserByEmail(adminEmail);
+      if (existingUser) {
+        return res.status(409).json({ error: 'Email already registered' });
+      }
+
+      // Create the firm
+      const firm = await storage.createFirm({
+        name: firmName,
+        slug: subdomain,
+        plan: "starter",
+        status: "active",
+        onboarded: false
+      });
+
+      // Hash password and create admin user
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      
+      const adminUser = await storage.createUser({
+        email: adminEmail,
+        password: hashedPassword,
+        firstName: firstName,
+        lastName: lastName,
+        role: "firm_admin",
+        firmId: firm.id,
+        status: "active"
+      });
+
+      // Generate JWT tokens for immediate login
+      const jwtModule = await import('jsonwebtoken');
+      const jwt = jwtModule.default || jwtModule;
+      const secret = process.env.JWT_SECRET || 'fallback-secret-key';
+      
+      const accessToken = jwt.sign(
+        {
+          userId: adminUser.id,
+          email: adminUser.email,
+          role: adminUser.role,
+          firmId: adminUser.firmId,
+          type: 'access'
+        },
+        secret,
+        { expiresIn: '2h' }
+      );
+
+      const refreshToken = jwt.sign(
+        {
+          userId: adminUser.id,
+          type: 'refresh'
+        },
+        secret,
+        { expiresIn: '7d' }
+      );
+
+      // Set cookies
+      const cookieOptions = {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax' as const,
+        path: '/',
+        domain: undefined
+      };
+      
+      res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 2 * 60 * 60 * 1000 });
+      res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+      console.log('✅ New firm registered:', { firmId: firm.id, userId: adminUser.id });
+
+      res.status(201).json({
+        message: 'Registration successful',
+        firm: {
+          id: firm.id,
+          name: firm.name,
+          slug: firm.slug
+        },
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          firstName: adminUser.firstName,
+          lastName: adminUser.lastName,
+          role: adminUser.role
+        },
+        redirectTo: '/onboarding'
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ error: 'Registration failed' });
+    }
+  });
+
   // Onboarding Authentication Routes
   app.post("/api/onboarding/init", OnboardingAuthController.initializeOnboarding);
   app.get("/api/onboarding/validate/:subdomain", OnboardingAuthController.validateSubdomain);
@@ -483,6 +589,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ tenant: tenantData });
     } catch (error) {
       console.error('Error fetching tenant:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Public tenant lookup by slug (for tenant detection)
+  app.get('/api/tenant/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+      console.log('🔍 Looking up tenant by slug:', slug);
+
+      if (!slug) {
+        return res.status(400).json({ error: 'Tenant slug is required' });
+      }
+
+      // Find firm by slug
+      const firm = await storage.getFirmBySlug(slug);
+
+      if (!firm) {
+        console.log('❌ No firm found for slug:', slug);
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+
+      // Return tenant configuration data
+      const tenantData = {
+        id: firm.id.toString(),
+        name: firm.name,
+        subdomain: firm.slug,
+        onboardingComplete: firm.onboarded || false,
+        branding: {
+          logo: null,
+          primaryColor: '#3b82f6',
+          secondaryColor: '#64748b'
+        },
+        features: {
+          documentAnalysis: true,
+          aiAssistant: true,
+          advancedReporting: firm.plan !== 'starter',
+          integrations: firm.plan !== 'starter',
+          customBranding: firm.plan === 'enterprise',
+          prioritySupport: firm.plan === 'enterprise',
+          billingEnabled: true,
+          documentsEnabled: true,
+          intakeEnabled: true,
+          communicationsEnabled: true,
+          calendarEnabled: true
+        }
+      };
+
+      console.log('✅ Tenant data found:', { id: tenantData.id, name: tenantData.name });
+      res.json({ tenant: tenantData });
+    } catch (error) {
+      console.error('Error fetching tenant by slug:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   });
