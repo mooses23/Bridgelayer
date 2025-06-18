@@ -120,27 +120,37 @@ export const requireSessionFirmUser = async (req: SessionAuthenticatedRequest, r
  */
 export const createUserSession = async (req: Request, user: any): Promise<void> => {
   return new Promise((resolve, reject) => {
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
-    req.session.firmId = user.firmId;
-
-    console.log('💾 Creating session:', {
-      userId: user.id,
-      userRole: user.role,
-      firmId: user.firmId
-    });
-
-    req.session.save((err) => {
+    // Clear any existing session data first
+    req.session.regenerate((err) => {
       if (err) {
-        console.error('Session save failed:', err);
-        reject(new Error('Session creation failed'));
-      } else {
-        console.log('✅ Session created successfully:', {
-          userId: req.session.userId,
-          sessionId: req.sessionID
-        });
-        resolve();
+        console.error('Session regeneration failed:', err);
+        // Continue anyway, don't fail completely
       }
+
+      req.session.userId = user.id;
+      req.session.userRole = user.role;
+      req.session.firmId = user.firmId;
+
+      console.log('💾 Creating session:', {
+        userId: user.id,
+        userRole: user.role,
+        firmId: user.firmId,
+        sessionId: req.sessionID
+      });
+
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save failed:', saveErr);
+          reject(new Error('Session creation failed'));
+        } else {
+          console.log('✅ Session created successfully:', {
+            userId: req.session.userId,
+            userRole: req.session.userRole,
+            sessionId: req.sessionID
+          });
+          resolve();
+        }
+      });
     });
   });
 };

@@ -101,9 +101,9 @@ app.use(session({
   rolling: true,
   cookie: {
     secure: false, // Set to false for Replit development environment
-    httpOnly: false, // Set to false for cross-origin debugging in Replit
+    httpOnly: true, // Enable httpOnly for security
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none', // Required for cross-origin requests in Replit
+    sameSite: 'lax', // Changed from none to lax for better compatibility
     domain: undefined // Let browser handle domain automatically
   }
 }));
