@@ -28,6 +28,8 @@ import {
   Calendar,
   ExternalLink,
   Shield,
+  Building2,
+  TrendingUp,
   Database
 } from 'lucide-react';
 
@@ -193,14 +195,14 @@ export default function IntegrationsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="available" className="space-y-6">
+      <Tabs defaultValue="marketplace" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="available">Available Integrations</TabsTrigger>
-          <TabsTrigger value="enabled">Enabled Integrations</TabsTrigger>
-          <TabsTrigger value="activity">Activity Log</TabsTrigger>
+          <TabsTrigger value="marketplace">Platform Marketplace</TabsTrigger>
+          <TabsTrigger value="firms">Firm Integrations</TabsTrigger>
+          <TabsTrigger value="analytics">Usage Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="available" className="space-y-6">
+        <TabsContent value="marketplace" className="space-y-6">
           {/* Integration Categories Filter */}
           <div className="flex flex-wrap gap-2 mb-6">
             <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
@@ -294,18 +296,52 @@ export default function IntegrationsPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="enabled" className="space-y-6">
+        <TabsContent value="firms" className="space-y-6">
+          {/* Firm Integration Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Total Firms</p>
+                    <p className="text-2xl font-bold">12</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Settings className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Active Integrations</p>
+                    <p className="text-2xl font-bold">34</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">This Month</p>
+                    <p className="text-2xl font-bold">+8</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {dashboardData?.enabledIntegrations.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Settings className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Integrations Enabled</h3>
+                <Building2 className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Firm Integrations Yet</h3>
                 <p className="text-gray-500 text-center mb-4">
-                  Enable integrations from the Available tab to start connecting your firm's workflows.
+                  Once firms start enabling integrations during onboarding, they will appear here for monitoring and management.
                 </p>
-                <Button variant="outline" onClick={() => document.querySelector('[data-state="inactive"][value="available"]')?.click()}>
-                  Browse Available Integrations
-                </Button>
               </CardContent>
             </Card>
           ) : (
@@ -427,35 +463,109 @@ export default function IntegrationsPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="activity" className="space-y-6">
-          {/* Activity Log Controls */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium">Integration Activity Log</h3>
-              <p className="text-gray-500">Track all integration events, configuration changes, and system activities</p>
-            </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Filter Dates
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Log
-              </Button>
-            </div>
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Usage Analytics Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Database className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Total API Calls</p>
+                    <p className="text-2xl font-bold">24,589</p>
+                    <p className="text-xs text-green-600">+12% from last month</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Success Rate</p>
+                    <p className="text-2xl font-bold">98.7%</p>
+                    <p className="text-xs text-green-600">+0.3% from last month</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Avg Response</p>
+                    <p className="text-2xl font-bold">247ms</p>
+                    <p className="text-xs text-green-600">-23ms from last month</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="text-sm text-gray-500">Error Rate</p>
+                    <p className="text-2xl font-bold">1.3%</p>
+                    <p className="text-xs text-red-600">-0.3% from last month</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Top Integrations by Usage */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Most Used Integrations</CardTitle>
+              <CardDescription>Integration usage across all firms in the last 30 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  { name: "DocuSign", usage: "8,234", firms: 8, trend: "+15%" },
+                  { name: "QuickBooks", usage: "6,789", firms: 7, trend: "+8%" },
+                  { name: "Google Workspace", usage: "5,432", firms: 10, trend: "+22%" },
+                  { name: "Dropbox Business", usage: "3,876", firms: 6, trend: "+5%" },
+                  { name: "Slack", usage: "2,945", firms: 4, trend: "+31%" }
+                ].map((integration, index) => (
+                  <div key={integration.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm font-medium text-blue-600">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium">{integration.name}</p>
+                        <p className="text-sm text-gray-500">{integration.firms} firms using</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="font-medium">{integration.usage}</p>
+                        <p className="text-sm text-gray-500">API calls</p>
+                      </div>
+                      <Badge variant="outline" className="text-green-600 border-green-200">
+                        {integration.trend}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {dashboardData?.recentActivity.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Activity className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Activity Yet</h3>
+                <TrendingUp className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Dashboard</h3>
                 <p className="text-gray-500 text-center mb-4">
-                  Integration activities will appear here as you enable and configure services.
+                  Integration usage analytics will populate as firms begin using platform integrations.
                 </p>
                 <div className="text-sm text-gray-400">
-                  Activity types tracked: Enablements, Configuration Changes, API Calls, Sync Events, Errors
+                  Metrics tracked: API usage, response times, error rates, firm adoption rates
                 </div>
               </CardContent>
             </Card>
