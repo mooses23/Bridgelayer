@@ -14,7 +14,7 @@ import {
   type FirmIntegration,
   type UserIntegrationPermission
 } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 
 export class IntegrationService {
   
@@ -271,10 +271,18 @@ export class IntegrationService {
     userPermissions: UserIntegrationPermission[];
     recentActivity: any[];
   }> {
-    const [availableIntegrations, enabledIntegrations, userPermissions, recentActivity] = await Promise.all([
+    // Get firm integrations first to get their IDs
+    const enabledIntegrations = await this.getFirmIntegrations(firmId);
+    const firmIntegrationIds = enabledIntegrations.map(fi => fi.id);
+
+    const [availableIntegrations, userPermissions, recentActivity] = await Promise.all([
       this.getAllPlatformIntegrations(),
-      this.getFirmIntegrations(firmId),
-      db.select().from(userIntegrationPermissions).where(eq(userIntegrationPermissions.firmId, firmId)),
+      // Get user permissions for this firm's integrations only
+      firmIntegrationIds.length > 0 
+        ? db.select().from(userIntegrationPermissions).where(
+            inArray(userIntegrationPermissions.firmIntegrationId, firmIntegrationIds)
+          )
+        : Promise.resolve([]),
       this.getIntegrationAuditLogs(firmId)
     ]);
 
