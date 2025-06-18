@@ -20,10 +20,12 @@ interface SessionContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  authMethod: 'session' | 'jwt' | null;
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
   setToken: (token: string | null) => void;
+  refreshSession: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authMethod, setAuthMethod] = useState<'session' | 'jwt' | null>(null);
 
   const checkSession = async () => {
     setIsLoading(true);
@@ -49,13 +52,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const sessionData = await response.json();
         console.log('✅ Session data received:', sessionData);
         setUser(sessionData.user);
+        setAuthMethod(sessionData.authMethod || 'session');
       } else {
         console.log('❌ No active session');
-        setUser(null);
+        // Don't clear user immediately on session check failure during page loads
+        // The user might be logged in but session validation is having timing issues
+        if (!user) {
+          setUser(null);
+        }
       }
     } catch (error) {
       console.error('Session check failed:', error);
-      setUser(null);
+      if (!user) {
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -108,11 +118,44 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setToken(null);
       setUser(null);
+      setAuthMethod(null);
+    }
+  };
+
+  const refreshSession = async () => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        await checkSession();
+      }
+    } catch (error) {
+      console.error('Session refresh failed:', error);
     }
   };
 
   useEffect(() => {
-    checkSession();
+    // Initial session check with retry mechanism
+    const initializeSession = async () => {
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          await checkSession();
+          break;
+        } catch (error) {
+          retries--;
+          if (retries > 0) {
+            console.log(`Session check failed, retrying... (${retries} left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+    };
+    
+    initializeSession();
   }, []);
 
   const value = {
@@ -120,10 +163,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     token,
     isLoading,
     isAuthenticated: !!user,
+    authMethod,
     login,
     logout,
     checkSession,
     setToken,
+    refreshSession,
   };
 
   return (
