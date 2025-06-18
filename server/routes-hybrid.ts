@@ -11,7 +11,7 @@ import { refreshJWTTokens } from "./auth/jwt-auth-clean";
 // JWT validation function matching working admin endpoints
 async function validateJWTAuth(req: any) {
   try {
-    const jwtToken = req.cookies.accessToken;
+    const jwtToken = req.cookies.firmsync_access_token;
     if (!jwtToken) {
       return { success: false, error: "No JWT token found" };
     }
