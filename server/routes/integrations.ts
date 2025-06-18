@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth, requireAdmin } from "../auth/jwt-auth-clean";
+import { requireJWTAuth as requireAuth, requireJWTAdmin as requireAdmin } from "../auth/jwt-auth-clean";
 import { integrationService } from "../services/integration-service";
 import { insertPlatformIntegrationSchema, insertFirmIntegrationSchema } from "@shared/schema";
 import { z } from "zod";

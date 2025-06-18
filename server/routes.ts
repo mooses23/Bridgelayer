@@ -6,6 +6,7 @@ import { authStrategyMiddleware } from "./auth/strategy-router";
 import { requireAuth, requireAdmin, requireFirmUser, requireTenantAccess } from "./auth/middleware/unified-auth-middleware";
 import { hybridLogin, hybridLogout, hybridSessionCheck, hybridAuthStatus } from "./auth/hybrid-controller";
 import { refreshJWTTokens } from "./auth/jwt-auth-clean";
+import integrationRoutes from "./routes/integrations";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply authentication strategy middleware to all routes
@@ -356,6 +357,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch cases summary' });
     }
   });
+
+  // Integration routes
+  app.use("/api/integrations", integrationRoutes);
 
   // Create HTTP server
   const server = createServer(app);
