@@ -23,7 +23,8 @@ import {
   X,
   Phone,
   MapPin,
-  Upload
+  Upload,
+  Link
 } from "lucide-react";
 
 interface IntakeFormField {
@@ -785,10 +786,9 @@ export default function FirmOnboardingPage() {
     switch (currentStep) {
       case 1: return "Firm Information";
       case 2: return "Account Creation";
-      case 3: return "Storage Setup";
-      case 4: return "Integrations";
-      case 5: return "Forum Intake";
-      case 6: return "AI Assistant Configuration";
+      case 3: return "Integrations";
+      case 4: return "Feature Selection";
+      case 5: return "AI Assistant Configuration";
       default: return "";
     }
   };
@@ -800,12 +800,10 @@ export default function FirmOnboardingPage() {
       case 2:
         return formData.practiceAreas.length > 0 && formData.firmSize;
       case 3:
-        return formData.adminFirstName && formData.adminLastName && formData.adminEmail;
-      case 4:
         return true; // Integration step is optional
-      case 5:
+      case 4:
         return formData.enabledFeatures.length > 0;
-      case 6:
+      case 5:
         return true; // AI configuration is optional but has defaults
       default:
         return false;
@@ -849,19 +847,17 @@ export default function FirmOnboardingPage() {
           <CardTitle className="flex items-center">
             {currentStep === 1 && <Building2 className="h-5 w-5 mr-2" />}
             {currentStep === 2 && <Settings className="h-5 w-5 mr-2" />}
-            {currentStep === 3 && <Users className="h-5 w-5 mr-2" />}
+            {currentStep === 3 && <Link className="h-5 w-5 mr-2" />}
             {currentStep === 4 && <FileText className="h-5 w-5 mr-2" />}
             {currentStep === 5 && <Brain className="h-5 w-5 mr-2" />}
-            {currentStep === 6 && <CheckCircle className="h-5 w-5 mr-2" />}
             {getStepTitle()}
           </CardTitle>
           <CardDescription>
             {currentStep === 1 && "Enter basic information about the law firm"}
             {currentStep === 2 && "Configure practice areas and firm settings"}
-            {currentStep === 3 && "Set up the primary administrator account"}
-            {currentStep === 4 && "Choose which platform integrations to enable"}
-            {currentStep === 5 && "Select which features to enable for your firm"}
-            {currentStep === 6 && "Configure AI analysis settings based on your firm profile"}
+            {currentStep === 3 && "Choose which platform integrations to enable"}
+            {currentStep === 4 && "Select which features to enable for your firm"}
+            {currentStep === 5 && "Configure AI analysis settings based on your firm profile"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
