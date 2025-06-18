@@ -58,10 +58,26 @@ interface FirmOnboardingData {
   selectedIntegrations: string[];
   integrationConfigs: Record<string, any>;
   
-  // Forum Intake
-  intakeFormTitle: string;
-  intakeFormDescription: string;
-  intakeFormFields: IntakeFormField[];
+  // AI Assistant Configuration
+  commonDocumentTypes: string[];
+  researchRequirements: string[];
+  reviewPriorities: 'speed' | 'thoroughness' | 'balanced';
+  riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+  customPromptInstructions: string;
+  analysisModules: {
+    summarize: boolean;
+    risk: boolean;
+    clauses: boolean;
+    crossref: boolean;
+    formatting: boolean;
+  };
+  documentTemplates: Array<{
+    id: string;
+    name: string;
+    type: string;
+    enhancedPrompt: string;
+    uploadedFile?: File;
+  }>;
   
   // Features & Settings
   enabledFeatures: string[];
@@ -134,14 +150,19 @@ export default function FirmOnboardingPage() {
     adminRole: "firm_admin",
     selectedIntegrations: [],
     integrationConfigs: {},
-    intakeFormTitle: "Client Intake Form",
-    intakeFormDescription: "Please provide the following information to help us serve you better.",
-    intakeFormFields: [
-      { id: "1", type: "text", label: "Full Name", placeholder: "Enter your full name", required: true },
-      { id: "2", type: "email", label: "Email Address", placeholder: "Enter your email", required: true },
-      { id: "3", type: "phone", label: "Phone Number", placeholder: "Enter your phone number", required: false },
-      { id: "4", type: "textarea", label: "Case Description", placeholder: "Briefly describe your legal matter", required: true }
-    ],
+    commonDocumentTypes: [],
+    researchRequirements: [],
+    reviewPriorities: 'balanced',
+    riskTolerance: 'moderate',
+    customPromptInstructions: '',
+    analysisModules: {
+      summarize: true,
+      risk: true,
+      clauses: false,
+      crossref: false,
+      formatting: false
+    },
+    documentTemplates: [],
     enabledFeatures: ["documents", "billing", "intake"],
     billingRate: "",
     timezone: "America/New_York"
@@ -507,76 +528,309 @@ export default function FirmOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-4">Client Intake Form Configuration</h3>
-              <p className="text-sm text-gray-600 mb-4">Customize your client intake form</p>
+              <h3 className="text-lg font-medium mb-4">Feature Selection</h3>
+              <p className="text-sm text-gray-600 mb-4">Choose which features to enable for your firm</p>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Form Builder */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {AVAILABLE_FEATURES.map((feature) => (
+                  <div
+                    key={feature.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      formData.enabledFeatures.includes(feature.id)
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => toggleFeature(feature.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-medium">{feature.label}</h4>
+                        <p className="text-sm text-gray-600 mt-1">{feature.description}</p>
+                      </div>
+                      {formData.enabledFeatures.includes(feature.id) && (
+                        <CheckCircle className="h-5 w-5 text-blue-500" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">AI Assistant Configuration</h3>
+              <p className="text-sm text-gray-600 mb-4">Configure AI analysis settings based on your firm profile and upload document templates for enhanced prompts</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Document Template Upload */}
                 <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="intakeTitle">Form Title</Label>
-                    <Input
-                      id="intakeTitle"
-                      value={formData.intakeFormTitle}
-                      onChange={(e) => updateFormData({ intakeFormTitle: e.target.value })}
-                      placeholder="Enter form title"
-                    />
+                  <h4 className="font-medium">Document Templates</h4>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-2">Upload template documents</p>
+                    <Button variant="outline" size="sm">
+                      Choose Files
+                    </Button>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="intakeDescription">Form Description</Label>
-                    <Textarea
-                      id="intakeDescription"
-                      value={formData.intakeFormDescription}
-                      onChange={(e) => updateFormData({ intakeFormDescription: e.target.value })}
-                      placeholder="Enter form description"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Form Fields</Label>
-                    <div className="space-y-2 mt-2">
-                      {formData.intakeFormFields.map((field, index) => (
-                        <div key={field.id} className="flex items-center justify-between p-3 border rounded">
+                  {formData.documentTemplates.length > 0 && (
+                    <div className="space-y-2">
+                      {formData.documentTemplates.map((template) => (
+                        <div key={template.id} className="flex items-center justify-between p-2 border rounded">
                           <div>
-                            <span className="font-medium">{field.label}</span>
-                            <span className="text-sm text-gray-500 ml-2">({field.type})</span>
-                            {field.required && <Badge variant="secondary" className="ml-2">Required</Badge>}
+                            <span className="text-sm font-medium">{template.name}</span>
+                            <span className="text-xs text-gray-500 ml-2">({template.type})</span>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const newFields = formData.intakeFormFields.filter((_, i) => i !== index);
-                              updateFormData({ intakeFormFields: newFields });
-                            }}
-                          >
-                            Remove
+                          <Button variant="ghost" size="sm">
+                            <X className="h-3 w-3" />
                           </Button>
                         </div>
                       ))}
                     </div>
+                  )}
+                </div>
+
+                {/* Base Prompt Display */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Enhanced Prompt Preview</h4>
+                  <div className="border rounded-lg p-4 bg-gray-50 h-64 overflow-y-auto">
+                    <div className="text-sm text-gray-600">
+                      <div className="font-medium mb-2">TRUST LAYER ENHANCER</div>
+                      <p className="mb-3">You are FIRMSYNC's AI Legal Assistant. Provide evidence-based analysis with specific citations...</p>
+                      
+                      <div className="font-medium mb-2">RISK PROFILE BALANCER</div>
+                      <p className="mb-3">Current Risk Level: {formData.riskTolerance.toUpperCase()}</p>
+                      
+                      <div className="font-medium mb-2">ANALYSIS MODULES</div>
+                      <ul className="mb-3">
+                        {Object.entries(formData.analysisModules).filter(([_, enabled]) => enabled).map(([module]) => (
+                          <li key={module} className="text-blue-600">• {module.charAt(0).toUpperCase() + module.slice(1)} Analysis</li>
+                        ))}
+                      </ul>
+                      
+                      {formData.customPromptInstructions && (
+                        <>
+                          <div className="font-medium mb-2">CUSTOM INSTRUCTIONS</div>
+                          <p className="mb-3 bg-yellow-100 p-2 rounded">{formData.customPromptInstructions}</p>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Form Preview */}
+                {/* Configuration Controls */}
                 <div className="space-y-4">
-                  <h4 className="font-medium">Form Preview</h4>
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <h5 className="font-medium mb-2">{formData.intakeFormTitle}</h5>
-                    <p className="text-sm text-gray-600 mb-4">{formData.intakeFormDescription}</p>
-                    
-                    <div className="space-y-3">
-                      {formData.intakeFormFields.map((field) => (
-                        <div key={field.id}>
-                          <Label>
-                            {field.label}
-                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                  <h4 className="font-medium">Analysis Settings</h4>
+                  
+                  <div>
+                    <Label htmlFor="reviewPriorities">Review Priorities</Label>
+                    <Select 
+                      value={formData.reviewPriorities} 
+                      onValueChange={(value: 'speed' | 'thoroughness' | 'balanced') => 
+                        updateFormData({ reviewPriorities: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="speed">Speed (Quick Review)</SelectItem>
+                        <SelectItem value="balanced">Balanced (Standard)</SelectItem>
+                        <SelectItem value="thoroughness">Thoroughness (Deep Analysis)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="riskTolerance">Risk Tolerance</Label>
+                    <Select 
+                      value={formData.riskTolerance} 
+                      onValueChange={(value: 'conservative' | 'moderate' | 'aggressive') => 
+                        updateFormData({ riskTolerance: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="conservative">Conservative</SelectItem>
+                        <SelectItem value="moderate">Moderate</SelectItem>
+                        <SelectItem value="aggressive">Aggressive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Analysis Modules</Label>
+                    <div className="space-y-2 mt-2">
+                      {Object.entries(formData.analysisModules).map(([module, enabled]) => (
+                        <div key={module} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={module}
+                            checked={enabled}
+                            onCheckedChange={(checked) => 
+                              updateFormData({
+                                analysisModules: {
+                                  ...formData.analysisModules,
+                                  [module]: !!checked
+                                }
+                              })
+                            }
+                          />
+                          <Label htmlFor={module} className="text-sm">
+                            {module.charAt(0).toUpperCase() + module.slice(1)} Analysis
                           </Label>
-                          {field.type === 'textarea' ? (
-                            <Textarea placeholder={field.placeholder} disabled />
-                          ) : field.type === 'select' ? (
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="customInstructions">Custom Instructions</Label>
+                    <Textarea
+                      id="customInstructions"
+                      value={formData.customPromptInstructions}
+                      onChange={(e) => updateFormData({ customPromptInstructions: e.target.value })}
+                      placeholder="Enter firm-specific AI analysis instructions..."
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+
+
+      default:
+        return null;
+    }
+  };
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.firmName && formData.firmSlug && formData.email;
+      case 2:
+        return formData.practiceAreas.length > 0 && formData.firmSize;
+      case 3:
+        return formData.adminFirstName && formData.adminLastName && formData.adminEmail;
+      case 4:
+        return true; // Integration step is optional
+      case 5:
+        return true; // AI configuration is optional but has defaults
+      case 6:
+        return formData.enabledFeatures.length > 0;
+      default:
+        return false;
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Handle form submission
+    console.log('Onboarding data:', formData);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Firm Onboarding</h1>
+        <Button variant="outline" onClick={() => navigate('/admin/firms')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Firms
+        </Button>
+      </div>
+
+      {/* Progress indicator */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-gray-700">
+            Step {currentStep} of {totalSteps}: {getStepTitle()}
+          </span>
+          <span className="text-sm text-gray-500">
+            {Math.round((currentStep / totalSteps) * 100)}% Complete
+          </span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Form content */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            {currentStep === 1 && <Building2 className="h-5 w-5 mr-2" />}
+            {currentStep === 2 && <Settings className="h-5 w-5 mr-2" />}
+            {currentStep === 3 && <Users className="h-5 w-5 mr-2" />}
+            {currentStep === 4 && <FileText className="h-5 w-5 mr-2" />}
+            {currentStep === 5 && <Brain className="h-5 w-5 mr-2" />}
+            {currentStep === 6 && <CheckCircle className="h-5 w-5 mr-2" />}
+            {getStepTitle()}
+          </CardTitle>
+          <CardDescription>
+            {currentStep === 1 && "Enter basic information about the law firm"}
+            {currentStep === 2 && "Configure practice areas and firm settings"}
+            {currentStep === 3 && "Set up the primary administrator account"}
+            {currentStep === 4 && "Choose which platform integrations to enable"}
+            {currentStep === 5 && "Configure AI analysis settings and document templates"}
+            {currentStep === 6 && "Select which features to enable for your firm"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {renderStep()}
+        </CardContent>
+      </Card>
+
+      {/* Navigation buttons */}
+      <div className="flex justify-between">
+        <Button
+          variant="outline"
+          onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
+          disabled={currentStep === 1}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Previous
+        </Button>
+
+        <div className="flex space-x-3">
+          <Button variant="outline">
+            <Save className="h-4 w-4 mr-2" />
+            Save Draft
+          </Button>
+          
+          {currentStep < totalSteps ? (
+            <Button
+              onClick={() => setCurrentStep(prev => prev + 1)}
+              disabled={!isStepValid()}
+            >
+              Next
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!isStepValid()}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Complete Onboarding
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
                             <Select disabled>
                               <SelectTrigger>
                                 <SelectValue placeholder={field.placeholder} />
@@ -643,8 +897,8 @@ export default function FirmOnboardingPage() {
       case 2: return "Practice Configuration";
       case 3: return "Administrator Setup";
       case 4: return "Integration Setup";
-      case 5: return "Client Intake Configuration";
-      case 6: return "Feature Selection";
+      case 5: return "Feature Selection";
+      case 6: return "AI Assistant Configuration";
       default: return "";
     }
   };
