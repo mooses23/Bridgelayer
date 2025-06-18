@@ -67,7 +67,7 @@ export function setJWTCookies(res: Response, accessToken: string, refreshToken: 
   const cookieOptions = {
     httpOnly: true,
     secure: false, // Replit development uses HTTP
-    sameSite: 'lax' as const, // Updated for better compatibility
+    sameSite: 'none' as const, // Changed to none for better cross-origin compatibility
     path: '/'
   };
 
@@ -80,6 +80,12 @@ export function setJWTCookies(res: Response, accessToken: string, refreshToken: 
     ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
+
+  console.log('🍪 JWT cookies set:', { 
+    accessTokenLength: accessToken.length, 
+    refreshTokenLength: refreshToken.length,
+    cookieOptions 
+  });
 }
 
 /**
@@ -89,7 +95,7 @@ export function clearJWTCookies(res: Response) {
   const cookieOptions = {
     httpOnly: true,
     secure: false,
-    sameSite: 'lax' as const,
+    sameSite: 'none' as const,
     path: '/'
   };
   
