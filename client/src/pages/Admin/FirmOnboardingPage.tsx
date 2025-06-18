@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { 
   Building2, 
@@ -18,6 +19,8 @@ import {
   Save,
   Globe,
   Mail,
+  Brain,
+  X,
   Phone,
   MapPin
 } from "lucide-react";
@@ -705,7 +708,189 @@ export default function FirmOnboardingPage() {
           </div>
         );
 
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4">AI Assistant Configuration</h3>
+              <p className="text-sm text-gray-600 mb-4">Configure AI analysis settings based on your firm profile: {formData.firmName} specializing in {formData.practiceAreas.join(', ')}</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Document Template Upload */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Document Templates</h4>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-2">Upload template documents</p>
+                    <Button variant="outline" size="sm">
+                      Choose Files
+                    </Button>
+                  </div>
+                  
+                  {formData.documentTemplates.length > 0 && (
+                    <div className="space-y-2">
+                      {formData.documentTemplates.map((template) => (
+                        <div key={template.id} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <span className="text-sm font-medium">{template.name}</span>
+                            <span className="text-xs text-gray-500 ml-2">({template.type})</span>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-gray-500">
+                    <p className="font-medium mb-1">Document Types Based on Practice Areas:</p>
+                    <ul className="space-y-1">
+                      {formData.practiceAreas.map(area => {
+                        const typeMap = {
+                          'Corporate Law': 'Corporate Agreements, M&A Documents',
+                          'Real Estate': 'Purchase Agreements, Leases, Deeds',
+                          'Employment Law': 'Employment Contracts, NDAs',
+                          'Intellectual Property': 'Patent Applications, Licensing',
+                          'Estate Planning': 'Wills, Trust Agreements',
+                          'Litigation': 'Discovery Documents, Settlements'
+                        };
+                        return (
+                          <li key={area} className="text-blue-600">
+                            • {typeMap[area as keyof typeof typeMap] || 'General Legal Documents'}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
 
+                {/* Enhanced Prompt Preview */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Enhanced Prompt Preview</h4>
+                  <div className="border rounded-lg p-4 bg-gray-50 h-64 overflow-y-auto">
+                    <div className="text-sm text-gray-600">
+                      <div className="font-medium mb-2 text-blue-700">FIRMSYNC AI LEGAL ASSISTANT</div>
+                      <p className="mb-3 bg-blue-50 p-2 rounded">Firm: {formData.firmName} | Practice: {formData.practiceAreas.join(', ')} | Size: {formData.firmSize}</p>
+                      
+                      <div className="font-medium mb-2">TRUST LAYER ENHANCER</div>
+                      <p className="mb-3">Evidence-based analysis with specific citations. Professional paralegal-level assistance focusing on {formData.practiceAreas[0] || 'legal'} documentation...</p>
+                      
+                      <div className="font-medium mb-2">RISK PROFILE BALANCER</div>
+                      <p className="mb-3">Current Risk Level: <span className="font-semibold text-red-600">{formData.riskTolerance.toUpperCase()}</span> | Review Priority: <span className="font-semibold text-green-600">{formData.reviewPriorities.toUpperCase()}</span></p>
+                      
+                      <div className="font-medium mb-2">ENABLED ANALYSIS MODULES</div>
+                      <ul className="mb-3">
+                        {Object.entries(formData.analysisModules).filter(([_, enabled]) => enabled).map(([module]) => (
+                          <li key={module} className="text-blue-600">• {module.charAt(0).toUpperCase() + module.slice(1)} Analysis</li>
+                        ))}
+                      </ul>
+                      
+                      {formData.customPromptInstructions && (
+                        <>
+                          <div className="font-medium mb-2">FIRM-SPECIFIC INSTRUCTIONS</div>
+                          <p className="mb-3 bg-yellow-100 p-2 rounded border-l-4 border-yellow-400">{formData.customPromptInstructions}</p>
+                        </>
+                      )}
+                      
+                      <div className="font-medium mb-2">INTEGRATIONS CONTEXT</div>
+                      <p className="text-xs">Connected: {formData.selectedIntegrations.length} integrations | Features: {formData.enabledFeatures.length} enabled</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Configuration Controls */}
+                <div className="space-y-4">
+                  <h4 className="font-medium">Analysis Settings</h4>
+                  
+                  <div>
+                    <Label htmlFor="reviewPriorities">Review Priorities</Label>
+                    <Select 
+                      value={formData.reviewPriorities} 
+                      onValueChange={(value: 'speed' | 'thoroughness' | 'balanced') => 
+                        updateFormData({ reviewPriorities: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="speed">Speed (Quick Review)</SelectItem>
+                        <SelectItem value="balanced">Balanced (Standard)</SelectItem>
+                        <SelectItem value="thoroughness">Thoroughness (Deep Analysis)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="riskTolerance">Risk Tolerance</Label>
+                    <Select 
+                      value={formData.riskTolerance} 
+                      onValueChange={(value: 'conservative' | 'moderate' | 'aggressive') => 
+                        updateFormData({ riskTolerance: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="conservative">Conservative</SelectItem>
+                        <SelectItem value="moderate">Moderate</SelectItem>
+                        <SelectItem value="aggressive">Aggressive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Analysis Modules</Label>
+                    <div className="space-y-2 mt-2">
+                      {Object.entries(formData.analysisModules).map(([module, enabled]) => (
+                        <div key={module} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={module}
+                            checked={enabled}
+                            onCheckedChange={(checked) => 
+                              updateFormData({
+                                analysisModules: {
+                                  ...formData.analysisModules,
+                                  [module]: !!checked
+                                }
+                              })
+                            }
+                          />
+                          <Label htmlFor={module} className="text-sm">
+                            {module.charAt(0).toUpperCase() + module.slice(1)} Analysis
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="customInstructions">Custom Instructions</Label>
+                    <Textarea
+                      id="customInstructions"
+                      value={formData.customPromptInstructions}
+                      onChange={(e) => updateFormData({ customPromptInstructions: e.target.value })}
+                      placeholder={`Enter ${formData.firmName} specific AI analysis instructions...`}
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                    <h5 className="font-medium text-blue-800 mb-1">AI Configuration Summary</h5>
+                    <div className="text-xs text-blue-700 space-y-1">
+                      <p>• Practice Areas: {formData.practiceAreas.length} selected</p>
+                      <p>• Integrations: {formData.selectedIntegrations.length} connected</p>
+                      <p>• Features: {formData.enabledFeatures.length} enabled</p>
+                      <p>• Admin: {formData.adminFirstName} {formData.adminLastName}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
 
       default:
         return null;
@@ -723,18 +908,15 @@ export default function FirmOnboardingPage() {
       case 4:
         return true; // Integration step is optional
       case 5:
-        return true; // AI configuration is optional but has defaults
-      case 6:
         return formData.enabledFeatures.length > 0;
+      case 6:
+        return true; // AI configuration is optional but has defaults
       default:
         return false;
     }
   };
 
-  const handleSubmit = async () => {
-    // Handle form submission
-    console.log('Onboarding data:', formData);
-  };
+
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -782,8 +964,8 @@ export default function FirmOnboardingPage() {
             {currentStep === 2 && "Configure practice areas and firm settings"}
             {currentStep === 3 && "Set up the primary administrator account"}
             {currentStep === 4 && "Choose which platform integrations to enable"}
-            {currentStep === 5 && "Configure AI analysis settings and document templates"}
-            {currentStep === 6 && "Select which features to enable for your firm"}
+            {currentStep === 5 && "Select which features to enable for your firm"}
+            {currentStep === 6 && "Configure AI analysis settings based on your firm profile"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -831,25 +1013,6 @@ export default function FirmOnboardingPage() {
     </div>
   );
 }
-                            <Select disabled>
-                              <SelectTrigger>
-                                <SelectValue placeholder={field.placeholder} />
-                              </SelectTrigger>
-                            </Select>
-                          ) : (
-                            <Input 
-                              type={field.type === 'phone' ? 'tel' : field.type}
-                              placeholder={field.placeholder} 
-                              disabled 
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         );
 
