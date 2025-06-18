@@ -619,235 +619,387 @@ export default function GhostModePage() {
     </div>
   );
 
-  const FirmParalegalContent = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Paralegal+ AI Assistant</h1>
-        <p className="text-gray-600 mt-2">Unified AI-powered legal workspace for all your legal tasks</p>
-      </div>
+  const FirmParalegalContent = () => {
+    const [activeAITab, setActiveAITab] = useState('research');
 
-      {/* Main AI Interface */}
-      <Card className="border-2 border-blue-200">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center space-x-2">
-            <Brain className="w-6 h-6 text-blue-600" />
-            <span>AI Legal Assistant</span>
-          </CardTitle>
-          <p className="text-sm text-gray-600">Ask me anything: research legal questions, generate documents, analyze contracts, or create new cases</p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Unified Input Interface */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">What can I help you with today?</label>
-              <textarea 
-                className="w-full mt-2 p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={4}
-                placeholder="Examples:
-• Research contract termination clauses in California employment law
-• Generate an NDA for TechStart Inc with standard confidentiality terms
-• Analyze the attached service agreement for potential risks
-• Create a new case for Acme Corp regarding breach of contract dispute"
-              />
-            </div>
+    const aiTabs = [
+      { id: 'research', label: 'Legal Research', icon: BookOpen, color: 'blue' },
+      { id: 'generate', label: 'Document Generator', icon: Wand2, color: 'purple' },
+      { id: 'analyze', label: 'Document Analysis', icon: Brain, color: 'green' },
+      { id: 'cases', label: 'Case Creation', icon: Plus, color: 'orange' }
+    ];
 
-            {/* Context Selectors */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Task Type</label>
-                <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                  <option>Auto-detect from query</option>
-                  <option>🔍 Legal Research</option>
-                  <option>📝 Document Generation</option>
-                  <option>🧠 Document Analysis</option>
-                  <option>➕ Case Creation</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Client/Matter</label>
-                <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                  <option>Select client (optional)</option>
-                  <option>Acme Corporation</option>
-                  <option>TechStart Inc</option>
-                  <option>Global Holdings LLC</option>
-                  <option>+ Add New Client</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Practice Area</label>
-                <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                  <option>Auto-detect from context</option>
-                  <option>Contract Law</option>
-                  <option>Employment Law</option>
-                  <option>Real Estate</option>
-                  <option>Corporate Law</option>
-                  <option>Litigation</option>
-                  <option>Personal Injury</option>
-                </select>
-              </div>
-            </div>
-
-            {/* File Upload (for analysis tasks) */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-              <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Drag and drop documents here for analysis (optional)</p>
-              <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
-            </div>
-
-            {/* Action Button */}
-            <Button className="w-full h-12 text-lg font-medium" size="lg">
-              <Brain className="w-5 h-5 mr-2" />
-              Process with AI
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Button variant="outline" className="h-20 flex-col space-y-2 text-xs">
-          <BookOpen className="w-6 h-6 text-blue-600" />
-          <span>Legal Research</span>
-          <span className="text-gray-500">Find case law & statutes</span>
-        </Button>
-        <Button variant="outline" className="h-20 flex-col space-y-2 text-xs">
-          <Wand2 className="w-6 h-6 text-purple-600" />
-          <span>Generate Document</span>
-          <span className="text-gray-500">Create contracts & forms</span>
-        </Button>
-        <Button variant="outline" className="h-20 flex-col space-y-2 text-xs">
-          <Brain className="w-6 h-6 text-green-600" />
-          <span>Analyze Document</span>
-          <span className="text-gray-500">Review risks & clauses</span>
-        </Button>
-        <Button variant="outline" className="h-20 flex-col space-y-2 text-xs">
-          <Plus className="w-6 h-6 text-orange-600" />
-          <span>Create Case</span>
-          <span className="text-gray-500">Start new matter</span>
-        </Button>
-      </div>
-
-      {/* Recent Activity & AI History */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Recent AI Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <BookOpen className="w-5 h-5 text-blue-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Contract Termination Research</p>
-                  <p className="text-xs text-gray-600">Researched CA employment law termination clauses</p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
+    const renderAITabContent = () => {
+      switch (activeAITab) {
+        case 'research':
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <BookOpen className="w-5 h-5 text-blue-600" />
+                  <span>Legal Research Assistant</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600">AI-powered legal research with comprehensive case law and statute analysis</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Research Query</label>
+                  <textarea 
+                    className="w-full mt-2 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="Enter your legal research question (e.g., 'What are the requirements for contract termination clauses in California employment law?')"
+                  />
                 </div>
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Jurisdiction</label>
+                    <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                      <option>Federal</option>
+                      <option>California</option>
+                      <option>New York</option>
+                      <option>Texas</option>
+                      <option>Florida</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Practice Area</label>
+                    <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                      <option>Contract Law</option>
+                      <option>Employment Law</option>
+                      <option>Real Estate</option>
+                      <option>Corporate Law</option>
+                      <option>Litigation</option>
+                    </select>
+                  </div>
+                </div>
+                <Button className="w-full">
+                  <Search className="w-4 h-4 mr-2" />
+                  Start Research
+                </Button>
+              </CardContent>
+            </Card>
+          );
+
+        case 'generate':
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Wand2 className="w-5 h-5 text-purple-600" />
+                  <span>Document Generator</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600">Generate professional legal documents with AI assistance</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Document Type</label>
+                  <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500">
+                    <option>Non-Disclosure Agreement</option>
+                    <option>Employment Contract</option>
+                    <option>Service Agreement</option>
+                    <option>Demand Letter</option>
+                    <option>Motion to Dismiss</option>
+                    <option>Lease Agreement</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Document Details</label>
+                  <textarea 
+                    className="w-full mt-2 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-purple-500"
+                    rows={4}
+                    placeholder="Describe the key details for your document (e.g., 'NDA between TechStart Inc and marketing consultant for 2-year term with standard confidentiality provisions')"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Client</label>
+                    <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500">
+                      <option>Acme Corporation</option>
+                      <option>TechStart Inc</option>
+                      <option>Global Holdings LLC</option>
+                      <option>+ Add New Client</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Template Style</label>
+                    <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500">
+                      <option>Standard</option>
+                      <option>Detailed</option>
+                      <option>Simplified</option>
+                    </select>
+                  </div>
+                </div>
+                <Button className="w-full">
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Generate Document
+                </Button>
+              </CardContent>
+            </Card>
+          );
+
+        case 'analyze':
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Brain className="w-5 h-5 text-green-600" />
+                  <span>Document Analysis</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600">AI-powered document review for risks, clauses, and compliance</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Upload Document</label>
+                  <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-400 transition-colors">
+                    <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">Drag and drop or click to upload</p>
+                    <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Analysis Options</label>
+                  <div className="mt-2 grid grid-cols-2 gap-3">
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" defaultChecked className="rounded focus:ring-green-500" />
+                      <span className="text-sm">Risk Analysis</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" defaultChecked className="rounded focus:ring-green-500" />
+                      <span className="text-sm">Clause Extraction</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" className="rounded focus:ring-green-500" />
+                      <span className="text-sm">Cross-Reference Check</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" className="rounded focus:ring-green-500" />
+                      <span className="text-sm">Formatting Review</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Additional Instructions</label>
+                  <textarea 
+                    className="w-full mt-2 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-green-500"
+                    rows={2}
+                    placeholder="Any specific areas to focus on or particular concerns? (optional)"
+                  />
+                </div>
+                <Button className="w-full">
+                  <Brain className="w-4 h-4 mr-2" />
+                  Analyze Document
+                </Button>
+              </CardContent>
+            </Card>
+          );
+
+        case 'cases':
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Plus className="w-5 h-5 text-orange-600" />
+                  <span>AI Case Creation</span>
+                </CardTitle>
+                <p className="text-sm text-gray-600">Create new cases with AI suggestions for similar cases and recommended documents</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Case Description</label>
+                  <textarea 
+                    className="w-full mt-2 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-orange-500"
+                    rows={3}
+                    placeholder="Describe the case, including parties, key issues, and relevant facts (e.g., 'Breach of contract dispute between Acme Corp and supplier regarding delayed delivery of manufacturing equipment')"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Practice Area</label>
+                    <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500">
+                      <option>Contract Dispute</option>
+                      <option>Employment Law</option>
+                      <option>Personal Injury</option>
+                      <option>Real Estate</option>
+                      <option>Corporate Law</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Priority</label>
+                    <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500">
+                      <option>High</option>
+                      <option>Medium</option>
+                      <option>Low</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Client</label>
+                    <select className="w-full mt-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500">
+                      <option>Acme Corporation</option>
+                      <option>TechStart Inc</option>
+                      <option>Global Holdings LLC</option>
+                      <option>+ Add New Client</option>
+                    </select>
+                  </div>
+                </div>
+                <Button className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Case with AI
+                </Button>
+              </CardContent>
+            </Card>
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Paralegal+ AI Tools</h1>
+          <p className="text-gray-600 mt-2">AI-powered legal assistance tools for enhanced productivity</p>
+        </div>
+
+        {/* AI Tool Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8">
+            {aiTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeAITab === tab.id;
               
-              <div className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                <Wand2 className="w-5 h-5 text-purple-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">NDA Generated</p>
-                  <p className="text-xs text-gray-600">Created NDA for TechStart Inc partnership</p>
-                  <p className="text-xs text-gray-500">1 hour ago</p>
-                </div>
-              </div>
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveAITab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    isActive
+                      ? `text-${tab.color}-600 border-${tab.color}-600`
+                      : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? `text-${tab.color}-600` : 'text-gray-400'}`} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-              <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                <Brain className="w-5 h-5 text-green-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Service Agreement Analysis</p>
-                  <p className="text-xs text-gray-600">Identified 3 risks, 2 recommendations</p>
-                  <p className="text-xs text-gray-500">30 minutes ago</p>
-                </div>
-              </div>
+        {/* Active Tab Content */}
+        <div>
+          {renderAITabContent()}
+        </div>
 
-              <div className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <Plus className="w-5 h-5 text-orange-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New Case Created</p>
-                  <p className="text-xs text-gray-600">Acme Corp breach of contract matter</p>
-                  <p className="text-xs text-gray-500">Yesterday</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">AI Usage Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm">Research Queries</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-blue-600">247</div>
-                  <div className="text-xs text-gray-500">This month</div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Wand2 className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm">Documents Generated</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-purple-600">89</div>
-                  <div className="text-xs text-gray-500">This month</div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Brain className="w-4 h-4 text-green-600" />
-                  <span className="text-sm">Documents Analyzed</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-green-600">156</div>
-                  <div className="text-xs text-gray-500">This month</div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Plus className="w-4 h-4 text-orange-600" />
-                  <span className="text-sm">Cases Created</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-bold text-orange-600">34</div>
-                  <div className="text-xs text-gray-500">This month</div>
-                </div>
-              </div>
-
-              {/* AI Efficiency Metrics */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="text-sm font-medium mb-2">AI Efficiency</div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span>Average response time</span>
-                    <span className="font-medium">2.3 seconds</span>
+        {/* Recent Activity & Usage Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Recent AI Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <BookOpen className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Contract Termination Research</p>
+                    <p className="text-xs text-gray-600">CA employment law termination clauses</p>
+                    <p className="text-xs text-gray-500">2 hours ago</p>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span>Accuracy rate</span>
-                    <span className="font-medium">96.8%</span>
+                </div>
+                
+                <div className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <Wand2 className="w-4 h-4 text-purple-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">NDA Generated</p>
+                    <p className="text-xs text-gray-600">TechStart Inc partnership agreement</p>
+                    <p className="text-xs text-gray-500">1 hour ago</p>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span>Time saved this month</span>
-                    <span className="font-medium">47.2 hours</span>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <Brain className="w-4 h-4 text-green-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Service Agreement Analysis</p>
+                    <p className="text-xs text-gray-600">3 risks identified, 2 recommendations</p>
+                    <p className="text-xs text-gray-500">30 minutes ago</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                  <Plus className="w-4 h-4 text-orange-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">New Case Created</p>
+                    <p className="text-xs text-gray-600">Acme Corp breach of contract</p>
+                    <p className="text-xs text-gray-500">Yesterday</p>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Monthly Usage Statistics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <BookOpen className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm">Research Queries</span>
+                  </div>
+                  <span className="font-bold text-blue-600">247</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <Wand2 className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm">Documents Generated</span>
+                  </div>
+                  <span className="font-bold text-purple-600">89</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <Brain className="w-4 h-4 text-green-600" />
+                    <span className="text-sm">Documents Analyzed</span>
+                  </div>
+                  <span className="font-bold text-green-600">156</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <Plus className="w-4 h-4 text-orange-600" />
+                    <span className="text-sm">Cases Created</span>
+                  </div>
+                  <span className="font-bold text-orange-600">34</span>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="text-sm font-medium mb-2">AI Performance</div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span>Average response time</span>
+                      <span className="font-medium">2.3 seconds</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span>Accuracy rate</span>
+                      <span className="font-medium">96.8%</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span>Time saved this month</span>
+                      <span className="font-medium">47.2 hours</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const FirmSettingsContent = () => (
     <div className="space-y-6">
