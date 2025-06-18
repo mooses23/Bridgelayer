@@ -67,7 +67,7 @@ export function setJWTCookies(res: Response, accessToken: string, refreshToken: 
   const cookieOptions = {
     httpOnly: true,
     secure: false, // Replit development uses HTTP
-    sameSite: 'none' as const, // Changed to none for better cross-origin compatibility
+    sameSite: 'lax' as const, // Changed to lax for better compatibility with same-origin requests
     path: '/'
   };
 
@@ -95,7 +95,7 @@ export function clearJWTCookies(res: Response) {
   const cookieOptions = {
     httpOnly: true,
     secure: false,
-    sameSite: 'none' as const,
+    sameSite: 'lax' as const,
     path: '/'
   };
   

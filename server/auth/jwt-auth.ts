@@ -97,7 +97,7 @@ export function verifyToken(token: string): JWTPayload | null {
 // JWT Authentication middleware
 export const requireAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const token = req.cookies.auth_token;
+    const token = req.cookies.accessToken;
 
     if (!token) {
       return res.status(401).json({ message: 'No authentication token' });
