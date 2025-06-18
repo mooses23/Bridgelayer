@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { seedAuthData } from "./seed-auth-data";
+
 import { pool } from "./db";
 
 const app = express();
@@ -140,8 +140,7 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Auto-seed authentication data on startup if needed
-    await seedAuthData();
+    console.log('Starting FIRMSYNC server...');
     
     const server = await registerRoutes(app);
 
