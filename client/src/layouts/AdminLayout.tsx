@@ -140,7 +140,7 @@ export default function AdminLayout() {
               if (currentPath === "/admin/integrations") return <IntegrationsPage />;
               if (currentPath === "/admin/usage") return <div>Usage Analytics Page</div>;
               if (currentPath === "/admin/system-health") return <div>System Health Page</div>;
-              if (currentPath === "/admin/ghost") return <GhostModePage />;
+              if (currentPath.startsWith("/admin/ghost")) return <GhostModePage />;
               if (currentPath === "/admin/settings") return <div>System Settings Page</div>;
               return <AdminDashboard />;
             })()}
