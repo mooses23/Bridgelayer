@@ -134,7 +134,7 @@ export default function GhostModePage() {
     },
   });
 
-  const filteredFirms = firms.filter((firm: Firm) =>
+  const filteredFirms = (firms || []).filter((firm: Firm) =>
     firm.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     firm.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
