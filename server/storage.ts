@@ -112,6 +112,7 @@ export interface IStorage {
   createDocument(document: InsertDocument): Promise<Document>;
   getDocument(id: number, firmId: number): Promise<Document | undefined>;
   getFirmDocuments(firmId: number): Promise<Document[]>;
+  getDocumentsByFirmId(firmId: number): Promise<Document[]>;
   getFolderDocuments(folderId: number, firmId: number): Promise<Document[]>;
   updateDocument(id: number, updates: Partial<Document>): Promise<Document | undefined>;
   deleteDocument(id: number, firmId: number): Promise<boolean>;
@@ -331,6 +332,14 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).where(eq(users.firmId, firmId));
   }
 
+  async getUsersByFirmId(firmId: number): Promise<User[]> {
+    return this.getUsersByFirm(firmId);
+  }
+
+  async getAllFirms(): Promise<Firm[]> {
+    return await db.select().from(firms).orderBy(firms.name);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -407,7 +416,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(documents)
       .where(eq(documents.firmId, firmId))
-      .orderBy(desc(documents.uploadedAt));
+      .orderBy(desc(documents.createdAt));
+  }
+
+  async getDocumentsByFirmId(firmId: number): Promise<Document[]> {
+    return this.getFirmDocuments(firmId);
   }
 
   async getFolderDocuments(folderId: number, firmId: number): Promise<Document[]> {

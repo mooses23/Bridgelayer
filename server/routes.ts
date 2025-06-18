@@ -201,14 +201,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin firms management endpoint
-  app.get("/api/admin/firms", requireAdmin, async (req, res) => {
+  app.get("/api/admin/firms", requireAuth, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
       
       // Enhance firms with additional metadata for admin view
       const enhancedFirms = await Promise.all(firms.map(async (firm) => {
-        const users = await storage.getUsersByFirmId(firm.id);
-        const documents = await storage.getDocumentsByFirmId(firm.id);
+        const users = await storage.getUsersByFirm(firm.id);
+        const documents = await storage.getFirmDocuments(firm.id);
         
         return {
           ...firm,
