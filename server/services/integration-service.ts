@@ -265,18 +265,30 @@ export class IntegrationService {
   }
 
   // Complete Integration Dashboard Data
-  async getIntegrationDashboardData(firmId: number): Promise<{
+  async getIntegrationDashboardData(firmId: number | null): Promise<{
     availableIntegrations: PlatformIntegration[];
     enabledIntegrations: FirmIntegration[];
     userPermissions: UserIntegrationPermission[];
     recentActivity: any[];
   }> {
-    // Get firm integrations first to get their IDs
+    // Get available integrations (always visible)
+    const availableIntegrations = await this.getAllPlatformIntegrations();
+    
+    // For admin users (firmId = 0 or null), return platform-wide view with empty firm data
+    if (!firmId || firmId === 0) {
+      return {
+        availableIntegrations,
+        enabledIntegrations: [],
+        userPermissions: [],
+        recentActivity: []
+      };
+    }
+
+    // For firm users, get their specific integrations
     const enabledIntegrations = await this.getFirmIntegrations(firmId);
     const firmIntegrationIds = enabledIntegrations.map(fi => fi.id);
 
-    const [availableIntegrations, userPermissions, recentActivity] = await Promise.all([
-      this.getAllPlatformIntegrations(),
+    const [userPermissions, recentActivity] = await Promise.all([
       // Get user permissions for this firm's integrations only
       firmIntegrationIds.length > 0 
         ? db.select().from(userIntegrationPermissions).where(

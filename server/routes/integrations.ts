@@ -207,7 +207,12 @@ router.get("/check/:integrationId", requireAuth, async (req, res) => {
 router.get("/dashboard", requireAuth, async (req, res) => {
   try {
     const user = req.user as any;
-    const dashboardData = await integrationService.getIntegrationDashboardData(user.firmId);
+    
+    // For admin users, provide platform-wide view (firmId = null)
+    // For firm users, show their firm-specific integrations
+    const firmId = user.role === 'admin' ? null : user.firmId;
+    
+    const dashboardData = await integrationService.getIntegrationDashboardData(firmId);
     
     // Sanitize API credentials in response
     dashboardData.enabledIntegrations = dashboardData.enabledIntegrations.map(integration => ({
