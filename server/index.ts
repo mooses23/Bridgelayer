@@ -103,7 +103,7 @@ app.use(session({
     secure: false, // Set to false for Replit development environment
     httpOnly: true, // Enable for security
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Change to lax for better Replit compatibility
+    sameSite: 'none', // Required for cross-origin requests in Replit
     domain: undefined // Let browser handle domain automatically
   }
 }));
