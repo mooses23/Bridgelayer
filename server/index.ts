@@ -79,7 +79,9 @@ const PgSession = connectPgSimple(session);
 app.use(session({
   store: new PgSession({
     pool: pool,
-    tableName: 'session'
+    tableName: 'session',
+    createTableIfMissing: true,
+    schemaName: 'public'
   }),
   secret: process.env.SESSION_SECRET || 'firmsync-session-secret-change-in-production',
   name: 'firmsync.sid',
@@ -88,9 +90,9 @@ app.use(session({
   rolling: true,
   cookie: {
     secure: false, // Set to false for Replit development environment
-    httpOnly: false, // Set to false for cross-origin Replit environment debugging
+    httpOnly: true, // HttpOnly for security
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none', // Required for cross-origin requests in Replit
+    sameSite: 'lax', // Changed from 'none' to 'lax' for better compatibility
     domain: undefined // Let browser handle domain automatically
   }
 }));

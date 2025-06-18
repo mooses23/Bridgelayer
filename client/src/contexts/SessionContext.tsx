@@ -74,12 +74,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const loginData = await response.json();
         console.log("✅ Login successful, redirectPath:", loginData.redirectPath);
-        console.log("🍪 Response headers:", [...response.headers.entries()]);
         
+        // Set user data immediately from login response
         setUser(loginData.user);
+        setIsLoading(false);
         
-        // Force session check after login to verify cookie persistence
-        setTimeout(() => checkSession(), 100);
+        // Don't check session immediately - we have the user data already
+        console.log("📤 Login result:", { success: true, redirectPath: loginData.redirectPath });
         
         return {
           success: true,
