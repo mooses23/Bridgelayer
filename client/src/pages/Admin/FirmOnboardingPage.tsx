@@ -66,7 +66,7 @@ interface FirmOnboardingData {
   commonDocumentTypes: string[];
   researchRequirements: string[];
   reviewPriorities: 'speed' | 'thoroughness' | 'balanced';
-  riskTolerance: 'conservative' | 'moderate' | 'aggressive';
+  riskTolerance: string;
   customPromptInstructions: string;
   analysisModules: {
     summarize: boolean;
@@ -82,6 +82,7 @@ interface FirmOnboardingData {
     enhancedPrompt: string;
     uploadedFile?: File;
   }>;
+  enableDocumentTemplates?: boolean;
   
   // Features & Settings
   enabledFeatures: string[];
@@ -134,6 +135,7 @@ export default function FirmOnboardingPage() {
   const [, navigate] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 6;
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState<FirmOnboardingData>({
     firmName: "",
@@ -157,7 +159,7 @@ export default function FirmOnboardingPage() {
     commonDocumentTypes: [],
     researchRequirements: [],
     reviewPriorities: 'balanced',
-    riskTolerance: 'moderate',
+    riskTolerance: '50',
     customPromptInstructions: '',
     analysisModules: {
       summarize: true,
@@ -174,6 +176,29 @@ export default function FirmOnboardingPage() {
 
   const updateFormData = (updates: Partial<FirmOnboardingData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newTemplates = Array.from(files).map(file => ({
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      type: file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+      enhancedPrompt: '',
+      uploadedFile: file
+    }));
+
+    updateFormData({
+      documentTemplates: [...formData.documentTemplates, ...newTemplates]
+    });
+  };
+
+  const removeTemplate = (templateId: string) => {
+    updateFormData({
+      documentTemplates: formData.documentTemplates.filter(t => t.id !== templateId)
+    });
   };
 
   const togglePracticeArea = (area: string) => {
@@ -629,46 +654,83 @@ export default function FirmOnboardingPage() {
                   )}
 
                   <div className="border rounded-lg p-4 bg-gray-50 h-80 overflow-y-auto">
-                    <div className="text-sm text-gray-600">
-                      <div className="font-medium mb-2 text-blue-700">FIRMSYNC AI LEGAL ASSISTANT</div>
-                      <p className="mb-3 bg-blue-50 p-2 rounded">Firm: {formData.firmName} | Practice: {formData.practiceAreas.join(', ')} | Size: {formData.firmSize}</p>
+                    <div className="text-sm text-gray-700">
+                      <div className="font-bold mb-3 text-blue-800 border-b pb-2">FIRMSYNC AI LEGAL ASSISTANT - {formData.firmName}</div>
                       
-                      <div className="font-medium mb-2">TRUST LAYER ENHANCER</div>
-                      <p className="mb-3">Evidence-based analysis with specific citations. Professional paralegal-level assistance focusing on {formData.practiceAreas[0] || 'legal'} documentation...</p>
-                      
-                      <div className="font-medium mb-2">RISK PROFILE BALANCER</div>
-                      <p className="mb-3">Current Risk Level: <span className="font-semibold text-red-600">{formData.riskTolerance}%</span> | Review Priority: <span className="font-semibold text-green-600">{formData.reviewPriorities.toUpperCase()}</span></p>
-                      
-                      <div className="font-medium mb-2">ENABLED ANALYSIS MODULES</div>
-                      <ul className="mb-3">
-                        {Object.entries(formData.analysisModules).filter(([_, enabled]) => enabled).map(([module]) => (
-                          <li key={module} className="text-blue-600">• {module.charAt(0).toUpperCase() + module.slice(1)} Analysis</li>
-                        ))}
-                      </ul>
+                      <div className="bg-blue-50 p-3 rounded mb-3 border-l-4 border-blue-400">
+                        <p className="text-xs"><strong>Firm Profile:</strong> {formData.firmName} | <strong>Practice Areas:</strong> {formData.practiceAreas.join(', ')} | <strong>Size:</strong> {formData.firmSize}</p>
+                        <p className="text-xs"><strong>Jurisdiction:</strong> {formData.state} | <strong>Risk Tolerance:</strong> {formData.riskTolerance}% | <strong>Priority:</strong> {formData.reviewPriorities}</p>
+                      </div>
+
+                      <div className="font-medium mb-2 text-green-700">COMPREHENSIVE CASE ANALYSIS FRAMEWORK</div>
+                      <div className="text-xs mb-3 bg-green-50 p-2 rounded">
+                        You are a highly skilled AI legal assistant integrated into {formData.firmName}'s system. You have been provided with a case submission from the firm portal, including case description and supporting documents. Your task is to analyze the information and produce a thorough legal analysis for the attorneys.
+                      </div>
+
+                      <div className="font-medium mb-2">ANALYSIS STRUCTURE:</div>
+                      <div className="space-y-2 mb-3">
+                        <div className="bg-yellow-50 p-2 rounded border-l-2 border-yellow-400">
+                          <p className="font-medium text-xs text-yellow-800">1. Facts and Context</p>
+                          <p className="text-xs">Extract and merge all relevant facts, dates, events from case description and documents. Present clear timeline of background facts.</p>
+                        </div>
+                        
+                        <div className="bg-orange-50 p-2 rounded border-l-2 border-orange-400">
+                          <p className="font-medium text-xs text-orange-800">2. Legal Issues and Analysis</p>
+                          <p className="text-xs">Determine case type ({formData.practiceAreas[0] || 'legal'} focus), jurisdiction importance, list legal issues with explanations.</p>
+                        </div>
+                        
+                        <div className="bg-red-50 p-2 rounded border-l-2 border-red-400">
+                          <p className="font-medium text-xs text-red-800">3. Obligations/Duties</p>
+                          <p className="text-xs">Identify legal obligations, contractual duties, statutory requirements, fiduciary duties, and deadlines.</p>
+                        </div>
+                        
+                        <div className="bg-purple-50 p-2 rounded border-l-2 border-purple-400">
+                          <p className="font-medium text-xs text-purple-800">4. Risks/Liabilities</p>
+                          <p className="text-xs">Assess potential legal penalties, financial exposures, reputational risks, procedural risks for client.</p>
+                        </div>
+                        
+                        <div className="bg-teal-50 p-2 rounded border-l-2 border-teal-400">
+                          <p className="font-medium text-xs text-teal-800">5. Opportunities/Strategies</p>
+                          <p className="text-xs">Identify strategic advantages, negotiation opportunities, available remedies, creative legal strategies.</p>
+                        </div>
+                        
+                        <div className="bg-gray-100 p-2 rounded border-l-2 border-gray-400">
+                          <p className="font-medium text-xs text-gray-800">6. Information Gaps</p>
+                          <p className="text-xs">Note missing information, open questions, required documents, needed verifications.</p>
+                        </div>
+                        
+                        <div className="bg-indigo-50 p-2 rounded border-l-2 border-indigo-400">
+                          <p className="font-medium text-xs text-indigo-800">7. Next Steps</p>
+                          <p className="text-xs">Outline investigative, procedural, research, and drafting recommendations aligned with issues.</p>
+                        </div>
+                      </div>
                       
                       {formData.enableDocumentTemplates && formData.documentTemplates.length > 0 && (
-                        <>
-                          <div className="font-medium mb-2 text-purple-700">DOCUMENT TEMPLATES INTEGRATION</div>
-                          <div className="mb-3 bg-purple-50 p-2 rounded border-l-4 border-purple-400">
-                            <p className="text-xs">Enhanced with {formData.documentTemplates.length} firm-specific templates:</p>
-                            <ul className="text-xs mt-1">
-                              {formData.documentTemplates.map(template => (
-                                <li key={template.id} className="text-purple-600">• {template.name} ({template.type})</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </>
+                        <div className="bg-purple-50 p-2 rounded border-l-4 border-purple-400 mb-3">
+                          <p className="font-medium text-xs text-purple-800">ENHANCED WITH FIRM TEMPLATES</p>
+                          <p className="text-xs">Analysis enhanced with {formData.documentTemplates.length} firm-specific document templates for improved accuracy and firm-specific language patterns.</p>
+                        </div>
                       )}
                       
                       {formData.customPromptInstructions && (
-                        <>
-                          <div className="font-medium mb-2">FIRM-SPECIFIC INSTRUCTIONS</div>
-                          <p className="mb-3 bg-yellow-100 p-2 rounded border-l-4 border-yellow-400">{formData.customPromptInstructions}</p>
-                        </>
+                        <div className="bg-yellow-100 p-2 rounded border-l-4 border-yellow-400 mb-3">
+                          <p className="font-medium text-xs">FIRM-SPECIFIC INSTRUCTIONS</p>
+                          <p className="text-xs">{formData.customPromptInstructions}</p>
+                        </div>
                       )}
                       
-                      <div className="font-medium mb-2">INTEGRATIONS CONTEXT</div>
-                      <p className="text-xs">Connected: {formData.selectedIntegrations.length} integrations | Features: {formData.enabledFeatures.length} enabled</p>
+                      <div className="font-medium mb-1">ENABLED ANALYSIS MODULES:</div>
+                      <div className="text-xs grid grid-cols-2 gap-1 mb-3">
+                        {Object.entries(formData.analysisModules).map(([module, enabled]) => (
+                          <span key={module} className={`px-2 py-1 rounded ${enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {enabled ? '✓' : '○'} {module.charAt(0).toUpperCase() + module.slice(1)}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="text-xs text-gray-600 bg-gray-100 p-2 rounded">
+                        <strong>Professional Standard:</strong> Maintain analytical tone, base conclusions only on provided information, flag assumptions clearly, escalate high-risk items to attorney review.
+                      </div>
                     </div>
                   </div>
                 </div>
