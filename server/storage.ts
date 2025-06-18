@@ -153,9 +153,11 @@ export interface IStorage {
 
   // Admin panel operations - Integration management
   getAvailableIntegrations(): Promise<AvailableIntegration[]>;
+  getAllPlatformIntegrations(): Promise<AvailableIntegration[]>;
   createAvailableIntegration(integration: InsertAvailableIntegration): Promise<AvailableIntegration>;
   updateAvailableIntegration(id: number, updates: Partial<AvailableIntegration>): Promise<AvailableIntegration | undefined>;
   getFirmIntegrations(firmId: number): Promise<FirmIntegration[]>;
+  enableFirmIntegration(integration: InsertFirmIntegration): Promise<FirmIntegration>;
   updateFirmIntegration(firmId: number, integrationName: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined>;
 
   // Admin panel operations - Document type templates
@@ -642,7 +644,11 @@ export class DatabaseStorage implements IStorage {
 
   // Admin panel operations - Integration management
   async getAvailableIntegrations(): Promise<AvailableIntegration[]> {
-    return await db.select().from(availableIntegrations).orderBy(availableIntegrations.displayName);
+    return await db.select().from(availableIntegrations).orderBy(availableIntegrations.name);
+  }
+
+  async getAllPlatformIntegrations(): Promise<AvailableIntegration[]> {
+    return await db.select().from(availableIntegrations).orderBy(availableIntegrations.name);
   }
 
   async createAvailableIntegration(insertIntegration: InsertAvailableIntegration): Promise<AvailableIntegration> {
@@ -666,11 +672,25 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(firmIntegrations).where(eq(firmIntegrations.firmId, firmId));
   }
 
-  async updateFirmIntegration(firmId: number, integrationType: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined> {
+  async enableFirmIntegration(integration: InsertFirmIntegration): Promise<FirmIntegration> {
+    const [newIntegration] = await db
+      .insert(firmIntegrations)
+      .values({
+        ...integration,
+        isEnabled: true,
+        enabledAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    return newIntegration;
+  }
+
+  async updateFirmIntegration(firmId: number, integrationName: string, updates: Partial<FirmIntegration>): Promise<FirmIntegration | undefined> {
     const [integration] = await db
       .update(firmIntegrations)
       .set({ ...updates, updatedAt: new Date() })
-      .where(and(eq(firmIntegrations.firmId, firmId), eq(firmIntegrations.integrationType, integrationType)))
+      .where(and(eq(firmIntegrations.firmId, firmId), eq(firmIntegrations.integrationName, integrationName)))
       .returning();
     return integration;
   }

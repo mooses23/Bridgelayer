@@ -250,6 +250,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Integration Management Routes
+  app.get("/api/integrations/dashboard", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      // For admin users, provide platform-wide view (firmId = null)
+      // For firm users, show their firm-specific integrations
+      const firmId = user.role === 'admin' ? null : user.firmId;
+      
+      // Get platform integrations
+      const availableIntegrations = await storage.getAllPlatformIntegrations();
+      
+      // Get firm integrations (empty for admin users)
+      const enabledIntegrations = firmId ? await storage.getFirmIntegrations(firmId) : [];
+      
+      // Sanitize API credentials in response
+      const sanitizedIntegrations = enabledIntegrations.map(integration => ({
+        ...integration,
+        apiCredentials: integration.apiCredentials ? { hasApiKey: true } : null
+      }));
+      
+      res.json({
+        availableIntegrations,
+        enabledIntegrations: sanitizedIntegrations,
+        userPermissions: [],
+        recentActivity: []
+      });
+    } catch (error) {
+      console.error("Error fetching integration dashboard:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data" });
+    }
+  });
+
+  app.get("/api/integrations/platform", requireAdmin, async (req, res) => {
+    try {
+      const integrations = await storage.getAllPlatformIntegrations();
+      res.json(integrations);
+    } catch (error) {
+      console.error("Error fetching platform integrations:", error);
+      res.status(500).json({ error: "Failed to fetch platform integrations" });
+    }
+  });
+
+  app.post("/api/integrations/firm", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      const integrationData = {
+        ...req.body,
+        firmId: user.firmId,
+        enabledBy: user.id,
+        enabledAt: new Date()
+      };
+
+      const integration = await storage.enableFirmIntegration(integrationData);
+      res.json(integration);
+    } catch (error) {
+      console.error("Error enabling firm integration:", error);
+      res.status(400).json({ error: "Failed to enable integration" });
+    }
+  });
+
+  app.get("/api/integrations/firm", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const integrations = await storage.getFirmIntegrations(user.firmId);
+      
+      // Remove API credentials from response for security
+      const sanitizedIntegrations = integrations.map(integration => ({
+        ...integration,
+        apiCredentials: integration.apiCredentials ? { hasApiKey: true } : null
+      }));
+      
+      res.json(sanitizedIntegrations);
+    } catch (error) {
+      console.error("Error fetching firm integrations:", error);
+      res.status(500).json({ error: "Failed to fetch integrations" });
+    }
+  });
+
+  // Onboarding Completion Route
+  app.post("/api/onboarding/complete", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const formData = req.body;
+      
+      console.log('📝 Onboarding completion:', { firmId: user.firmId, userId: user.id });
+      
+      // Update firm as onboarded
+      await storage.updateFirm(user.firmId, {
+        onboarded: true,
+        settings: {
+          ...formData.preferences,
+          integrations: formData.selectedIntegrations || [],
+          apiKeys: formData.apiKeys || {}
+        }
+      });
+      
+      // Process selected integrations
+      if (formData.selectedIntegrations && formData.selectedIntegrations.length > 0) {
+        for (const integrationId of formData.selectedIntegrations) {
+          const integrationCredentials = formData.integrationCredentials?.[integrationId];
+          
+          if (integrationCredentials) {
+            await storage.enableFirmIntegration({
+              firmId: user.firmId,
+              integrationName: integrationId,
+              apiCredentials: integrationCredentials,
+              enabledBy: user.id,
+              enabledAt: new Date()
+            });
+          }
+        }
+      }
+      
+      console.log('✅ Onboarding completed successfully');
+      
+      res.json({
+        message: 'Onboarding completed successfully',
+        redirectTo: '/dashboard'
+      });
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      res.status(500).json({ error: 'Failed to complete onboarding' });
+    }
+  });
+
   // Create HTTP server
   const server = createServer(app);
   return server;
