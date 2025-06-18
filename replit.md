@@ -103,6 +103,20 @@ Preferred communication style: Simple, everyday language - present as configurat
 
 ## Recent Changes
 
+- **June 18, 2025**: Dual Document Template Saving System & Risk Tolerance Precision Update Complete
+  - **MAJOR ENHANCEMENT**: Implemented comprehensive dual document template saving system with base prompt and document prompt categorization
+  - Updated risk tolerance values from 25%-90% range to precise 0.0%-0.5% range with ultra-conservative through maximum risk options
+  - Enhanced document template interface with Template Category selection (Base Prompt vs Document Prompt)
+  - Added specialized input fields: Base Prompt Instructions for general legal framework, Document-Specific Prompt for targeted analysis requirements
+  - Maintained Enhanced Analysis Prompt field for backward compatibility and combined prompt merging
+  - Implemented real-time template categorization with contextual help text explaining each prompt type purpose
+  - Base prompts focus on general legal analysis framework and firm standards
+  - Document prompts focus on document-specific analysis patterns and specialized requirements
+  - Enhanced handleFileUpload function to support new dual prompt structure with proper defaults
+  - All uploaded templates now support comprehensive prompt customization through intuitive categorization system
+  - Risk tolerance now offers ultra-precise control: 0.0% (Ultra Conservative), 0.1% (Very Conservative), 0.25% (Conservative), 0.35% (Moderate), 0.45% (Aggressive), 0.5% (Maximum Risk)
+  - System maintains existing AI infrastructure while providing enhanced template management capabilities for legal document analysis
+
 - **June 18, 2025**: Complete 6-Step Onboarding Wizard with Forum Intake Implementation Complete
   - **MAJOR ENHANCEMENT**: Successfully implemented comprehensive 6-step onboarding wizard with forum intake as step 5 per user requirements
   - Restructured onboarding flow: Firm Info → Account Creation → Storage Setup → Integrations → Forum Intake → Review

@@ -82,6 +82,9 @@ interface FirmOnboardingData {
     type: string;
     enhancedPrompt: string;
     uploadedFile?: File;
+    promptType: 'base' | 'document'; // New dual saving system
+    basePrompt?: string; // For base prompt category
+    documentPrompt?: string; // For document prompt category
   }>;
   enableDocumentTemplates?: boolean;
   
@@ -160,7 +163,7 @@ export default function FirmOnboardingPage() {
     commonDocumentTypes: [],
     researchRequirements: [],
     reviewPriorities: 'balanced',
-    riskTolerance: '50',
+    riskTolerance: '0.25',
     customPromptInstructions: '',
     analysisModules: {
       summarize: true,
@@ -188,7 +191,10 @@ export default function FirmOnboardingPage() {
       name: file.name,
       type: file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN',
       enhancedPrompt: '',
-      uploadedFile: file
+      uploadedFile: file,
+      promptType: 'base' as 'base' | 'document', // Default to base prompt
+      basePrompt: '',
+      documentPrompt: ''
     }));
 
     updateFormData({
@@ -583,16 +589,107 @@ export default function FirmOnboardingPage() {
                       </div>
                       
                       {formData.documentTemplates.length > 0 && (
-                        <div className="space-y-2 mt-3">
+                        <div className="space-y-3 mt-4">
+                          <h5 className="text-sm font-medium text-blue-800">Uploaded Templates</h5>
                           {formData.documentTemplates.map((template) => (
-                            <div key={template.id} className="flex items-center justify-between p-2 border border-blue-200 rounded bg-white">
-                              <div>
-                                <span className="text-sm font-medium text-blue-800">{template.name}</span>
-                                <span className="text-xs text-blue-500 ml-2">({template.type})</span>
+                            <div key={template.id} className="border border-blue-200 rounded-lg bg-white p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <span className="text-sm font-medium text-blue-800">{template.name}</span>
+                                  <span className="text-xs text-blue-500 ml-2">({template.type})</span>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => removeTemplate(template.id)}>
+                                  <X className="h-3 w-3 text-blue-600" />
+                                </Button>
                               </div>
-                              <Button variant="ghost" size="sm" onClick={() => removeTemplate(template.id)}>
-                                <X className="h-3 w-3 text-blue-600" />
-                              </Button>
+                              
+                              {/* Dual Saving System Controls */}
+                              <div className="space-y-3">
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-700">Template Category</Label>
+                                  <Select 
+                                    value={template.promptType} 
+                                    onValueChange={(value: 'base' | 'document') => {
+                                      const updatedTemplates = formData.documentTemplates.map(t => 
+                                        t.id === template.id ? { ...t, promptType: value } : t
+                                      );
+                                      updateFormData({ documentTemplates: updatedTemplates });
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-8">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="base">Base Prompt</SelectItem>
+                                      <SelectItem value="document">Document Prompt</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {template.promptType === 'base' 
+                                      ? 'General legal analysis framework and firm standards'
+                                      : 'Document-specific analysis patterns and requirements'
+                                    }
+                                  </p>
+                                </div>
+                                
+                                {/* Base Prompt Input */}
+                                {template.promptType === 'base' && (
+                                  <div>
+                                    <Label className="text-xs font-medium text-gray-700">Base Prompt Instructions</Label>
+                                    <Textarea
+                                      value={template.basePrompt || ''}
+                                      onChange={(e) => {
+                                        const updatedTemplates = formData.documentTemplates.map(t => 
+                                          t.id === template.id ? { ...t, basePrompt: e.target.value } : t
+                                        );
+                                        updateFormData({ documentTemplates: updatedTemplates });
+                                      }}
+                                      placeholder="Enter general legal analysis framework, firm standards, and base review criteria..."
+                                      rows={3}
+                                      className="text-xs"
+                                    />
+                                  </div>
+                                )}
+                                
+                                {/* Document Prompt Input */}
+                                {template.promptType === 'document' && (
+                                  <div>
+                                    <Label className="text-xs font-medium text-gray-700">Document-Specific Prompt</Label>
+                                    <Textarea
+                                      value={template.documentPrompt || ''}
+                                      onChange={(e) => {
+                                        const updatedTemplates = formData.documentTemplates.map(t => 
+                                          t.id === template.id ? { ...t, documentPrompt: e.target.value } : t
+                                        );
+                                        updateFormData({ documentTemplates: updatedTemplates });
+                                      }}
+                                      placeholder="Enter document-specific analysis requirements, key clauses to review, and specialized criteria..."
+                                      rows={3}
+                                      className="text-xs"
+                                    />
+                                  </div>
+                                )}
+                                
+                                {/* Enhanced Prompt (Legacy Support) */}
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-700">Enhanced Analysis Prompt</Label>
+                                  <Textarea
+                                    value={template.enhancedPrompt}
+                                    onChange={(e) => {
+                                      const updatedTemplates = formData.documentTemplates.map(t => 
+                                        t.id === template.id ? { ...t, enhancedPrompt: e.target.value } : t
+                                      );
+                                      updateFormData({ documentTemplates: updatedTemplates });
+                                    }}
+                                    placeholder="Enter comprehensive analysis instructions for this template..."
+                                    rows={2}
+                                    className="text-xs"
+                                  />
+                                  <p className="text-xs text-gray-400 mt-1">
+                                    Combined prompt that merges both base and document-specific instructions
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -717,10 +814,12 @@ export default function FirmOnboardingPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="25">25% (Conservative)</SelectItem>
-                        <SelectItem value="50">50% (Moderate)</SelectItem>
-                        <SelectItem value="75">75% (Aggressive)</SelectItem>
-                        <SelectItem value="90">90% (High Risk)</SelectItem>
+                        <SelectItem value="0.0">0.0% (Ultra Conservative)</SelectItem>
+                        <SelectItem value="0.1">0.1% (Very Conservative)</SelectItem>
+                        <SelectItem value="0.25">0.25% (Conservative)</SelectItem>
+                        <SelectItem value="0.35">0.35% (Moderate)</SelectItem>
+                        <SelectItem value="0.45">0.45% (Aggressive)</SelectItem>
+                        <SelectItem value="0.5">0.5% (Maximum Risk)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
