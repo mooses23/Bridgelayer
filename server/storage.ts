@@ -80,6 +80,11 @@ import {
   aiTriageResults,
   communicationLogs,
   adminGhostSessions,
+  onboardingSessions,
+  firmBranding,
+  firmPreferences,
+  firmTemplates,
+  complianceAgreements,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, isNull, inArray, ne, gte, lte } from "drizzle-orm";
@@ -303,6 +308,8 @@ export class DatabaseStorage implements IStorage {
     return firm || undefined;
   }
 
+
+
   async getFirmById(id: number): Promise<Firm | undefined> {
     return this.getFirm(id);
   }
@@ -327,9 +334,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserById(id: number): Promise<User | undefined> {
-    return this.getUser(id);
-  }
+
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
@@ -340,9 +345,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).where(eq(users.firmId, firmId));
   }
 
-  async getUsersByFirmId(firmId: number): Promise<User[]> {
-    return this.getUsersByFirm(firmId);
-  }
+
 
   async getAllFirms(): Promise<Firm[]> {
     return await db.select().from(firms).orderBy(firms.name);
