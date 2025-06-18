@@ -149,23 +149,31 @@ export const hybridSessionCheck = async (req: Request, res: Response) => {
 
     // Priority 1: Check session for web application
     if (req.session && req.session.userId) {
-      const user = await storage.getUser(req.session.userId);
-      if (user) {
-        console.log('✅ Session validation successful');
-        return res.json({
-          userId: req.session.userId,
-          role: req.session.userRole,
-          firmId: req.session.firmId,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            role: user.role,
-            firmId: user.firmId
-          },
-          authMethod: 'session'
-        });
+      try {
+        const user = await storage.getUser(req.session.userId);
+        if (user) {
+          console.log('✅ Session validation successful');
+          return res.json({
+            userId: req.session.userId,
+            role: req.session.userRole,
+            firmId: req.session.firmId,
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              role: user.role,
+              firmId: user.firmId
+            },
+            authMethod: 'session'
+          });
+        } else {
+          console.log('❌ User not found in database, destroying session');
+          req.session.destroy(() => {});
+        }
+      } catch (userLookupError) {
+        console.error('User lookup error:', userLookupError);
+        req.session.destroy(() => {});
       }
     }
 

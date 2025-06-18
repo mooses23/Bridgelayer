@@ -95,7 +95,7 @@ app.use(session({
     schemaName: 'public'
   }),
   secret: process.env.SESSION_SECRET || 'firmsync-session-secret-change-in-production',
-  name: 'firmsync.sid',
+  name: 'connect.sid',
   resave: false,
   saveUninitialized: false,
   rolling: true,

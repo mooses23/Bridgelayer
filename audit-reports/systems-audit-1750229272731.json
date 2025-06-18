@@ -1,0 +1,168 @@
+{
+  "timestamp": "2025-06-18T06:47:52.662Z",
+  "overall_status": "WARNING",
+  "critical_issues": [],
+  "warnings": [
+    {
+      "section": "SECURITY",
+      "level": "WARNING",
+      "message": "No CORS configuration found",
+      "details": null,
+      "timestamp": "2025-06-18T06:47:52.684Z"
+    },
+    {
+      "section": "API",
+      "level": "WARNING",
+      "message": "Missing critical endpoints",
+      "details": {
+        "missing": [
+          "/api/audit-logs",
+          "/api/documents",
+          "/api/users"
+        ]
+      },
+      "timestamp": "2025-06-18T06:47:52.728Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "section": "SECURITY",
+      "level": "RECOMMENDATION",
+      "message": "Consider implementing rate limiting",
+      "details": null,
+      "timestamp": "2025-06-18T06:47:52.685Z"
+    }
+  ],
+  "security_findings": [
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/routes.ts",
+      "details": {
+        "pattern": "/password/i",
+        "severity": "HIGH"
+      },
+      "timestamp": "2025-06-18T06:47:52.676Z"
+    },
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/routes.ts",
+      "details": {
+        "pattern": "/token/i",
+        "severity": "MEDIUM"
+      },
+      "timestamp": "2025-06-18T06:47:52.676Z"
+    },
+    {
+      "section": "SECURITY",
+      "level": "SECURITY",
+      "message": "Potential sensitive data in server/services/openai.ts",
+      "details": {
+        "pattern": "/api[_-]?key/i",
+        "severity": "HIGH"
+      },
+      "timestamp": "2025-06-18T06:47:52.681Z"
+    }
+  ],
+  "performance_metrics": {
+    "uploaded_files": {
+      "total_files": 2,
+      "total_size_mb": 0,
+      "firms_count": 3
+    },
+    "api_endpoints": {
+      "total_endpoints": 13,
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api/health"
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/register"
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/login"
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/logout"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/session"
+        },
+        {
+          "method": "GET",
+          "path": "/api/auth/status"
+        },
+        {
+          "method": "POST",
+          "path": "/api/auth/refresh"
+        },
+        {
+          "method": "GET",
+          "path": "/api/tenant/:identifier"
+        },
+        {
+          "method": "GET",
+          "path": "/api/firms/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/api/admin/firms"
+        },
+        {
+          "method": "GET",
+          "path": "/api/dashboard-summary"
+        },
+        {
+          "method": "GET",
+          "path": "/api/cases"
+        },
+        {
+          "method": "GET",
+          "path": "/api/cases-summary"
+        }
+      ]
+    },
+    "dependencies": {
+      "total_dependencies": 98,
+      "total_dev_dependencies": 22
+    },
+    "verticals": {
+      "total_verticals": 4,
+      "verticals": [
+        "edusync",
+        "firmsync",
+        "hrsync",
+        "medsync"
+      ]
+    }
+  },
+  "audit_sections": {
+    "database": {
+      "status": "COMPLETED"
+    },
+    "audit_logging": {
+      "status": "COMPLETED"
+    },
+    "security": {
+      "status": "COMPLETED"
+    },
+    "filesystem": {
+      "status": "COMPLETED"
+    },
+    "api": {
+      "status": "COMPLETED"
+    },
+    "dependencies": {
+      "status": "COMPLETED"
+    },
+    "configuration": {
+      "status": "COMPLETED"
+    }
+  }
+}
