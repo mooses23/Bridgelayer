@@ -282,7 +282,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Integration Management Routes
+  // ===== UNIFIED INTEGRATION MANAGEMENT ROUTES =====
+  
+  // Admin Integration Dashboard - Platform-wide management
   app.get("/api/integrations/dashboard", requireAuth, async (req, res) => {
     try {
       const user = req.user;
@@ -290,14 +292,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      // For admin users, provide platform-wide view (firmId = null)
-      // For firm users, show their firm-specific integrations
+      // Admin gets platform-wide view, firm users get their firm-specific view
       const firmId = user.role === 'admin' ? null : user.firmId;
       
-      // Get platform integrations
       const availableIntegrations = await storage.getAllPlatformIntegrations();
-      
-      // Get firm integrations (empty for admin users)
       const enabledIntegrations = firmId ? await storage.getFirmIntegrations(firmId) : [];
       
       // Sanitize API credentials in response
@@ -318,6 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Platform Integrations - Admin only
   app.get("/api/integrations/platform", requireAdmin, async (req, res) => {
     try {
       const integrations = await storage.getAllPlatformIntegrations();
@@ -328,29 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/integrations/firm", requireAuth, async (req, res) => {
-    try {
-      const user = req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      const integrationData = {
-        ...req.body,
-        firmId: user.firmId,
-        enabledBy: user.id,
-        enabledAt: new Date()
-      };
-
-      const integration = await storage.enableFirmIntegration(integrationData);
-      res.json(integration);
-    } catch (error) {
-      console.error("Error enabling firm integration:", error);
-      res.status(400).json({ error: "Failed to enable integration" });
-    }
-  });
-
-  // Get available integrations for onboarding selection
+  // Available Integrations - Public for onboarding (no auth required)
   app.get("/api/integrations/available", async (req, res) => {
     try {
       const availableIntegrations = await storage.getAllPlatformIntegrations();
@@ -361,14 +338,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Firm Integrations - Get firm-specific integrations
   app.get("/api/integrations/firm", requireAuth, async (req, res) => {
     try {
       const user = req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
+      if (!user || !user.firmId) {
+        return res.status(401).json({ message: "Firm authentication required" });
       }
       
-      const integrations = (user.firmId && typeof user.firmId === 'number') ? await storage.getFirmIntegrations(user.firmId) : [];
+      const integrations = await storage.getFirmIntegrations(user.firmId);
       
       // Remove API credentials from response for security
       const sanitizedIntegrations = integrations.map(integration => ({
@@ -380,6 +358,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching firm integrations:", error);
       res.status(500).json({ error: "Failed to fetch integrations" });
+    }
+  });
+
+  // Enable Firm Integration - Firm users only
+  app.post("/api/integrations/firm", requireAuth, async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.firmId) {
+        return res.status(401).json({ message: "Firm authentication required" });
+      }
+      
+      const integrationData = {
+        ...req.body,
+        firmId: user.firmId,
+        enabledBy: user.id
+      };
+
+      const integration = await storage.enableFirmIntegration(integrationData);
+      res.json(integration);
+    } catch (error) {
+      console.error("Error enabling firm integration:", error);
+      res.status(400).json({ error: "Failed to enable integration" });
     }
   });
 
