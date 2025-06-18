@@ -93,7 +93,7 @@ export function IntegrationsStep({ data, updateData, onNext, onPrevious }: Integ
                 </div>
                 <Checkbox
                   checked={data.selectedIntegrations.includes(integration.id)}
-                  onChange={(checked) => handleIntegrationToggle(integration.id, checked)}
+                  onCheckedChange={(checked) => handleIntegrationToggle(integration.id, checked as boolean)}
                 />
               </div>
               <CardDescription className="text-sm text-gray-500">

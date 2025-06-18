@@ -6,6 +6,8 @@ import { CheckCircle, Circle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { FirmInfoStep } from './steps/FirmInfoStep';
 import { AccountCreationStep } from './steps/AccountCreationStep';
 import { ApiKeysStep } from './steps/ApiKeysStep';
+import { IntegrationsStep } from './steps/IntegrationsStep';
+import { ForumIntakeStep } from './steps/ForumIntakeStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { useOnboardingApi } from '@/hooks/useOnboardingApi';
 import { toast } from '@/lib/toast';
@@ -143,6 +145,24 @@ export function OnboardingWizard() {
           />
         );
       case 4:
+        return (
+          <IntegrationsStep
+            data={formData}
+            updateData={updateFormData}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        );
+      case 5:
+        return (
+          <ForumIntakeStep
+            data={formData}
+            updateData={updateFormData}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        );
+      case 6:
         return (
           <ReviewStep
             data={formData}
