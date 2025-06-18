@@ -1,12 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Activity, AlertTriangle, TrendingUp, Eye, Settings, FileText, CheckCircle } from "lucide-react";
+import { Building2, Users, Activity, AlertTriangle, TrendingUp, Eye, Settings, FileText, CheckCircle, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 
 export default function AdminDashboard() {
-  console.log("[AdminDashboard] LIVE");
   const [, setLocation] = useLocation();
   
   const { data: tenants = [], isLoading: tenantsLoading } = useQuery({
@@ -27,25 +26,27 @@ export default function AdminDashboard() {
     staleTime: 1 * 60 * 1000,
   });
 
-  // Ensure systemAlerts is always an array
   const safeSystemAlerts = Array.isArray(systemAlerts) ? systemAlerts : [];
-
-  // Fallback data only when loading and no data
-  const fallbackStats = {
-    totalFirms: "...",
-    activeFirms: "...",
-    totalUsers: "...",
-    documentsProcessed: "...",
-    systemHealth: "Loading..."
-  };
-
-  const displayStats = systemStats || (statsLoading ? fallbackStats : {
+  
+  const displayStats = systemStats || {
     totalFirms: 0,
     activeFirms: 0,
     totalUsers: 0,
     documentsProcessed: 0,
     systemHealth: "Unknown"
-  });
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { 
+        method: "POST", 
+        credentials: "include" 
+      });
+      setLocation("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   // Get recent firms from tenants data - ensure tenants is an array
   const tenantsArray = Array.isArray(tenants) ? tenants : [];
