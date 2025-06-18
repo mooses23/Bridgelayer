@@ -897,6 +897,18 @@ export default function FirmOnboardingPage() {
     }
   };
 
+  const getStepTitle = () => {
+    switch (currentStep) {
+      case 1: return "Firm Information";
+      case 2: return "Account Creation";
+      case 3: return "Storage Setup";
+      case 4: return "Integrations";
+      case 5: return "Forum Intake";
+      case 6: return "AI Assistant Configuration";
+      default: return "";
+    }
+  };
+
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
