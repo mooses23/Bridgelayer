@@ -132,7 +132,7 @@ export const requireJWTAuth = async (req: JWTAuthenticatedRequest, res: Response
     }
 
     // Get user from database to ensure they still exist
-    const user = await storage.getUser(payload.userId);
+    const user = await storage.getUserById(payload.userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
