@@ -71,11 +71,14 @@ export default function GhostModePage() {
   const queryClient = useQueryClient();
 
   // Fetch available firms
-  const { data: firms = [], isLoading: firmsLoading } = useQuery({
+  const { data: firmsResponse, isLoading: firmsLoading } = useQuery({
     queryKey: ["/api/admin/firms"],
     queryFn: () => fetch("/api/admin/firms", { credentials: "include" }).then(r => r.json()),
     staleTime: 5 * 60 * 1000,
   });
+
+  // Extract firms array from response - handle different API response structures
+  const firms = Array.isArray(firmsResponse) ? firmsResponse : (firmsResponse?.firms || []);
 
   // Fetch current ghost session
   const { data: currentSession } = useQuery({
