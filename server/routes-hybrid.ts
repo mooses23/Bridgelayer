@@ -327,7 +327,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/integrations/firm", requireAuth, async (req, res) => {
     try {
-      const user = req.user as any;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       
       const integrationData = {
         ...req.body,
@@ -355,28 +358,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get integration dashboard data for admin
-  app.get("/api/integrations/dashboard", requireAdmin, async (req, res) => {
-    try {
-      const availableIntegrations = await storage.getAllPlatformIntegrations();
-      
-      const dashboardData = {
-        availableIntegrations,
-        enabledIntegrations: [],
-        userPermissions: [],
-        recentActivity: []
-      };
-
-      res.json(dashboardData);
-    } catch (error) {
-      console.error("Error fetching integration dashboard:", error);
-      res.status(500).json({ error: "Failed to fetch integration dashboard" });
-    }
-  });
-
   app.get("/api/integrations/firm", requireAuth, async (req, res) => {
     try {
-      const user = req.user as any;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const integrations = await storage.getFirmIntegrations(user.firmId);
       
       // Remove API credentials from response for security

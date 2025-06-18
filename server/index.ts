@@ -5,7 +5,7 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
 
 import { pool } from "./db";
