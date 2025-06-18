@@ -53,23 +53,27 @@ export default function RoleRouter() {
     return <ClientLayout />;
   }
 
-  // Firm users - check onboarding status
+  // Firm users - check onboarding status with fallbacks
   if (user.role === 'firm_admin' || user.role === 'paralegal') {
     // Show loading while checking firm status
     if (firmLoading) {
       return <LoadingSpinner />;
     }
 
-    // Check if firm needs onboarding
-    const needsOnboarding = !firmData?.onboarded && 
-                          (!tenantConfig?.onboardingComplete || tenantConfig?.onboardingComplete === false);
+    // Multiple conditions requiring onboarding:
+    // 1. No firm data found (API error/no firm)
+    // 2. Firm exists but not onboarded
+    // 3. Tenant config shows incomplete onboarding
+    const needsOnboarding = !firmData || 
+                          !firmData.onboarded || 
+                          tenantConfig?.onboardingComplete === false;
 
     if (needsOnboarding) {
-      console.log('🎯 Firm needs onboarding, showing onboarding page');
+      console.log('🎯 Firm needs onboarding - showing onboarding flow');
       return <OnboardingPage />;
     }
 
-    // Firm is onboarded, show dashboard
+    // Firm is properly onboarded, show dashboard
     return <FirmDashboardLayout />;
   }
 

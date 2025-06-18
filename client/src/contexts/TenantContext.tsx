@@ -43,23 +43,23 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const hostname = window.location.hostname;
         console.log('🌐 Detecting tenant from hostname:', hostname);
 
-        // Set default tenant immediately to prevent context errors
-        const defaultTenant: TenantConfig = {
-          id: 'default',
-          name: 'FirmSync',
-          subdomain: 'localhost', // Added subdomain
+        // Set default fallback tenant to prevent context errors
+        const fallbackTenant: TenantConfig = {
+          id: 'fallback',
+          name: 'FirmSync Demo',
+          subdomain: 'demo',
           onboardingComplete: false,
           features: {
             documentAnalysis: true,
             aiAssistant: true,
-            advancedReporting: true,
-            integrations: true,
+            advancedReporting: false,
+            integrations: false,
             customBranding: false,
             prioritySupport: false
           }
         };
 
-        setTenant(defaultTenant);
+        setTenant(fallbackTenant);
 
         let tenantSlug = 'localhost';
 
@@ -85,7 +85,22 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             console.log('✅ Tenant data loaded:', data);
             setTenant(data.tenant);
           } else {
-            console.log('ℹ️ No tenant found for slug, keeping defaults');
+            console.log('ℹ️ No tenant found for slug, using fallback tenant');
+            // Use fallback tenant for any unrecognized subdomain
+            setTenant({
+              id: 'new-firm',
+              name: 'New Legal Firm',
+              subdomain: tenantSlug,
+              onboardingComplete: false,
+              features: {
+                documentAnalysis: true,
+                aiAssistant: true,
+                advancedReporting: false,
+                integrations: false,
+                customBranding: false,
+                prioritySupport: false
+              }
+            });
           }
         } catch (apiError) {
           console.log('ℹ️ Tenant API not available, using defaults');

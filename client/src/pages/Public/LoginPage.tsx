@@ -116,9 +116,9 @@ export default function LoginPage() {
             Sign in to FIRMSYNC
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-              start your 14-day free trial
+            Don't have a firm account?{' '}
+            <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              Register your firm here
             </a>
           </p>
 
