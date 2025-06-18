@@ -1,17 +1,26 @@
 import { useSession } from "@/contexts/SessionContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Building, Users, Settings } from "lucide-react";
+import { CheckCircle, Building, Users, Settings, Plug, CheckSquare, AlertCircle, ExternalLink } from "lucide-react";
 
 export default function Onboarding() {
   console.log("[Onboarding] loaded");
   const { user } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
+  
+  // Fetch available integrations from admin-managed platform
+  const { data: availableIntegrations = [], isLoading: integrationsLoading } = useQuery({
+    queryKey: ['/api/integrations/available'],
+    queryFn: () => fetch('/api/integrations/available', { 
+      credentials: 'include' 
+    }).then(res => res.json())
+  });
   const [formData, setFormData] = useState({
     firmName: "",
     firmType: "",
@@ -20,10 +29,12 @@ export default function Onboarding() {
     address: "",
     phone: "",
     preferences: {
-      documentTypes: [],
-      analysisFeatures: [],
+      documentTypes: [] as string[],
+      analysisFeatures: [] as string[],
       reviewWorkflow: ""
-    }
+    },
+    selectedIntegrations: [] as number[],
+    integrationCredentials: {} as Record<number, Record<string, string>>
   });
 
 
@@ -63,10 +74,50 @@ export default function Onboarding() {
     }
   };
 
+  // Integration selection handlers
+  const handleIntegrationToggle = (integrationId: number) => {
+    const isSelected = formData.selectedIntegrations.includes(integrationId);
+    const updatedIntegrations = isSelected 
+      ? formData.selectedIntegrations.filter(id => id !== integrationId)
+      : [...formData.selectedIntegrations, integrationId];
+    
+    setFormData(prev => ({
+      ...prev,
+      selectedIntegrations: updatedIntegrations
+    }));
+  };
+
+  const handleCredentialsChange = (integrationId: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      integrationCredentials: {
+        ...prev.integrationCredentials,
+        [integrationId]: {
+          ...prev.integrationCredentials[integrationId],
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  // Check if mandatory integrations are selected (storage + billing)
+  const getMandatoryIntegrations = () => {
+    const storage = availableIntegrations.find(i => i.category === 'storage');
+    const billing = availableIntegrations.find(i => i.category === 'billing');
+    return { storage, billing };
+  };
+
+  const isMandatoryRequirementMet = () => {
+    const { storage, billing } = getMandatoryIntegrations();
+    const hasStorage = storage && formData.selectedIntegrations.includes(storage.id);
+    const hasBilling = billing && formData.selectedIntegrations.includes(billing.id);
+    return hasStorage && hasBilling;
+  };
+
   const steps = [
     { number: 1, title: "Firm Information", icon: Building },
     { number: 2, title: "Team Setup", icon: Users },
-    { number: 3, title: "Workflow Preferences", icon: Settings }
+    { number: 3, title: "Integration Setup", icon: Plug }
   ];
 
   return (
