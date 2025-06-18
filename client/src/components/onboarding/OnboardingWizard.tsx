@@ -28,13 +28,30 @@ export interface OnboardingFormData {
   storageProvider: 'google' | 'dropbox' | 'onedrive' | '';
   apiKeys: Record<string, string>;
   oauthTokens: Record<string, any>;
+
+  // Step 4: Integrations
+  selectedIntegrations: string[];
+  integrationConfigs: Record<string, any>;
+
+  // Step 5: Forum Intake
+  intakeFormFields: Array<{
+    id: string;
+    label: string;
+    type: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'radio' | 'checkbox';
+    required: boolean;
+    options?: string[];
+  }>;
+  intakeFormTitle: string;
+  intakeFormDescription: string;
 }
 
 const STEPS = [
   { id: 1, title: 'Firm Information', description: 'Basic firm details and branding' },
   { id: 2, title: 'Account Creation', description: 'Create your admin account' },
   { id: 3, title: 'Storage Setup', description: 'Connect cloud storage' },
-  { id: 4, title: 'Review', description: 'Confirm your settings' }
+  { id: 4, title: 'Integrations', description: 'Connect third-party services' },
+  { id: 5, title: 'Forum Intake', description: 'Configure client intake forms' },
+  { id: 6, title: 'Review', description: 'Confirm your settings' }
 ];
 
 export function OnboardingWizard() {
@@ -50,7 +67,17 @@ export function OnboardingWizard() {
     mfaEnabled: false,
     storageProvider: '',
     apiKeys: {},
-    oauthTokens: {}
+    oauthTokens: {},
+    selectedIntegrations: [],
+    integrationConfigs: {},
+    intakeFormFields: [
+      { id: 'name', label: 'Full Name', type: 'text', required: true },
+      { id: 'email', label: 'Email Address', type: 'email', required: true },
+      { id: 'phone', label: 'Phone Number', type: 'phone', required: false },
+      { id: 'matter_type', label: 'Matter Type', type: 'select', required: true, options: ['Personal Injury', 'Family Law', 'Criminal Defense', 'Business Law', 'Real Estate'] }
+    ],
+    intakeFormTitle: 'Client Intake Form',
+    intakeFormDescription: 'Please provide your information so we can assist you with your legal matter.'
   });
 
   const { mutate: completeOnboarding, isPending } = useOnboardingApi();
