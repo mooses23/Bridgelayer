@@ -441,6 +441,87 @@ export const firmSettings = pgTable("firm_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Platform-level integration definitions (Admin managed)
+export const platformIntegrations = pgTable("platform_integrations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // document-management, billing-payments, etc.
+  provider: text("provider").notNull(),
+  logoUrl: text("logo_url"),
+  webhookUrl: text("webhook_url"),
+  apiBaseUrl: text("api_base_url"),
+  authType: text("auth_type").notNull(), // oauth2, api_key, webhook
+  isActive: boolean("is_active").default(true),
+  requiresApproval: boolean("requires_approval").default(false),
+  planRestrictions: text("plan_restrictions").array(), // which plans can access
+  configSchema: jsonb("config_schema"), // JSON schema for configuration
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Firm-level integration enablement (Firm Admin controlled)
+export const firmIntegrations = pgTable("firm_integrations", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  integrationId: integer("integration_id").references(() => platformIntegrations.id).notNull(),
+  isEnabled: boolean("is_enabled").default(true),
+  configuration: jsonb("configuration"), // firm-specific config
+  apiCredentials: text("api_credentials"), // encrypted credentials
+  webhookSecret: text("webhook_secret"),
+  lastSyncAt: timestamp("last_sync_at"),
+  syncStatus: text("sync_status").default("pending"), // pending, active, error, disabled
+  errorMessage: text("error_message"),
+  enabledBy: integer("enabled_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User-level integration permissions (User role based)
+export const userIntegrationPermissions = pgTable("user_integration_permissions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  firmIntegrationId: integer("firm_integration_id").references(() => firmIntegrations.id).notNull(),
+  canRead: boolean("can_read").default(true),
+  canWrite: boolean("can_write").default(false),
+  canConfigure: boolean("can_configure").default(false),
+  canDisable: boolean("can_disable").default(false),
+  grantedBy: integer("granted_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Integration usage tracking and audit
+export const integrationAuditLogs = pgTable("integration_audit_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  integrationId: integer("integration_id").references(() => platformIntegrations.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  action: text("action").notNull(), // enabled, disabled, configured, api_call, webhook_received
+  details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  success: boolean("success").default(true),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Integration API rate limiting per firm
+export const integrationRateLimits = pgTable("integration_rate_limits", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  integrationId: integer("integration_id").references(() => platformIntegrations.id).notNull(),
+  requestsPerHour: integer("requests_per_hour").default(1000),
+  requestsPerDay: integer("requests_per_day").default(10000),
+  currentHourlyUsage: integer("current_hourly_usage").default(0),
+  currentDailyUsage: integer("current_daily_usage").default(0),
+  lastResetAt: timestamp("last_reset_at").defaultNow(),
+  isBlocked: boolean("is_blocked").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,
