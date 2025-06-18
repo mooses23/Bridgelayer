@@ -658,6 +658,10 @@ export default function FirmOnboardingPage() {
       case 3:
         return formData.adminFirstName && formData.adminLastName && formData.adminEmail;
       case 4:
+        return true; // Integration setup is optional
+      case 5:
+        return formData.intakeFormTitle && formData.intakeFormDescription && formData.intakeFormFields.length > 0;
+      case 6:
         return formData.enabledFeatures.length > 0;
       default:
         return false;
