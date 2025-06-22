@@ -1,3 +1,4 @@
+bridgelayer - owner of firmsync,medsync
 # FIRMSYNC - AI Legal Document Analysis Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
