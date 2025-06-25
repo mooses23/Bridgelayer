@@ -35,7 +35,7 @@ export class JWTUtils {
       expiresIn: JWT_EXPIRES_IN,
       issuer: 'firmsync',
       audience: 'firmsync-users'
-    });
+    } as jwt.SignOptions);
   }
 
   /**
@@ -46,7 +46,7 @@ export class JWTUtils {
       expiresIn: REFRESH_TOKEN_EXPIRES_IN,
       issuer: 'firmsync',
       audience: 'firmsync-refresh'
-    });
+    } as jwt.SignOptions);
   }
 
   /**

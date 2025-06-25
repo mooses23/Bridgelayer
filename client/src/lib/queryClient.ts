@@ -15,19 +15,48 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Overloaded function signatures for backwards compatibility
+export async function apiRequest(url: string): Promise<any>;
+export async function apiRequest(url: string, options: RequestInit): Promise<any>;
+export async function apiRequest(method: string, url: string, data?: unknown): Promise<any>;
 export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+  urlOrMethod: string,
+  urlOrOptions?: string | RequestInit,
+  data?: unknown,
+): Promise<any> {
   try {
-    const res = await authInterceptor.request(url, {
-      method,
-      body: data ? JSON.stringify(data) : undefined,
-    });
+    let finalUrl: string;
+    let finalOptions: RequestInit = {};
 
+    // Handle different calling patterns
+    if (typeof urlOrOptions === 'string') {
+      // Called as apiRequest(method, url, data)
+      finalUrl = urlOrOptions;
+      finalOptions.method = urlOrMethod;
+      if (data) {
+        finalOptions.body = JSON.stringify(data);
+        finalOptions.headers = { 'Content-Type': 'application/json' };
+      }
+    } else if (typeof urlOrOptions === 'object') {
+      // Called as apiRequest(url, options)
+      finalUrl = urlOrMethod;
+      finalOptions = urlOrOptions;
+    } else {
+      // Called as apiRequest(url)
+      finalUrl = urlOrMethod;
+      finalOptions.method = 'GET';
+    }
+
+    const res = await authInterceptor.request(finalUrl, finalOptions);
     await throwIfResNotOk(res);
-    return res;
+    
+    // Return parsed JSON for compatibility
+    const responseText = await res.text();
+    try {
+      return JSON.parse(responseText);
+    } catch {
+      return responseText;
+    }
   } catch (error) {
     handleAuthError(error as Error);
     throw error;
@@ -35,11 +64,13 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+
+export const getQueryFn = <T>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+}): QueryFunction<T | null> => {
+  const { on401: unauthorizedBehavior } = options;
+  
+  return async ({ queryKey }) => {
     // Add defensive check for queryKey
     if (!queryKey || !queryKey[0] || typeof queryKey[0] !== 'string') {
       throw new Error('Invalid query key provided');
@@ -52,7 +83,7 @@ export const getQueryFn: <T>(options: {
         return null;
       }
 
-      return await parseApiResponse(res);
+      return await parseApiResponse(res) as T;
     } catch (error) {
       if (error instanceof AuthenticationError && unauthorizedBehavior === "returnNull") {
         return null;
@@ -62,6 +93,7 @@ export const getQueryFn: <T>(options: {
       throw error;
     }
   };
+};
 
 export const queryClient = new QueryClient({
   defaultOptions: {

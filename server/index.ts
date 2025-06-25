@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
@@ -100,10 +101,10 @@ app.use(session({
   saveUninitialized: false,
   rolling: true,
   cookie: {
-    secure: false, // Set to false for Replit development environment
+    secure: false, // Set to false for development
     httpOnly: true, // Enable for security
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none', // Required for cross-origin requests in Replit
+    sameSite: 'lax', // Changed from 'none' to 'lax' for better compatibility
     domain: undefined // Let browser handle domain automatically
   }
 }));
@@ -161,10 +162,8 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    // ALWAYS serve the app on port 5000
-    // this serves both the API and the client.
-    // It is the only port that is not firewalled.
-    const port = 5000;
+    // Use port from environment or default to 5001
+    const port = process.env.PORT ? parseInt(process.env.PORT) : 5001;
     
     // Check if server is already listening to prevent duplicate listeners
     if (!server.listening) {

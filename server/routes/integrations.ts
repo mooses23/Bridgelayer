@@ -95,7 +95,7 @@ router.put("/firm/:integrationId", requireAuth, async (req, res) => {
     
     // Add API credentials if provided
     if (updates.apiKey) {
-      updates.apiCredentials = { apiKey: updates.apiKey };
+      updates.apiCredentials = JSON.stringify({ apiKey: updates.apiKey });
       delete updates.apiKey;
     }
     
@@ -142,10 +142,19 @@ router.post("/permissions", requireAuth, async (req, res) => {
     
     const { userId, integrationId, permissions } = schema.parse(req.body);
     
+    // Find the firm integration ID
+    const firmIntegrations = await integrationService.getFirmIntegrations(user.firmId);
+    const firmIntegration = firmIntegrations.find(fi => fi.integrationId === integrationId);
+    
+    if (!firmIntegration) {
+      return res.status(400).json({ error: "Integration not enabled for this firm" });
+    }
+    
     const permission = await integrationService.grantUserIntegrationAccess({
       userId,
       firmId: user.firmId,
       integrationId,
+      firmIntegrationId: firmIntegration.id,
       grantedBy: user.id,
       permissions
     });
@@ -214,13 +223,16 @@ router.get("/dashboard", requireAuth, async (req, res) => {
     
     const dashboardData = await integrationService.getIntegrationDashboardData(firmId);
     
-    // Sanitize API credentials in response
-    dashboardData.enabledIntegrations = dashboardData.enabledIntegrations.map(integration => ({
-      ...integration,
-      apiCredentials: integration.apiCredentials ? { hasApiKey: true } : null
-    }));
+    // Sanitize API credentials in response - create new structure
+    const sanitizedResponse = {
+      ...dashboardData,
+      enabledIntegrations: dashboardData.enabledIntegrations.map(integration => ({
+        ...integration,
+        apiCredentials: integration.apiCredentials ? JSON.stringify({ hasApiKey: true }) : null
+      }))
+    };
     
-    res.json(dashboardData);
+    res.json(sanitizedResponse);
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
     res.status(500).json({ error: "Failed to fetch dashboard data" });
@@ -265,9 +277,17 @@ router.get("/credentials/:integrationId", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Integration credentials not found" });
     }
     
+    // Parse the API credentials JSON
+    let apiCredentials;
+    try {
+      apiCredentials = JSON.parse(integration.apiCredentials);
+    } catch (error) {
+      return res.status(500).json({ error: "Invalid API credentials format" });
+    }
+    
     // Return actual API key for internal use
     res.json({ 
-      apiKey: integration.apiCredentials.apiKey,
+      apiKey: apiCredentials.apiKey,
       integrationName: integration.name || 'Unknown Integration'
     });
   } catch (error) {

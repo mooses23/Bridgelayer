@@ -12,15 +12,26 @@ import { runAiAgent } from "./aiAgent";
 import type { Document, AnalysisFeatures } from "@shared/schema";
 
 export async function processDocument(documentId: number, userId: number): Promise<void> {
-  const document = await storage.getDocument(documentId);
+  // First get user to obtain firmId
+  const user = await storage.getUser(userId);
+  if (!user || !user.firmId) {
+    throw new Error("User not found or not associated with a firm");
+  }
+
+  const firmId = user.firmId; // Store for use in analysis creation
+
+  const document = await storage.getDocument(documentId, firmId);
   if (!document || !document.content) {
     throw new Error("Document not found or has no content");
   }
 
-  const features = await storage.getUserFeatures(userId);
-  if (!features) {
-    throw new Error("User features not configured");
+  const analysisSettings = await storage.getFirmAnalysisSettings(firmId);
+  if (!analysisSettings || !analysisSettings.settings) {
+    throw new Error("Firm analysis settings not configured");
   }
+
+  // Parse settings from JSON
+  const features = analysisSettings.settings as any;
 
   // Identify document type using enhanced detection
   const documentType = getDocumentTypeFromContent(document.content);
@@ -33,6 +44,7 @@ export async function processDocument(documentId: number, userId: number): Promi
     analysisPromises.push(
       analyzeDocumentSummary(document.content).then(result => 
         storage.createAnalysis({
+          firmId,
           documentId,
           analysisType: 'summarization',
           result: result as any,
@@ -46,6 +58,7 @@ export async function processDocument(documentId: number, userId: number): Promi
     analysisPromises.push(
       analyzeDocumentRisks(document.content).then(result => 
         storage.createAnalysis({
+          firmId,
           documentId,
           analysisType: 'risk',
           result: result as any,
@@ -59,6 +72,7 @@ export async function processDocument(documentId: number, userId: number): Promi
     analysisPromises.push(
       extractClauses(document.content).then(result => 
         storage.createAnalysis({
+          firmId,
           documentId,
           analysisType: 'clause',
           result: result as any,
@@ -72,6 +86,7 @@ export async function processDocument(documentId: number, userId: number): Promi
     analysisPromises.push(
       checkCrossReferences(document.content).then(result => 
         storage.createAnalysis({
+          firmId,
           documentId,
           analysisType: 'cross_reference',
           result: result as any,
@@ -85,6 +100,7 @@ export async function processDocument(documentId: number, userId: number): Promi
     analysisPromises.push(
       analyzeFormatting(document.content).then(result => 
         storage.createAnalysis({
+          firmId,
           documentId,
           analysisType: 'formatting',
           result: result as any,

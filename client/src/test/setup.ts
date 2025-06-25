@@ -1,6 +1,7 @@
 import { expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
+import '@testing-library/jest-dom';
 
 expect.extend(matchers);
 
@@ -44,16 +45,16 @@ beforeEach(() => {
   }));
 
   // Mock File and FileReader
-  global.File = vi.fn().mockImplementation((chunks, filename, options) => ({
+  global.File = vi.fn().mockImplementation((chunks: any[], filename: string, options: any) => ({
     name: filename,
-    size: chunks.reduce((total, chunk) => total + chunk.length, 0),
+    size: chunks.reduce((total: number, chunk: any) => total + chunk.length, 0),
     type: options?.type || 'text/plain',
     lastModified: Date.now(),
     arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(0)),
     text: vi.fn().mockResolvedValue(chunks.join('')),
   }));
 
-  global.FileReader = vi.fn().mockImplementation(() => ({
+  (global.FileReader as any) = vi.fn().mockImplementation(() => ({
     readAsText: vi.fn(),
     readAsDataURL: vi.fn(),
     readAsArrayBuffer: vi.fn(),
@@ -116,7 +117,7 @@ expect.extend({
 
     const isDisabled = received.hasAttribute('disabled');
 
-    const pass = (hasLoadingText || hasSpinner) && isDisabled;
+    const pass = Boolean((hasLoadingText || hasSpinner) && isDisabled);
 
     return {
       message: () => `expected element to be in loading state`,

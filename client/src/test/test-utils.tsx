@@ -3,6 +3,7 @@ import React from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
+import { vi } from 'vitest';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { SessionProvider } from '@/contexts/SessionContext';
 
@@ -22,7 +23,12 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   tenant?: {
     id: string;
     name: string;
-    features: Record<string, boolean>;
+    features: {
+      documentsEnabled: boolean;
+      billingEnabled: boolean;
+      aiAnalysis: boolean;
+      [key: string]: boolean;
+    };
   };
   user?: {
     id: number;
@@ -61,7 +67,7 @@ export function renderWithProviders(
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <SessionProvider initialUser={user}>
+        <SessionProvider>
           <TenantProvider initialTenant={tenant}>
             {children}
           </TenantProvider>
@@ -114,7 +120,7 @@ export const mockApiResponses = {
 
 // Mock fetch for testing
 export const mockFetch = (responses: Record<string, any>) => {
-  global.fetch = jest.fn((url: string) => {
+  global.fetch = vi.fn((url: string | URL | Request) => {
     const urlPath = typeof url === 'string' ? url : url.toString();
     
     for (const [path, response] of Object.entries(responses)) {
@@ -131,23 +137,23 @@ export const mockFetch = (responses: Record<string, any>) => {
       status: 404,
       json: () => Promise.resolve({ error: 'Not found' }),
     } as Response);
-  });
+  }) as any;
 };
 
 // Helper for testing error states
 export const mockApiError = (status: number = 500, message: string = 'Internal Server Error') => {
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     Promise.resolve({
       ok: false,
       status,
       json: () => Promise.resolve({ error: message }),
     } as Response)
-  );
+  ) as any;
 };
 
 // Helper for testing loading states
 export const mockApiDelay = (response: any, delay: number = 1000) => {
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     new Promise((resolve) =>
       setTimeout(() =>
         resolve({
@@ -156,7 +162,7 @@ export const mockApiDelay = (response: any, delay: number = 1000) => {
         } as Response), delay
       )
     )
-  );
+  ) as any;
 };
 
 export * from '@testing-library/react';

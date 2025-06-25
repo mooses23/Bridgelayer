@@ -1,31 +1,31 @@
 import React from 'react';
 import { useSession } from '@/contexts/SessionContext';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenantSafe } from '@/hooks/useTenantSafe';
 import { useQuery } from '@tanstack/react-query';
 
 // Protected Route Components
 import { AdminRoute, FirmUserRoute, ClientRoute, PublicRoute } from '@/components/ProtectedRoute';
 
 // Public Pages
-import LoginPage from '@/pages/Public/LoginPage';
+import LoginPage from '@/pages/Login/Login';
 import NotFoundPage from '@/pages/Public/NotFoundPage';
 
 // Admin Pages
-import AdminLayout from '@/layouts/AdminLayout';
+import ModernAdminLayout from '@/layouts/ModernAdminLayout';
 
 // Firm Pages
-import FirmDashboardLayout from '@/layouts/FirmDashboardLayout';
-import OnboardingPage from '@/pages/Onboarding';
+import FirmLayout from '@/layouts/FirmLayout';
 
 // Client Pages
 import ClientLayout from '@/layouts/ClientLayout';
 
 // Loading Component
-import LoadingSpinner from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
+import ErrorBoundary from '@/components/shared/ErrorBoundary';
 
 export default function RoleRouter() {
   const { user, isLoading } = useSession();
-  const { config: tenantConfig, isLoading: tenantLoading } = useTenant();
+  const { config: tenantConfig, isLoading: tenantLoading, error: tenantError } = useTenantSafe();
 
   // Check if user's firm is onboarded
   const { data: firmData, isLoading: firmLoading } = useQuery({
@@ -37,8 +37,23 @@ export default function RoleRouter() {
     retry: false
   });
 
+  console.log('🎯 RoleRouter state:', { 
+    userRole: user?.role, 
+    isLoading, 
+    tenantLoading, 
+    firmLoading,
+    tenantError,
+    firmData: !!firmData
+  });
+
   if (isLoading || tenantLoading) {
     return <LoadingSpinner />;
+  }
+
+  // Show tenant error if tenant detection failed
+  if (tenantError) {
+    console.error('❌ Tenant error in RoleRouter:', tenantError);
+    // Don't block - continue with authentication flow
   }
 
   // Show login page if not authenticated
@@ -46,26 +61,41 @@ export default function RoleRouter() {
     return <LoginPage />;
   }
 
+  // Owner users - redirect to owner dashboard
+  if (user.role === 'owner') {
+    return (
+      <ErrorBoundary>
+        <AdminRoute>
+          <ModernAdminLayout />
+        </AdminRoute>
+      </ErrorBoundary>
+    );
+  }
+
   // Admin users - redirect to admin panel
   if (['platform_admin', 'admin', 'super_admin'].includes(user.role)) {
     return (
-      <AdminRoute>
-        <AdminLayout />
-      </AdminRoute>
+      <ErrorBoundary>
+        <AdminRoute>
+          <ModernAdminLayout />
+        </AdminRoute>
+      </ErrorBoundary>
     );
   }
 
   // Client users - redirect to client portal  
   if (user.role === 'client') {
     return (
-      <ClientRoute>
-        <ClientLayout />
-      </ClientRoute>
+      <ErrorBoundary>
+        <ClientRoute>
+          <ClientLayout />
+        </ClientRoute>
+      </ErrorBoundary>
     );
   }
 
   // Firm users - check onboarding status with fallbacks
-  if (user.role === 'firm_admin' || user.role === 'paralegal') {
+  if (user.role === 'firm_admin' || user.role === 'paralegal' || user.role === 'firm_user') {
     // Show loading while checking firm status
     if (firmLoading) {
       return <LoadingSpinner />;
@@ -80,19 +110,24 @@ export default function RoleRouter() {
                           tenantConfig?.onboardingComplete === false;
 
     if (needsOnboarding) {
-      console.log('🎯 Firm needs onboarding - showing onboarding flow');
+      console.log('🎯 Firm needs onboarding - redirecting to unified admin onboarding');
+      // CONSOLIDATED: All onboarding now goes through admin's unified system
       return (
-        <FirmUserRoute>
-          <OnboardingPage />
-        </FirmUserRoute>
+        <ErrorBoundary>
+          <FirmUserRoute>
+            <ModernAdminLayout />
+          </FirmUserRoute>
+        </ErrorBoundary>
       );
     }
 
     // Firm is properly onboarded, show dashboard
     return (
-      <FirmUserRoute>
-        <FirmDashboardLayout />
-      </FirmUserRoute>
+      <ErrorBoundary>
+        <FirmUserRoute>
+          <FirmLayout />
+        </FirmUserRoute>
+      </ErrorBoundary>
     );
   }
 

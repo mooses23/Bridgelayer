@@ -113,7 +113,7 @@ export class JWTManager {
   }
 
   /**
-   * Validate token and return payload
+   * Validate JWT token
    */
   static async validateToken(token: string): Promise<{
     valid: boolean;
@@ -121,26 +121,23 @@ export class JWTManager {
     error?: string;
   }> {
     try {
+      const secret = process.env.JWT_SECRET || 'fallback-secret-key';
+      
       // Check if token is blacklisted
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
       if (this.blacklistedTokens.has(tokenHash)) {
         return { valid: false, error: 'Token has been revoked' };
       }
-
-      const secret = process.env.JWT_SECRET || 'fallback-secret-key';
-      const decoded = jwt.verify(token, secret, {
-        issuer: 'firmsync-auth'
+      
+      const payload = jwt.verify(token, secret, {
+        issuer: 'firmsync-auth',
+        audience: 'firmsync-app'
       });
-
-      return { valid: true, payload: decoded };
+      
+      return { valid: true, payload };
     } catch (error) {
-      if (error instanceof jwt.TokenExpiredError) {
-        return { valid: false, error: 'Token expired' };
-      }
-      if (error instanceof jwt.JsonWebTokenError) {
-        return { valid: false, error: 'Invalid token' };
-      }
-      return { valid: false, error: 'Token validation failed' };
+      console.error('JWT validation error:', error);
+      return { valid: false, error: 'Invalid token' };
     }
   }
 

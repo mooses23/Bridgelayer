@@ -1,0 +1,6 @@
+import { requireSessionAuth } from '../auth-minimal';
+import { requireJWTAuth } from '../auth/jwt-auth';
+import { requireModernJWTAuth } from '../middleware/auth';
+import { requireLegacyAuth } from '../auth';
+
+// ...existing code...

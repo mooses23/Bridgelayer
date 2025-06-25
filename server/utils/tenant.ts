@@ -7,8 +7,8 @@ export function getTenantIdFromRequest(req: Request): string {
   const subdomain = host.split('.')[0];
   
   // Fallback to auth context if available
-  if (req.user?.tenantId) {
-    return req.user.tenantId;
+  if (req.user?.firmId) {
+    return req.user.firmId?.toString() || subdomain;
   }
   
   // Fallback to subdomain

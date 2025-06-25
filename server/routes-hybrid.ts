@@ -4,9 +4,20 @@ import { createServer } from "http";
 import { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { authStrategyMiddleware } from "./auth/strategy-router";
-import { requireAuth, requireAdmin, requireFirmUser, requireTenantAccess } from "./auth/middleware/unified-auth-middleware";
-import { hybridLogin, hybridLogout, hybridSessionCheck, hybridAuthStatus } from "./auth/hybrid-controller";
+import { requireAuth, requireAdmin, requireFirmUser, validateFirmCode, createFirmUserWithValidationMiddleware } from "./auth/middleware/auth-middleware";
 import { refreshJWTTokens } from "./auth/jwt-auth-clean";
+import { loginHandler } from "./services/authService";
+// Import new unified authentication controller
+import authController from './authController';
+
+// Import LLM routes
+import llmRoutes from "./routes/llm";
+import documentStencilRoutes from "./routes/documentStencils";
+import onboardingCodesRoutes from "./routes/onboarding-codes";
+import adminRoutes from "./routes/admin";
+import simpleFirmsRoutes from "./routes/simple-firms";
+import agentAssignmentsRoutes from "./routes/agent-assignments";
+import ownerAnalyticsRoutes from "./routes/owner-analytics";
 
 // JWT validation function matching working admin endpoints
 async function validateJWTAuth(req: any) {
@@ -34,7 +45,7 @@ async function validateJWTAuth(req: any) {
     
     return { success: false, error: "Invalid token" };
   } catch (error) {
-    console.log("🔍 JWT Debug - Error:", error.message);
+    console.log("🔍 JWT Debug - Error:", (error as Error).message);
     return { success: false, error: "JWT validation failed" };
   }
 }
@@ -118,12 +129,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Unified Hybrid Authentication Routes
-  app.post("/api/auth/login", hybridLogin);
-  app.post("/api/auth/logout", hybridLogout);
-  app.get("/api/auth/session", hybridSessionCheck);
-  app.get("/api/auth/status", hybridAuthStatus);
+  // Unified Authentication Routes
+  app.post("/api/auth/login", loginHandler);
+  app.post("/api/auth/owner-login", authController.loginOwner);
+  app.post("/api/auth/admin-login", authController.loginAdmin);
+  app.post("/api/auth/logout", authController.logout);
+  app.get("/api/auth/session", authController.validateSession);
+  app.get("/api/auth/status", authController.validateSession);
   app.post("/api/auth/refresh", refreshJWTTokens);
+
+  // Test endpoint to debug authController issues
+  app.get("/api/auth/test", (req, res) => {
+    try {
+      console.log("🧪 Testing authController access...");
+      console.log("AuthController available:", !!authController);
+      console.log("AuthController methods:", Object.keys(authController || {}));
+      res.json({ 
+        success: true, 
+        authControllerLoaded: !!authController,
+        methods: Object.keys(authController || {}),
+        loginOwnerType: typeof authController?.loginOwner
+      });
+    } catch (error) {
+      console.error("❌ Test endpoint error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Tenant lookup endpoint - handles both subdomains and Replit workspace IDs
   app.get("/api/tenant/:identifier", async (req, res) => {
@@ -182,8 +213,231 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Basic firm route
-  app.get("/api/firms/:id", requireAuth, async (req, res) => {
+  // Firm portal API routes (protected by requireFirmUser middleware)
+  app.get('/api/app/profile/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+    try {
+      const { firmCode } = req.params;
+      const user = req.user as any;
+      const firm = await storage.getFirm(user.firmId);
+      
+      if (!firm || firm.slug !== firmCode) {
+        return res.status(404).json({ error: 'Firm not found' });
+      }
+      
+      res.json({ firm, user });
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  app.get('/api/app/dashboard/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+    try {
+      const { firmCode } = req.params;
+      const user = req.user as any;
+      
+      // Get basic dashboard stats
+      const stats = {
+        totalCases: 12,
+        totalDocuments: 45,
+        monthlyRevenue: 24500,
+        activeTasks: 8
+      };
+      
+      res.json({ stats, firmCode });
+    } catch (error) {
+      console.error('Dashboard fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    }
+  });
+
+  app.get('/api/app/documents/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+    try {
+      const { firmCode } = req.params;
+      const user = req.user as any;
+      
+      // Get firm documents
+      const documents = await storage.getFirmDocuments(user.firmId);
+      
+      res.json({ documents, firmCode });
+    } catch (error) {
+      console.error('Documents fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch documents' });
+    }
+  });
+
+  app.post('/api/app/ai/review', requireAuth, requireFirmUser, async (req, res) => {
+    try {
+      const { profileData, documentText, documentType } = req.body;
+      
+      if (!documentText && !profileData) {
+        return res.status(400).json({ error: 'Document text or profile data is required' });
+      }
+
+      // Mock AI review response based on input type
+      let suggestions: any = {
+        issues: [],
+        improvements: [],
+        confidence: 0.85,
+        reviewType: documentText ? 'document' : 'profile'
+      };
+
+      if (documentText) {
+        // Document review
+        suggestions.issues = [
+          'Potential missing clause in liability section',
+          'Date format inconsistency detected'
+        ];
+        suggestions.improvements = [
+          'Consider adding force majeure clause',
+          'Standardize date format throughout document',
+          'Add dispute resolution mechanism'
+        ];
+        suggestions.documentType = documentType || 'contract';
+      } else {
+        // Profile/firm review
+        suggestions.improvements = [
+          'Consider adding more detailed client intake questions',
+          'Billing settings could be optimized for better cash flow',
+          'Practice areas could be more specific',
+          'Add client communication preferences'
+        ];
+        suggestions.issues = [
+          'Missing backup contact information',
+          'Incomplete billing configuration'
+        ];
+      }
+      
+      res.json({ 
+        success: true, 
+        suggestions,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('AI review error:', error);
+      res.status(500).json({ error: 'AI review failed' });
+    }
+  });
+
+  app.get('/api/app/billing/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+    try {
+      const { firmCode } = req.params;
+      const user = req.user as any;
+      
+      // Get firm invoices
+      const invoices = await storage.getFirmInvoices(user.firmId);
+      
+      res.json({ invoices, firmCode });
+    } catch (error) {
+      console.error('Billing fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch billing data' });
+    }
+  });
+
+  // Payment processing endpoint
+  app.post('/api/app/billing/pay', requireAuth, requireFirmUser, async (req, res) => {
+    try {
+      const { invoiceId, paymentMethodId, amount } = req.body;
+      const user = req.user as any;
+
+      if (!invoiceId || !paymentMethodId || !amount) {
+        return res.status(400).json({ error: 'Invoice ID, payment method, and amount are required' });
+      }
+
+      // Mock Stripe payment processing
+      // In production, this would integrate with actual Stripe API
+      const paymentResult = {
+        id: `payment_${Date.now()}`,
+        status: 'succeeded',
+        amount: amount * 100, // Convert to cents
+        currency: 'usd',
+        created: Math.floor(Date.now() / 1000),
+        invoice_id: invoiceId,
+        firm_id: user.firmId
+      };
+
+      // Update invoice status in database
+      await storage.updateInvoice(invoiceId, {
+        status: 'paid',
+        paidDate: new Date(),
+        paymentId: paymentResult.id
+      });
+
+      res.json({
+        success: true,
+        payment: paymentResult,
+        message: 'Payment processed successfully'
+      });
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      res.status(500).json({ error: 'Payment processing failed' });
+    }
+  });
+
+  // Create payment intent for Stripe
+  app.post('/api/app/billing/create-payment-intent', requireAuth, requireFirmUser, async (req, res) => {
+    try {
+      const { amount, currency = 'usd', invoiceId } = req.body;
+      const user = req.user as any;
+
+      if (!amount || !invoiceId) {
+        return res.status(400).json({ error: 'Amount and invoice ID are required' });
+      }
+
+      // Mock Stripe PaymentIntent creation
+      // In production, this would call stripe.paymentIntents.create()
+      const paymentIntent = {
+        id: `pi_${Date.now()}`,
+        client_secret: `pi_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`,
+        amount: amount * 100, // Convert to cents
+        currency,
+        status: 'requires_payment_method',
+        metadata: {
+          invoice_id: invoiceId,
+          firm_id: user.firmId.toString()
+        }
+      };
+
+      res.json({
+        success: true,
+        paymentIntent
+      });
+    } catch (error) {
+      console.error('Payment intent creation error:', error);
+      res.status(500).json({ error: 'Failed to create payment intent' });
+    }
+  });
+
+  // Current user's firm endpoint - used by RoleRouter to check onboarding status
+  app.get('/api/firm', requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (!user.firmId) {
+        return res.status(404).json({ error: 'No firm associated with user' });
+      }
+      
+      const firm = await storage.getFirm(user.firmId);
+      
+      if (!firm) {
+        return res.status(404).json({ error: 'Firm not found' });
+      }
+
+      res.json({ 
+        id: firm.id,
+        name: firm.name,
+        onboarded: firm.onboarded,
+        status: firm.status,
+        plan: firm.plan
+      });
+    } catch (error) {
+      console.error('Current firm fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch firm data' });
+    }
+  });
+
+   // Basic firm route
+   app.get("/api/firms/:id", requireAuth, async (req, res) => {
     try {
       const firmId = parseInt(req.params.id);
       const firm = await storage.getFirm(firmId);
@@ -671,6 +925,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching template preview:", error);
       res.status(500).json({ error: "Failed to fetch template preview" });
+    }
+  });
+
+  // Register API routes
+  app.use("/api/llm", llmRoutes);
+  app.use("/api/admin", adminRoutes);
+  app.use("/api/document-stencils", documentStencilRoutes);
+  app.use("/api/onboarding", onboardingCodesRoutes);
+  app.use("/api/simple-firms", simpleFirmsRoutes);
+  app.use("/api/agent-assignments", agentAssignmentsRoutes);
+  app.use("/api/owner/analytics", ownerAnalyticsRoutes);
+
+  // Document template endpoints for firm users
+  app.get('/api/app/templates/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+    try {
+      const { firmCode } = req.params;
+      
+      // Get firm-specific templates (or default templates for now)
+      const templates = [
+        { id: 1, name: 'Contract Template', description: 'Standard contract template' },
+        { id: 2, name: 'Invoice Template', description: 'Billing invoice template' },
+        { id: 3, name: 'Letter Template', description: 'Professional letter template' },
+        { id: 4, name: 'Agreement Template', description: 'Standard agreement template' }
+      ];
+
+      res.json({
+        success: true,
+        templates
+      });
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      res.status(500).json({ error: 'Failed to fetch templates' });
+    }
+  });
+
+  // Document generation endpoint
+  app.post('/api/app/documents/:firmCode/generate', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+    try {
+      const { firmCode } = req.params;
+      const { templateId } = req.body;
+      
+      if (!templateId) {
+        return res.status(400).json({ error: 'Template ID is required' });
+      }
+
+      // Mock document generation (integrate with actual document generation later)
+      const generatedDoc = {
+        id: Date.now(),
+        name: `Generated Document ${Date.now()}`,
+        type: 'PDF',
+        templateId,
+        firmCode,
+        createdAt: new Date().toISOString(),
+        downloadUrl: `/api/documents/${Date.now()}/download`
+      };
+
+      res.json({
+        success: true,
+        document: generatedDoc
+      });
+    } catch (error) {
+      console.error('Error generating document:', error);
+      res.status(500).json({ error: 'Failed to generate document' });
+    }
+  });
+
+  // Time entries endpoints
+  app.get('/api/app/time-entries/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+    try {
+      const { firmCode } = req.params;
+      const user = req.user as any;
+      
+      const billingStorage = new (await import('./storage-billing')).BillingStorage();
+      const timeEntries = await billingStorage.getTimeEntries(user.firmId);
+      
+      res.json({ timeEntries, firmCode });
+    } catch (error) {
+      console.error('Time entries fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch time entries' });
+    }
+  });
+
+  app.post('/api/app/time-entries', requireAuth, requireFirmUser, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { firmId, ...timeEntryData } = req.body;
+      
+      // Validate firm ID matches authenticated user
+      if (firmId && firmId !== user.firmId) {
+        return res.status(403).json({ error: 'Unauthorized firm access' });
+      }
+
+      const billingStorage = new (await import('./storage-billing')).BillingStorage();
+      const timeEntry = await billingStorage.createTimeEntry({
+        firmId: user.firmId,
+        userId: user.id,
+        ...timeEntryData,
+        loggedAt: new Date(timeEntryData.date || Date.now()),
+        billableRate: timeEntryData.billableRate * 100, // Convert to cents
+        hours: timeEntryData.hours * 100, // Convert to centihours
+        isLocked: false
+      });
+      
+      res.json({ success: true, timeEntry });
+    } catch (error) {
+      console.error('Time entry creation error:', error);
+      res.status(500).json({ error: 'Failed to create time entry' });
     }
   });
 

@@ -16,6 +16,7 @@ export class AuditService {
     try {
       const auditLog: InsertAuditLog = {
         firmId: params.firmId,
+        userId: params.actorId, // Use actorId as userId
         actorId: params.actorId,
         actorName: params.actorName,
         action: params.action,

@@ -6,7 +6,8 @@ import {
   insertDocumentTypeTemplateSchema,
   insertPlatformSettingSchema
 } from "@shared/schema";
-import { requireAuth, requireAdmin } from "../auth/jwt-auth";
+import { requireSessionAuth } from "../auth/session-auth";
+import { requireAuth, requireAdmin } from "../auth/middleware/auth-middleware";
 import express from 'express';
 import { getSystemHealth, logManager } from "../utils";
 
@@ -16,10 +17,11 @@ const router = express.Router();
 router.get('/system-health', requireAuth, requireAdmin, async (req, res) => {
   try {
     const healthData = await getSystemHealth();
-    logManager.log('info', 'System health data requested', { user: req.user?.id }, 'admin');
+    logManager.log('info', 'System health data requested', 'admin');
     res.json(healthData);
   } catch (error) {
-    logManager.log('error', 'Failed to fetch system health data', { error: error.message }, 'admin');
+    const err = error as Error;
+    logManager.log('error', `Failed to fetch system health data: ${err.message}`, 'admin');
     res.status(500).json({ error: 'Failed to fetch system health data' });
   }
 });
@@ -28,22 +30,84 @@ router.get('/system-health', requireAuth, requireAdmin, async (req, res) => {
 router.get('/logs', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { level, source, limit = 100 } = req.query;
+    const limitNum = parseInt(limit as string) || 100;
 
-    const logs = logManager.getLogs({
-      level: level as string,
-      source: source as string,
-      limit: parseInt(limit as string)
-    });
+    let logs;
+    if (level) {
+      logs = logManager.getLogsByLevel(level as string, limitNum);
+    } else {
+      logs = logManager.getLogs(limitNum);
+    }
 
-    logManager.log('info', 'System logs requested', { 
-      filters: { level, source, limit },
-      user: req.user?.id 
-    }, 'admin');
+    logManager.log('info', 'System logs requested', 'admin');
 
     res.json(logs);
   } catch (error) {
-    logManager.log('error', 'Failed to fetch system logs', { error: error.message }, 'admin');
+    const err = error as Error;
+    logManager.log('error', `Failed to fetch system logs: ${err.message}`, 'admin');
     res.status(500).json({ error: 'Failed to fetch logs' });
+  }
+});
+
+// Admin stats endpoint for dashboard metrics
+router.get('/stats', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    // Fetch basic metrics for dashboard
+    const firms = await storage.getAllFirms();
+    
+    const stats = {
+      totalFirms: firms.length,
+      activeFirms: firms.filter(f => f.status === 'active').length,
+      onboardingCodes: 0, // TODO: implement when onboarding profiles are available
+      totalIntegrations: 0, // TODO: add when integrations table is available
+      systemUptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0'
+    };
+
+    res.json(stats);
+  } catch (error) {
+    const err = error as Error;
+    logManager.log('error', `Failed to fetch admin stats: ${err.message}`, 'admin');
+    res.status(500).json({ error: 'Failed to fetch admin statistics' });
+  }
+});
+
+// Firms management endpoint
+router.get('/firms', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const firms = await storage.getAllFirms();
+    res.json(firms);
+  } catch (error) {
+    const err = error as Error;
+    logManager.log('error', `Failed to fetch firms: ${err.message}`, 'admin');
+    res.status(500).json({ error: 'Failed to fetch firms' });
+  }
+});
+
+// Create new firm endpoint
+router.post('/firms', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const firmData = insertFirmSchema.parse(req.body);
+    const newFirm = await storage.createFirm(firmData);
+
+    logManager.log('info', `Firm created: ${newFirm.name}`, 'admin');
+    res.json(newFirm);
+  } catch (error) {
+    const err = error as Error;
+    logManager.log('error', `Failed to create firm: ${err.message}`, 'admin');
+    res.status(500).json({ error: 'Failed to create firm' });
+  }
+});
+
+// Platform integrations endpoint
+router.get('/platform-integrations', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    // Return empty array for now since integrations table needs to be implemented
+    res.json([]);
+  } catch (error) {
+    const err = error as Error;
+    logManager.log('error', `Failed to fetch integrations: ${err.message}`, 'admin');
+    res.status(500).json({ error: 'Failed to fetch integrations' });
   }
 });
 
@@ -51,7 +115,7 @@ export default router;
 
 export function registerAdminRoutes(app: Express) {
   // Firm management routes
-  app.get('/api/admin/firms', jwtAuthMiddleware, requireAdmin, async (req, res) => {
+  app.get('/api/admin/firms', requireAuth, requireAdmin, async (req, res) => {
     try {
       const firms = await storage.getAllFirms();
       res.json(firms);
@@ -266,7 +330,8 @@ export function registerAdminRoutes(app: Express) {
           const firm = await storage.updateFirm(firmId, configUpdates);
           results.push({ firmId, success: true, firm });
         } catch (error) {
-          results.push({ firmId, success: false, error: error.message });
+          const err = error as Error;
+          results.push({ firmId, success: false, error: err.message });
         }
       }
 

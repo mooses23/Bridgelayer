@@ -2,7 +2,7 @@
 import express from "express";
 import { StorageService } from "../services/storageService";
 import { getTenantIdFromRequest } from "../utils/tenant";
-import { requireAuth } from "../auth/authMiddleware";
+import { requireAuth } from "../auth/middleware/auth-middleware";
 
 const router = express.Router();
 

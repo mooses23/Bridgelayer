@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSession } from '@/contexts/SessionContext';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/shared/LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -67,11 +67,11 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Firm user route protection (admin and paralegal)
+ * Firm user route protection (admin, paralegal, and firm_user)
  */
 export function FirmUserRoute({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute requiredRole={['firm_admin', 'firm_owner', 'paralegal']}>
+    <ProtectedRoute requiredRole={['firm_admin', 'firm_owner', 'paralegal', 'firm_user']}>
       {children}
     </ProtectedRoute>
   );

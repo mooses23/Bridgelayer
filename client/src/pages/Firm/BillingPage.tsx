@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, Clock, FileText, TrendingUp, Plus, Download } from "lucide-react";
-import { useTenant } from "@/context/TenantContext";
+import { useTenant } from "@/contexts/TenantContext";
+import { useSession } from "@/contexts/SessionContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { timeEntrySchema, invoiceSchema } from "@shared/validation";
 
@@ -27,6 +28,7 @@ interface TimeEntryFormData {
 
 export default function BillingPage() {
   const { tenant } = useTenant();
+  const { user } = useSession();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showTimeForm, setShowTimeForm] = useState(false);
@@ -46,31 +48,37 @@ export default function BillingPage() {
     }
   });
 
+  const { data: firm } = useQuery({
+    queryKey: ["firm", user?.firmId],
+    queryFn: () => fetch(`/api/firm`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!user?.firmId
+  });
+
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
-    queryKey: ["invoices", tenant?.id],
-    queryFn: () => fetch(`/api/invoices?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
-    enabled: !!tenant?.id
+    queryKey: ["invoices", firm?.slug],
+    queryFn: () => fetch(`/api/app/billing/${firm?.slug}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!firm?.slug
   });
 
   const { data: timeLogs, isLoading: timeLogsLoading } = useQuery({
-    queryKey: ["timeLogs", tenant?.id],
-    queryFn: () => fetch(`/api/time-logs?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
-    enabled: !!tenant?.id
+    queryKey: ["timeLogs", firm?.slug],
+    queryFn: () => fetch(`/api/app/time-entries/${firm?.slug}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!firm?.slug
   });
 
   const { data: billingSummary, isLoading: summaryLoading } = useQuery({
-    queryKey: ["billingSummary", tenant?.id],
-    queryFn: () => fetch(`/api/billing-summary?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
-    enabled: !!tenant?.id
+    queryKey: ["billingSummary", firm?.slug],
+    queryFn: () => fetch(`/api/app/dashboard/${firm?.slug}`, { credentials: "include" }).then(r => r.json()),
+    enabled: !!firm?.slug
   });
 
   const addTimeMutation = useMutation({
     mutationFn: (entry: TimeEntryFormData) => 
-      fetch("/api/time-logs", { 
+      fetch("/api/app/time-entries", { 
         method: "POST", 
         credentials: "include", 
         headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify({ tenant: tenant?.id, ...entry }) 
+        body: JSON.stringify({ firmId: user?.firmId, ...entry }) 
       }).then(res => {
         if (!res.ok) throw new Error('Failed to create time entry');
         return res.json();
@@ -80,8 +88,8 @@ export default function BillingPage() {
         title: "Success",
         description: "Time entry created successfully"
       });
-      queryClient.invalidateQueries({ queryKey: ["timeLogs", tenant?.id] });
-      queryClient.invalidateQueries({ queryKey: ["billingSummary", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ["timeLogs", firm?.slug] });
+      queryClient.invalidateQueries({ queryKey: ["billingSummary", firm?.slug] });
       resetTimeForm();
       setShowTimeForm(false);
     },
