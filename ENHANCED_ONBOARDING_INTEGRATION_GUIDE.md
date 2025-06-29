@@ -1,53 +1,63 @@
-# Enhanced Onboarding Integration Guide
+# BridgeLayer Platform Enhanced Onboarding Integration Guide
 
-## 🚀 **How to Use the New Enhanced Onboarding System**
+## 🚀 **How to Use the Multi-Vertical Enhanced Onboarding System**
 
-### **1. Replace Existing Onboarding Pages**
+**Platform Overview**: BridgeLayer multi-vertical platform supporting legal (FIRMSYNC), medical (MEDSYNC), education (EDUSYNC), and HR (HRSYNC) verticals.
 
-The new `EnhancedOnboardingWizard` consolidates all existing onboarding implementations. Here's how to integrate it:
+**Key Principle**: **Platform Admin handles ALL firm onboarding** via left side nav dual workspace system. Owner (Bridgelayer) role has **NO onboarding responsibilities**.
 
-#### **Update Routing**
+### **1. Platform Admin Onboarding Integration**
+
+The enhanced `MultiVerticalOnboardingWizard` is integrated into the Platform Admin's left side navigation. **Only Platform Admins can onboard firms**.
+
+#### **Admin Left Side Navigation Integration**
 ```typescript
-// In your routing configuration, replace:
-// - /client/src/pages/Onboarding.tsx
-// - /client/src/pages/Onboarding/OnboardingWizard.tsx
-// - /client/src/pages/Admin/FirmOnboardingPage.tsx
+// Platform Admin dashboard with left side nav onboarding
+// Located in: /client/src/pages/Admin/AdminDashboard.tsx
 
-// With:
-import EnhancedOnboardingWizard from '@/components/onboarding/EnhancedOnboardingWizard';
+// Navigation structure:
+// 1. Firms (cross-vertical firm management)
+// 2. Onboarding (multi-step wizard with integrated verification)
+// 3. Vertical Configs (industry-specific settings)
+// 4. Integrations (cross-platform connections)
+// 5. Analytics (multi-vertical oversight)
+// 6. Settings (platform configuration)
 
-// Route configuration:
-<Route path="/onboarding" element={<EnhancedOnboardingWizard />} />
+import MultiVerticalOnboardingWizard from '@/components/onboarding/EnhancedOnboardingWizard';
+
+// Onboarding tab in admin nav:
+<Route path="/admin/onboarding" element={<MultiVerticalOnboardingWizard />} />
 ```
 
-#### **Admin Dashboard Integration**
+#### **Platform Admin Dashboard Integration**
 ```typescript
-// In your admin dashboard, update the "Add New Firm" action:
-const handleAddNewFirm = () => {
-  navigate('/onboarding');
+// Platform Admin initiates onboarding from Firms tab
+const handleAddNewFirm = (vertical: Vertical) => {
+  // Navigate to onboarding tab with vertical pre-selected
+  navigate('/admin/onboarding', { state: { vertical } });
 };
 ```
 
-### **2. Backend API Integration**
+### **2. Multi-Vertical Backend API Integration**
 
-The enhanced system expects these API endpoints:
+The enhanced system supports all industry verticals with these API endpoints:
 
-#### **Required Endpoints**
+#### **Required Multi-Vertical Endpoints**
 ```typescript
-// Subdomain validation
-GET /api/onboarding/check-subdomain?subdomain=example
+// Vertical-aware subdomain validation
+GET /api/onboarding/check-subdomain?subdomain=example&vertical=firmsync
 
-// Session initialization  
+// Multi-vertical session initialization  
 POST /api/onboarding/initialize
-Body: { subdomain: string, adminEmail: string }
+Body: { subdomain: string, adminEmail: string, vertical: Vertical }
 
-// Progress saving
+// Progress saving with vertical context
 POST /api/onboarding/progress/:sessionId
-Body: Partial<OnboardingFormData>
+Body: Partial<OnboardingFormData> & { vertical: Vertical }
 
-// Completion
+// Completion with integrated verification
 POST /api/onboarding/complete/:sessionId
-Body: FormData (multipart for file uploads)
+Body: FormData (multipart) & { vertical: Vertical, verificationStep: boolean }
 ```
 
 #### **Update Server Routes**

@@ -1,5 +1,12 @@
-# 🎯 **COPILOT ORCHESTRATION STRATEGY**
-**Multi-Phase Development Plan for Complex AI-Powered Legal Platform**
+# 🎯 **BRIDGELAYER PLATFORM ORCHESTRATION STRATEGY**
+**Multi-Phase Development Plan for Complex Multi-Vertical AI-Powered Platform**
+
+**Platform Overview**: BridgeLayer is a comprehensive multi-vertical authentication and document management system supporting legal (FIRMSYNC), medical (MEDSYNC), education (EDUSYNC), and HR (HRSYNC) verticals with a sophisticated three-tier role model.
+
+**Architecture**:
+- **Platform Admin**: Handles ALL firm onboarding via left side nav dual workspace system
+- **Owner (Bridgelayer)**: Multi-vertical operational management (NO onboarding responsibilities)
+- **Tenant (Firms)**: Industry-specific portal access after admin onboarding
 
 ## 🧠 **META-PROMPTING STRATEGY**
 
