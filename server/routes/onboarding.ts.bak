@@ -1,0 +1,287 @@
+
+import { Router } from 'express';
+import multer from 'multer';
+import path from 'path';
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { db } from '../db';
+import { firms, users, firmSettings } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
+
+const router = Router();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/branding/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
+// Validation schemas
+const onboardingSchema = z.object({
+  firmName: z.string().min(1, 'Firm name is required'),
+  subdomain: z.string()
+    .min(3, 'Subdomain must be at least 3 characters')
+    .max(20, 'Subdomain cannot exceed 20 characters')
+    .regex(/^[a-z0-9-]+$/, 'Subdomain can only contain lowercase letters, numbers, and hyphens'),
+  adminName: z.string().min(1, 'Admin name is required'),
+  adminEmail: z.string().email('Invalid admin email'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+  confirmPassword: z.string(),
+  storageProvider: z.enum(['google', 'dropbox', 'onedrive']),
+  oauthTokens: z.string().optional(),
+  apiKeys: z.string().optional()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+// Check subdomain availability
+router.get('/check-subdomain', async (req, res) => {
+  try {
+    const { subdomain } = req.query;
+    
+    if (!subdomain || typeof subdomain !== 'string') {
+      return res.status(400).json({ message: 'Subdomain is required' });
+    }
+
+    const existingFirm = await db
+      .select()
+      .from(firms)
+      .where(eq(firms.subdomain, subdomain))
+      .limit(1);
+
+    res.json({ available: existingFirm.length === 0 });
+  } catch (error) {
+    console.error('Subdomain check error:', error);
+    res.status(500).json({ message: 'Failed to check subdomain availability' });
+  }
+});
+
+// Complete onboarding
+router.post('/complete', upload.single('branding'), async (req, res) => {
+  try {
+    // Validate the form data
+    const validatedData = onboardingSchema.parse(req.body);
+
+    // Check if subdomain is still available
+    const existingFirm = await db
+      .select()
+      .from(firms)
+      .where(eq(firms.subdomain, validatedData.subdomain))
+      .limit(1);
+
+    if (existingFirm.length > 0) {
+      return res.status(400).json({ message: 'Subdomain is already taken' });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(validatedData.password, 12);
+
+    // Handle uploaded branding file
+    let brandingPath = null;
+    if (req.file) {
+      brandingPath = `/uploads/branding/${req.file.filename}`;
+    }
+
+    // Parse OAuth tokens and API keys
+    let oauthTokens = {};
+    let apiKeys = {};
+    
+    try {
+      if (validatedData.oauthTokens) {
+        oauthTokens = JSON.parse(validatedData.oauthTokens);
+      }
+      if (validatedData.apiKeys) {
+        apiKeys = JSON.parse(validatedData.apiKeys);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse tokens/keys:', parseError);
+    }
+
+    // Create firm
+    const [firm] = await db
+      .insert(firms)
+      .values({
+        name: validatedData.firmName,
+        slug: validatedData.subdomain || validatedData.firmName.toLowerCase().replace(/s+/g, "-"),        subdomain: validatedData.subdomain,
+        logoUrl: brandingPath,
+        plan: 'trial',
+        onboardingComplete: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+
+    // Create admin user
+    const [adminUser] = await db
+      .insert(users)
+      .values({
+        firmId: firm.id,
+        email: validatedData.adminEmail,
+        name: validatedData.adminName,
+        password: passwordHash,
+        role: 'admin',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+
+    // Create firm settings
+    await db
+      .insert(firmSettings)
+      .values({
+        firmId: firm.id,
+        storageProvider: validatedData.storageProvider,
+        oauthTokens: JSON.stringify(oauthTokens),
+        apiKeys: JSON.stringify(apiKeys),
+        features: JSON.stringify({
+          documentAnalysis: true,
+          clientPortal: true,
+          timeTracking: true,
+          billing: true,
+          integrations: true
+        }),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+    // Generate JWT token for immediate login
+    const token = jwt.sign(
+      { 
+        userId: adminUser.id, 
+        firmId: firm.id,
+        tenantId: firm.subdomain,
+        role: 'admin'
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    // Set secure cookie
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    res.status(201).json({
+      message: 'Onboarding completed successfully',
+      firm: {
+        id: firm.id,
+        name: firm.name,
+        subdomain: firm.subdomain
+      },
+      user: {
+        id: adminUser.id,
+        name: adminUser.name,
+        email: adminUser.email,
+        role: adminUser.role
+      },
+      redirectTo: '/dashboard'
+    });
+
+  } catch (error) {
+    console.error('Onboarding error:', error);
+    
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: error.errors
+      });
+    }
+
+    if (error instanceof multer.MulterError) {
+      return res.status(400).json({
+        message: 'File upload error',
+        details: error.message
+      });
+    }
+
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get firm configuration  
+router.get('/:tenantId/config', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+
+    const firmData = await db
+      .select({
+        firm: firms,
+        settings: firmSettings
+      })
+      .from(firms)
+      .leftJoin(firmSettings, eq(firms.id, firmSettings.firmId))
+      .where(eq(firms.subdomain, tenantId))
+      .limit(1);
+
+    if (firmData.length === 0) {
+      return res.status(404).json({ message: 'Firm not found' });
+    }
+
+    const { firm, settings } = firmData[0];
+
+    // Mock stats for now - these would come from actual data
+    const config = {
+      id: firm.subdomain,
+      name: firm.name,
+      subdomain: firm.subdomain,
+      branding: {
+        logo: firm.logoUrl,
+        primaryColor: '#3B82F6',
+        secondaryColor: '#1E3A8A'
+      },
+      onboardingComplete: firm.onboardingComplete,
+      onboardingProgress: firm.onboardingComplete ? 100 : 75,
+      features: settings ? JSON.parse(settings.features || '{}') : {},
+      templates: [
+        { id: '1', name: 'NDA Template', category: 'Contracts', enabled: true },
+        { id: '2', name: 'Service Agreement', category: 'Contracts', enabled: true },
+        { id: '3', name: 'Employment Contract', category: 'HR', enabled: false },
+      ],
+      integrations: {
+        storage: settings?.storageProvider || null,
+        billing: null,
+        calendar: null
+      },
+      stats: {
+        documentsAnalyzed: 24,
+        activeClients: 8,
+        hoursLogged: 156,
+        recentActivity: 5
+      }
+    };
+
+    res.json(config);
+  } catch (error) {
+    console.error('Firm config error:', error);
+    res.status(500).json({ message: 'Failed to load firm configuration' });
+  }
+});
+
+export default router;

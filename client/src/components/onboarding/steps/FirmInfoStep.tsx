@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Upload, ArrowRight } from 'lucide-react';
-import { OnboardingFormData } from '../OnboardingWizard';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Upload, ArrowRight, MapPin, Phone, Mail, Globe, CheckCircle } from 'lucide-react';
+import { UnifiedOnboardingData } from '../OnboardingWizard';
 import * as yup from 'yup';
 import { toast } from '@/lib/toast';
 
@@ -17,17 +19,93 @@ const firmInfoSchema = yup.object({
   contactEmail: yup.string()
     .email('Please enter a valid email address')
     .required('Contact email is required'),
+  address: yup.string().required('Address is required'),
+  city: yup.string().required('City is required'),
+  state: yup.string().required('State is required'),
+  zipCode: yup.string()
+    .matches(/^\d{5}(-\d{4})?$/, 'Please enter a valid ZIP code')
+    .required('ZIP code is required'),
+  phone: yup.string()
+    .matches(/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number')
+    .required('Phone number is required'),
 });
 
 interface FirmInfoStepProps {
-  data: OnboardingFormData;
-  updateData: (updates: Partial<OnboardingFormData>) => void;
+  data: UnifiedOnboardingData;
+  updateData: (updates: Partial<UnifiedOnboardingData>) => void;
   onNext: () => void;
+  onPrevious?: () => void;
 }
 
-export function FirmInfoStep({ data, updateData, onNext }: FirmInfoStepProps) {
+const PRACTICE_AREAS = [
+  'Personal Injury',
+  'Family Law',
+  'Criminal Defense',
+  'Corporate Law',
+  'Real Estate Law',
+  'Employment Law',
+  'Intellectual Property',
+  'Tax Law',
+  'Estate Planning',
+  'Bankruptcy Law',
+  'Immigration Law',
+  'Environmental Law'
+];
+
+const US_STATES = [
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+];
+
+export function FirmInfoStep({ data, updateData, onNext, onPrevious }: FirmInfoStepProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [subdomainChecking, setSubdomainChecking] = useState(false);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [firmCode, setFirmCode] = useState<string>('');
+
+  // Generate unique firm code using OpenAI
+  const generateFirmCode = async (firmName: string) => {
+    if (!firmName || firmName.length < 3) return;
+    
+    setGeneratingCode(true);
+    try {
+      const response = await fetch('/api/onboarding/generate-firm-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ firmName, practiceAreas: data.practiceAreas }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setFirmCode(result.code);
+        toast.success(`Generated unique firm code: ${result.code}`);
+      } else {
+        console.error('Failed to generate firm code');
+        toast.error('Failed to generate firm code');
+      }
+    } catch (error) {
+      console.error('Error generating firm code:', error);
+      toast.error('Error generating firm code');
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
+  // Auto-generate code when firm name changes
+  React.useEffect(() => {
+    if (data.firmName && data.firmName.length >= 3 && !firmCode) {
+      const debounceTimer = setTimeout(() => {
+        generateFirmCode(data.firmName);
+      }, 1000); // Debounce for 1 second
+
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [data.firmName]);
 
   const handleSubdomainChange = async (subdomain: string) => {
     updateData({ subdomain });
@@ -55,23 +133,16 @@ export function FirmInfoStep({ data, updateData, onNext }: FirmInfoStepProps) {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          description: "File too large. Please select an image under 5MB",
-          variant: "destructive"
-        });
+        toast.error("File too large. Please select an image under 5MB");
         return;
       }
 
       if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please select an image file",
-          variant: "destructive"
-        });
+        toast.error("Invalid file type. Please select an image file");
         return;
       }
 
-      updateData({ branding: file });
+      updateData({ logoFile: file });
     }
   };
 
@@ -107,6 +178,25 @@ export function FirmInfoStep({ data, updateData, onNext }: FirmInfoStepProps) {
           />
           {errors.firmName && (
             <p className="text-sm text-red-500">{errors.firmName}</p>
+          )}
+          
+          {/* Generated Firm Code */}
+          {firmCode && (
+            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-800">Generated Firm Code:</p>
+                  <p className="text-lg font-bold text-green-900">{firmCode}</p>
+                </div>
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+          )}
+          
+          {generatingCode && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-600">🤖 Generating unique firm code with AI...</p>
+            </div>
           )}
         </div>
 
@@ -165,7 +255,7 @@ export function FirmInfoStep({ data, updateData, onNext }: FirmInfoStepProps) {
           >
             <Upload className="w-8 h-8 text-gray-400" />
             <p className="text-sm text-gray-600">
-              {data.branding ? data.branding.name : 'Click to upload logo'}
+              {data.logoFile ? data.logoFile.name : 'Click to upload logo'}
             </p>
             <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
           </label>

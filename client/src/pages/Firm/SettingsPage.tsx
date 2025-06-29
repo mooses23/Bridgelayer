@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { useTenant } from "@/context/TenantContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { useSession } from "@/contexts/SessionContext";
 
 export default function SettingsPage() {

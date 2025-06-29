@@ -1,156 +1,156 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-interface TenantConfig {
+// Tenant Configuration Interface
+export interface TenantConfig {
   id: string;
   name: string;
-  subdomain: string;
-  branding?: {
-    logo?: string;
-    primaryColor?: string;
-    secondaryColor?: string;
+  slug?: string;
+  plan?: string;
+  onboardingComplete?: boolean;
+  features: {
+    documentsEnabled: boolean;
+    billingEnabled: boolean;
+    aiAnalysis: boolean;
+    [key: string]: boolean;
   };
-  onboardingComplete: boolean;
-  features: Record<string, boolean>;
+  integrations?: {
+    storage: string | null;
+    billing: string | null;
+    calendar: string | null;
+    [key: string]: string | null;
+  };
+  settings?: {
+    [key: string]: any;
+  };
 }
 
+// Tenant Context Interface
 interface TenantContextType {
-  tenantId: string;
-  config: TenantConfig | null;
-  isLoading: boolean;
-  error: string | null;
-  showFallback: boolean;
+  tenant: TenantConfig | null;
+  config: TenantConfig | null; // Add config alias for tenant
+  tenantId: string | null;
+  loading: boolean;
+  isLoading: boolean; // Add isLoading alias for loading
+  error: Error | null; // Add error field
+  hasFeature: (feature: string) => boolean;
+  updateTenant: (updates: Partial<TenantConfig>) => void;
+  refreshTenant: () => Promise<void>;
 }
 
-const TenantContext = createContext<TenantContextType>({
-  tenantId: '',
-  config: null,
-  isLoading: true,
-  error: null,
-  showFallback: false
-});
+// Create Context
+const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
-export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tenant, setTenant] = useState<TenantConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showFallback, setShowFallback] = useState(false);
+// Provider Props
+interface TenantProviderProps {
+  children: ReactNode;
+  initialTenant?: TenantConfig | null;
+}
 
+// Tenant Provider Component
+export function TenantProvider({ children, initialTenant = null }: TenantProviderProps) {
+  const [tenant, setTenant] = useState<TenantConfig | null>(initialTenant);
+  const [loading, setLoading] = useState(!initialTenant);
+  const [error, setError] = useState<Error | null>(null); // Add error state
+
+  // Feature check function
+  const hasFeature = (feature: string): boolean => {
+    if (!tenant?.features) return false;
+    return tenant.features[feature] === true;
+  };
+
+  // Update tenant function
+  const updateTenant = (updates: Partial<TenantConfig>) => {
+    if (!tenant) return;
+    setTenant(prev => prev ? { ...prev, ...updates } : null);
+  };
+
+  // Refresh tenant from server
+  const refreshTenant = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/tenant/current', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const tenantData = await response.json();
+        setTenant(tenantData);
+      } else {
+        console.warn('Failed to fetch tenant data:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching tenant:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load tenant on mount if not provided initially
   useEffect(() => {
-    const detectTenant = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    if (!initialTenant && !tenant) {
+      refreshTenant();
+    }
+  }, [initialTenant, tenant]);
 
-        // Get hostname without port
-        const hostname = window.location.hostname;
-        console.log('🌐 Detecting tenant from hostname:', hostname);
-
-        // Set default fallback tenant to prevent context errors
-        const fallbackTenant: TenantConfig = {
-          id: 'fallback',
-          name: 'FirmSync Demo',
-          subdomain: 'demo',
-          onboardingComplete: false,
+  // Auto-detect tenant from subdomain if available
+  useEffect(() => {
+    if (!tenant && !initialTenant) {
+      const hostname = window.location.hostname;
+      const subdomain = hostname.split('.')[0];
+      
+      if (subdomain && subdomain !== 'localhost' && subdomain !== 'www') {
+        // Extract tenant info from subdomain
+        const detectedTenant: TenantConfig = {
+          id: subdomain,
+          name: subdomain.charAt(0).toUpperCase() + subdomain.slice(1),
+          slug: subdomain,
+          plan: 'standard',
           features: {
-            documentAnalysis: true,
-            aiAssistant: true,
-            advancedReporting: false,
-            integrations: false,
-            customBranding: false,
-            prioritySupport: false
+            documentsEnabled: true,
+            billingEnabled: true,
+            aiAnalysis: true,
+          },
+          integrations: {
+            storage: null,
+            billing: null,
+            calendar: null,
           }
         };
-
-        setTenant(fallbackTenant);
-
-        let tenantSlug = 'localhost';
-
-        // Extract subdomain from Replit URLs
-        if (hostname.includes('.replit.dev') || hostname.includes('.repl.co')) {
-          // Format: subdomain-hash.username.replit.dev
-          const parts = hostname.split('.');
-          if (parts.length >= 3) {
-            tenantSlug = parts[0]; // Take the first part as tenant slug
-          }
-        }
-
-        console.log('🏷️ Detected tenant slug:', tenantSlug);
-
-        // Try to fetch tenant data from API (non-blocking)
-        try {
-          const response = await fetch(`/api/tenant/${tenantSlug}`, {
-            credentials: 'include'
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Tenant data loaded:', data);
-            setTenant(data.tenant);
-          } else {
-            console.log('ℹ️ No tenant found for slug, using fallback tenant');
-            // Use fallback tenant for any unrecognized subdomain
-            setTenant({
-              id: 'new-firm',
-              name: 'New Legal Firm',
-              subdomain: tenantSlug,
-              onboardingComplete: false,
-              features: {
-                documentAnalysis: true,
-                aiAssistant: true,
-                advancedReporting: false,
-                integrations: false,
-                customBranding: false,
-                prioritySupport: false
-              }
-            });
-          }
-        } catch (apiError) {
-          console.log('ℹ️ Tenant API not available, using defaults');
-        }
-      } catch (error) {
-        console.error('❌ Error in tenant detection:', error);
-        setError('Failed to load tenant configuration');
-        // Ensure we always have a tenant set
-        setTenant({
-          id: 'default',
-          name: 'FirmSync',
-          subdomain: 'localhost', // Added subdomain
-          onboardingComplete: false,
-          features: {
-            documentAnalysis: true,
-            aiAssistant: true,
-            advancedReporting: false,
-            integrations: false,
-            customBranding: false,
-            prioritySupport: false
-          }
-        });
-      } finally {
-        setLoading(false);
+        setTenant(detectedTenant);
       }
-    };
+    }
+  }, [tenant, initialTenant]);
 
-    detectTenant();
-  }, []); // Add empty dependency array
+  const contextValue: TenantContextType = {
+    tenant,
+    config: tenant, // Add config alias
+    tenantId: tenant?.id || null,
+    loading,
+    isLoading: loading, // Add isLoading alias
+    error, // Add error
+    hasFeature,
+    updateTenant,
+    refreshTenant,
+  };
 
   return (
-    <TenantContext.Provider value={{
-      tenantId: tenant?.id || '',
-      config: tenant || null,
-      isLoading: loading,
-      error,
-      showFallback
-    }}>
+    <TenantContext.Provider value={contextValue}>
       {children}
     </TenantContext.Provider>
   );
-};
+}
 
-export const useTenant = () => {
+// Custom Hook
+export function useTenant(): TenantContextType {
   const context = useContext(TenantContext);
   if (context === undefined) {
     throw new Error('useTenant must be used within a TenantProvider');
   }
   return context;
-};
+}
+
+// Export the context for testing
+export { TenantContext };

@@ -5,12 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Search, Download, Eye, FileText, Filter } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import type { Document } from "../../../../shared/schema";
 
 export default function ClientDocuments() {
   const { user } = useSession();
 
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: documents = [], isLoading } = useQuery<Document[]>({
     queryKey: ['/api/client/documents', user?.id],
+    queryFn: () => apiRequest('GET', `/api/client/documents?clientId=${user?.id}`),
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
@@ -32,38 +35,94 @@ export default function ClientDocuments() {
     return <FileText className="w-4 h-4" />;
   };
 
-  const fallbackDocuments = [
+  const fallbackDocuments: Document[] = [
     {
       id: 1,
-      name: "Initial Consultation Notes",
-      type: "Meeting Notes",
-      date: "Jan 20, 2025",
+      firmId: 1,
+      folderId: null,
+      fileName: "initial-consultation-notes.pdf",
+      originalName: "Initial Consultation Notes",
+      fileSize: 262144,
+      mimeType: "application/pdf",
+      documentType: "Meeting Notes",
+      uploadedBy: 1,
+      uploadedAt: new Date("2025-01-20"),
+      assignedReviewer: null,
+      reviewStatus: "completed",
       status: "Final",
-      size: "256 KB"
+      analyzedAt: new Date("2025-01-20"),
+      content: null,
+      userId: user?.id || 1,
+      tags: null,
+      metadata: null,
+      createdAt: new Date("2025-01-20"),
+      updatedAt: new Date("2025-01-20")
     },
     {
       id: 2,
-      name: "Contract Amendment v2",
-      type: "Contract",
-      date: "Jan 18, 2025",
+      firmId: 1,
+      folderId: null,
+      fileName: "contract-amendment-v2.pdf",
+      originalName: "Contract Amendment v2",
+      fileSize: 1258291,
+      mimeType: "application/pdf",
+      documentType: "Contract",
+      uploadedBy: 1,
+      uploadedAt: new Date("2025-01-18"),
+      assignedReviewer: null,
+      reviewStatus: "pending",
       status: "Draft",
-      size: "1.2 MB"
+      analyzedAt: null,
+      content: null,
+      userId: user?.id || 1,
+      tags: null,
+      metadata: null,
+      createdAt: new Date("2025-01-18"),
+      updatedAt: new Date("2025-01-18")
     },
     {
       id: 3,
-      name: "Legal Opinion Letter",
-      type: "Letter",
-      date: "Jan 15, 2025",
+      firmId: 1,
+      folderId: null,
+      fileName: "legal-opinion-letter.pdf",
+      originalName: "Legal Opinion Letter",
+      fileSize: 524288,
+      mimeType: "application/pdf",
+      documentType: "Letter",
+      uploadedBy: 1,
+      uploadedAt: new Date("2025-01-15"),
+      assignedReviewer: null,
+      reviewStatus: "completed",
       status: "Final",
-      size: "512 KB"
+      analyzedAt: new Date("2025-01-15"),
+      content: null,
+      userId: user?.id || 1,
+      tags: null,
+      metadata: null,
+      createdAt: new Date("2025-01-15"),
+      updatedAt: new Date("2025-01-15")
     },
     {
       id: 4,
-      name: "Discovery Documents",
-      type: "Discovery",
-      date: "Jan 10, 2025",
+      firmId: 1,
+      folderId: null,
+      fileName: "discovery-documents.zip",
+      originalName: "Discovery Documents",
+      fileSize: 3565158,
+      mimeType: "application/zip",
+      documentType: "Discovery",
+      uploadedBy: 1,
+      uploadedAt: new Date("2025-01-10"),
+      assignedReviewer: 1,
+      reviewStatus: "in_review",
       status: "Review",
-      size: "3.4 MB"
+      analyzedAt: null,
+      content: null,
+      userId: user?.id || 1,
+      tags: null,
+      metadata: null,
+      createdAt: new Date("2025-01-10"),
+      updatedAt: new Date("2025-01-10")
     }
   ];
 
@@ -126,7 +185,7 @@ export default function ClientDocuments() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {displayDocuments.filter((doc: any) => doc.status === 'Final').length}
+              {displayDocuments.filter((doc: Document) => doc.status === 'Final').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Completed documents
@@ -141,7 +200,7 @@ export default function ClientDocuments() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {displayDocuments.filter((doc: any) => doc.status === 'Review').length}
+              {displayDocuments.filter((doc: Document) => doc.status === 'Review').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Under review
@@ -156,7 +215,7 @@ export default function ClientDocuments() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {displayDocuments.filter((doc: any) => doc.status === 'Draft').length}
+              {displayDocuments.filter((doc: Document) => doc.status === 'Draft').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Work in progress
@@ -181,28 +240,28 @@ export default function ClientDocuments() {
             </div>
           ) : (
             <div className="space-y-4">
-              {displayDocuments.map((document: any) => (
+              {displayDocuments.map((document: Document) => (
                 <div
                   key={document.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                 >
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      {getTypeIcon(document.type)}
+                      {getTypeIcon(document.documentType || '')}
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <p className="font-semibold">{document.name}</p>
-                        <Badge className={getStatusColor(document.status)}>
+                        <p className="font-semibold">{document.originalName}</p>
+                        <Badge className={getStatusColor(document.status || '')}>
                           {document.status}
                         </Badge>
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span>{document.type}</span>
+                        <span>{document.documentType}</span>
                         <span>•</span>
-                        <span>{document.date}</span>
+                        <span>{document.createdAt?.toLocaleDateString()}</span>
                         <span>•</span>
-                        <span>{document.size}</span>
+                        <span>{(document.fileSize / 1024).toFixed(0)} KB</span>
                       </div>
                     </div>
                   </div>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, FileText, Plus } from "lucide-react";
-import { useTenant } from "@/context/TenantContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { useQuery } from "@tanstack/react-query";
 
 export default function CasesPage() {

@@ -139,9 +139,15 @@ export function useFormValidation<T>(schema: z.ZodSchema<T>) {
     validate: (data: any) => validateForm(schema, data),
     validateField: (field: keyof T, value: any) => {
       try {
-        const fieldSchema = schema.shape[field as string];
-        if (fieldSchema) {
-          fieldSchema.parse(value);
+        // Check if schema is a ZodObject before accessing shape
+        if (schema instanceof z.ZodObject) {
+          const fieldSchema = schema.shape[field as string];
+          if (fieldSchema) {
+            fieldSchema.parse(value);
+          }
+        } else {
+          // For non-object schemas, validate the entire value
+          schema.parse({ [field]: value });
         }
         return null;
       } catch (error) {

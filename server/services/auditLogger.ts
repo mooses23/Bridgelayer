@@ -1,4 +1,3 @@
-
 import { storage } from '../storage.js';
 
 interface AuditLogEntry {
@@ -167,6 +166,11 @@ class AuditLogger {
     } catch (error) {
       console.error('Failed to save user creation audit log:', error);
     }
+  }
+
+  async logError(context: string, details: any) {
+    // TODO: Persist error log to DB or external service
+    console.error(`[AUDIT][${context}]`, details);
   }
 
   getLogs(userId?: number, firmId?: number, limit: number = 10) {

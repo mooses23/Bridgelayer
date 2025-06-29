@@ -19,7 +19,7 @@ declare global {
 }
 
 // JWT authentication middleware
-export const authenticateJWT = async (req: Request, res: Response, next: NextFunction) => {
+export const requireModernJWTAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const accessToken = req.cookies.accessToken;
     
@@ -62,6 +62,9 @@ export const authenticateJWT = async (req: Request, res: Response, next: NextFun
   }
 };
 
+// Admin role middleware
+export const requireModernJWTAdmin = requireModernJWTAuth;
+
 // Role-based authorization middleware
 export const requireRole = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -76,9 +79,6 @@ export const requireRole = (allowedRoles: string[]) => {
     next();
   };
 };
-
-// Admin role middleware
-export const requireAdmin = requireRole(['platform_admin', 'admin', 'super_admin']);
 
 // Firm user middleware (admin or paralegal)
 export const requireFirmUser = requireRole(['firm_admin', 'paralegal']);
@@ -105,7 +105,7 @@ export const requireTenantAccess = (req: Request, res: Response, next: NextFunct
 };
 
 // Optional authentication middleware (doesn't fail if no token)
-export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+export const optionalModernAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const accessToken = req.cookies.accessToken;
     

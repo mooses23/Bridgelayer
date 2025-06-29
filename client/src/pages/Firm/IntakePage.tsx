@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { clientIntakeSchema } from "@shared/validation";
-import { useTenant } from "@/context/TenantContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { InlineLoader } from "@/components/LoadingStates";
 
 interface IntakeFormData {

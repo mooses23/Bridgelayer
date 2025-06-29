@@ -1,12 +1,11 @@
-
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, jest } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, mockFetch, mockApiError, mockApiResponses } from './test-utils';
 import DocumentAnalyzer from '@/components/DocumentAnalyzer';
 
 describe('Document Analysis', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('DocumentAnalyzer', () => {
@@ -137,14 +136,14 @@ describe('Document Analysis', () => {
 
     it('shows analysis progress during processing', async () => {
       // Mock delayed response
-      global.fetch = jest.fn(() => 
+      global.fetch = vi.fn(() => 
         new Promise(resolve => 
           setTimeout(() => resolve({
             ok: true,
             json: () => Promise.resolve(mockApiResponses.analysisResult)
           } as Response), 1000)
         )
-      );
+      ) as any;
       
       render(<DocumentAnalyzer />);
       

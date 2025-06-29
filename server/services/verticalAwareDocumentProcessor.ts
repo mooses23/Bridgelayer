@@ -42,6 +42,7 @@ export async function processDocumentWithVertical(documentId: number, firmId: nu
 
     // Store analysis result
     await storage.createAnalysis({
+      firmId,
       documentId,
       analysisType: 'comprehensive',
       result: { 

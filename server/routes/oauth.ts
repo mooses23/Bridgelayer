@@ -1,7 +1,7 @@
 
 import express from "express";
 import { google } from "googleapis";
-import { Dropbox } from "dropbox";
+import { Dropbox, DropboxAuth } from "dropbox";
 import { getOneDriveAuthUrl, exchangeOneDriveCode, refreshOneDriveToken } from "../utils/onedrive";
 import { encrypt, decrypt } from "../utils/encryption";
 import { db } from "../db";
@@ -105,25 +105,20 @@ router.get("/oauth/google/callback", async (req, res) => {
 });
 
 // Dropbox OAuth
-router.get("/oauth/dropbox/start", (req, res) => {
+router.get("/oauth/dropbox/start", async (req, res) => {
   try {
     const tenantId = getTenantIdFromRequest(req);
-    const dbx = new Dropbox({ 
+    const dbxAuth = new DropboxAuth({ 
       clientId: process.env.DROPBOX_CLIENT_ID,
       fetch: fetch
     });
     
-    const url = dbx.getAuthenticationUrl(
+    const url = await dbxAuth.getAuthenticationUrl(
       `${process.env.BACKEND_URL || 'http://0.0.0.0:5000'}/api/oauth/dropbox/callback`,
-      tenantId,
-      "code",
-      "offline",
-      undefined,
-      "none",
-      false
+      tenantId
     );
     
-    res.redirect(url);
+    res.redirect(url as string);
   } catch (error) {
     console.error('Dropbox OAuth start error:', error);
     res.status(500).json({ error: 'Failed to start Dropbox OAuth' });
@@ -138,14 +133,14 @@ router.get("/oauth/dropbox/callback", async (req, res) => {
       return res.status(400).json({ error: 'Missing code or state parameter' });
     }
     
-    const dbx = new Dropbox({ 
+    const dbxAuth = new DropboxAuth({ 
       clientId: process.env.DROPBOX_CLIENT_ID, 
       clientSecret: process.env.DROPBOX_CLIENT_SECRET,
       fetch: fetch
     });
     
-    const tokenRes = await dbx.auth.getAccessTokenFromCode(
-      `${process.env.BACKEND_URL || 'http://0.0.0.0:5000'}/api/oauth/dropbox/callback`, 
+    const tokenRes = await dbxAuth.getAccessTokenFromCode(
+      `${process.env.BACKEND_URL || 'http://0.0.0.0:5000'}/api/oauth/dropbox/callback`,
       code as string
     );
     
@@ -424,7 +419,7 @@ router.get("/oauth/status/:tenantId", async (req, res) => {
       .where(eq(firmSettings.firmId, firm.id))
       .limit(1);
     
-    let oauthTokens = {};
+    let oauthTokens: Record<string, any> = {};
     try {
       oauthTokens = settings?.oauthTokens ? JSON.parse(settings.oauthTokens) : {};
     } catch (parseError) {

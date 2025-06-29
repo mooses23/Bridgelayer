@@ -1,6 +1,6 @@
 
 import { ReactNode } from 'react';
-import { useTenant } from '@/context/TenantContext';
+import { useTenantSafe } from '@/hooks/useTenantSafe';
 
 interface FeatureToggleProps {
   feature: string;
@@ -9,7 +9,7 @@ interface FeatureToggleProps {
 }
 
 export default function FeatureToggle({ feature, children, fallback = null }: FeatureToggleProps) {
-  const { hasFeature } = useTenant();
+  const { hasFeature } = useTenantSafe();
   
   return hasFeature(feature as any) ? <>{children}</> : <>{fallback}</>;
 }

@@ -1,0 +1,239 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import { rateLimit } from 'express-rate-limit';
+import { z } from 'zod';
+import { loginHandler } from '../services/authService';
+import { storage } from '../storage';
+import { JWTManager } from '../auth/core/jwt-manager';
+import { AdminAuthManager } from '../auth/core/admin-auth-manager';
+import { OnboardingService } from '../services/onboardingService';
+import { auditLogger } from '../services/auditLogger';
+
+const router = Router();
+
+// Rate limiting configuration
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per IP
+  message: { 
+    success: false, 
+    error: 'Too many login attempts. Please try again later.' 
+  }
+});
+
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3, // Stricter limit for admin login
+  message: { 
+    success: false, 
+    error: 'Too many admin login attempts. Please try again later.' 
+  }
+});
+
+// Request validation schemas
+const adminLoginSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(1, 'Password required'),
+  tenantId: z.string().optional()
+});
+
+const onboardingCodeSchema = z.object({
+  code: z.string().length(8, 'Invalid code format')
+});
+
+// Standard response format
+const createResponse = (success: boolean, data?: any, error?: string) => ({
+  success,
+  ...(data && { data }),
+  ...(error && { error })
+});
+
+// Use unified login handler that supports both bridgelayer and firm modes
+router.post('/login', loginLimiter, loginHandler);
+
+// Enhanced admin login endpoint
+router.post('/admin-login', adminLoginLimiter, async (req: Request, res: Response) => {
+  const validation = adminLoginSchema.safeParse(req.body);
+  
+  if (!validation.success) {
+    return res.status(400).json(createResponse(false, null, validation.error.message));
+  }
+
+  const { email, password, tenantId } = validation.data;
+
+  try {
+    const user = await storage.getUserByEmail(email);
+    
+    if (!user) {
+      await auditLogger.logSecurityEvent(
+        null,
+        null,
+        'ADMIN_LOGIN_FAILED',
+        `Failed admin login attempt for email: ${email}`,
+        req.ip,
+        req.get('User-Agent')
+      );
+      
+      return res.status(401).json(createResponse(false, null, 'Invalid admin credentials'));
+    }
+
+    const adminValidation = await AdminAuthManager.validateAdminAccess(user.id);
+    if (!adminValidation.valid) {
+      await auditLogger.logSecurityEvent(
+        user.id,
+        user.firmId,
+        'ADMIN_LOGIN_FAILED',
+        'Non-admin user attempted admin login',
+        req.ip,
+        req.get('User-Agent')
+      );
+      
+      return res.status(401).json(createResponse(false, null, 'Invalid admin credentials'));
+    }
+
+    // Generate admin token with elevated permissions
+    const token = JWTManager.generateAccessToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      permissions: adminValidation.adminUser?.permissions || [],
+      tenantId: tenantId || 'platform',
+      firmId: user.firmId
+    });
+
+    // Set secure cookie options
+    res.cookie('accessToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000 // 15 minutes
+    });
+
+    await auditLogger.logSecurityEvent(
+      user.id,
+      user.firmId,
+      'ADMIN_LOGIN_SUCCESS',
+      'Successful admin login',
+      req.ip,
+      req.get('User-Agent')
+    );
+
+    res.json(createResponse(true, {
+      user: adminValidation.adminUser,
+      redirectPath: '/admin'
+    }));
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json(createResponse(false, null, 'Internal server error'));
+  }
+});
+
+// Onboarding code validation endpoint
+router.post('/validate-onboarding-code', async (req: Request, res: Response) => {
+  const validation = onboardingCodeSchema.safeParse(req.body);
+  
+  if (!validation.success) {
+    return res.status(400).json(createResponse(false, null, validation.error.message));
+  }
+
+  const { code } = validation.data;
+
+  try {
+    const onboardingCode = await OnboardingService.validateCode(code);
+    
+    if (!onboardingCode) {
+      return res.status(400).json(createResponse(false, null, 'Invalid or expired code'));
+    }
+
+    if (onboardingCode.status !== 'active') {
+      return res.status(400).json(createResponse(false, null, `Code is ${onboardingCode.status}`));
+    }
+
+    // Mark code as used
+    await OnboardingService.markCodeAsUsed(code);
+
+    res.json(createResponse(true, { onboardingCode }));
+  } catch (error) {
+    console.error('Code validation error:', error);
+    res.status(500).json(createResponse(false, null, 'Internal server error'));
+  }
+});
+
+// Session refresh endpoint
+router.post('/refresh', async (req: Request, res: Response) => {
+  try {
+    // Check session first
+    if (req.session?.userId) {
+      const user = await storage.getUser(req.session.userId);
+      if (user) {
+        // Generate new JWT token
+        const token = JWTManager.generateAccessToken({
+          userId: user.id,
+          email: user.email,
+          role: user.role,
+          permissions: [],
+          tenantId: user.firmId?.toString() || 'default',
+          firmId: user.firmId
+        });
+
+        res.cookie('accessToken', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 15 * 60 * 1000
+        });
+
+        return res.json(createResponse(true, { user }));
+      }
+    }
+
+    // No valid session
+    res.status(401).json(createResponse(false, null, 'No active session'));
+  } catch (error) {
+    console.error('Session refresh error:', error);
+    res.status(500).json(createResponse(false, null, 'Session refresh failed'));
+  }
+});
+
+// Enhanced logout with cleanup
+router.post('/logout', async (req: Request, res: Response) => {
+  try {
+    // Get user info for audit log
+    const userId = req.session?.userId;
+    const firmId = req.session?.firmId;
+
+    if (userId) {
+      await auditLogger.logSecurityEvent(
+        userId,
+        firmId,
+        'USER_LOGOUT',
+        'User logged out',
+        req.ip,
+        req.get('User-Agent')
+      );
+    }
+
+    // Clear session
+    if (req.session) {
+      await new Promise<void>((resolve, reject) => {
+        req.session.destroy((err) => {
+          if (err) reject(err);
+          resolve();
+        });
+      });
+    }
+
+    // Clear JWT cookie
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+
+    res.json(createResponse(true));
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json(createResponse(false, null, 'Logout failed'));
+  }
+});
+
+export default router;

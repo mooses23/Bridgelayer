@@ -77,6 +77,62 @@ export const requireAdmin = async (req: AuthenticatedRequest, res: Response, nex
 };
 
 /**
+ * Firm User Authorization Middleware
+ * Requires firm_user or firm_admin role after authentication
+ */
+export const requireFirmUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const firmUserRoles = ['firm_user', 'firm_admin'];
+    if (!firmUserRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Firm user access required' });
+    }
+
+    if (!req.user.firmId) {
+      return res.status(403).json({ message: 'Valid firm association required' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Authorization error:', error);
+    res.status(500).json({ error: 'Authorization failed' });
+  }
+};
+
+/**
+ * Firm Code Validation Middleware
+ * Validates that the firmCode in the URL matches the user's firm
+ */
+export const validateFirmCode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const { firmCode } = req.params;
+    if (!firmCode) {
+      return res.status(400).json({ message: 'Firm code is required' });
+    }
+
+    // Get user's firm information to validate firmCode
+    const storage = require('../../storage').storage;
+    const firm = await storage.getFirmById(req.user.firmId);
+    
+    if (!firm || firm.subdomain !== firmCode) {
+      return res.status(403).json({ message: 'Access denied for this firm' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Firm validation error:', error);
+    res.status(500).json({ error: 'Firm validation failed' });
+  }
+};
+
+/**
  * Create middleware that requires authentication
  */
 export const createAuthMiddleware = () => {
@@ -88,4 +144,18 @@ export const createAuthMiddleware = () => {
  */
 export const createAdminMiddleware = () => {
   return [requireAuth, requireAdmin];
+};
+
+/**
+ * Create middleware that requires firm user access
+ */
+export const createFirmUserMiddleware = () => {
+  return [requireAuth, requireFirmUser];
+};
+
+/**
+ * Create middleware that requires firm user access with firm validation
+ */
+export const createFirmUserWithValidationMiddleware = () => {
+  return [requireAuth, requireFirmUser, validateFirmCode];
 };

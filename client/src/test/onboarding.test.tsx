@@ -1,12 +1,11 @@
-
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, jest } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, mockFetch, mockApiError } from './test-utils';
 import OnboardingWizard from '@/pages/Onboarding/OnboardingWizard';
 
 describe('Onboarding Flow', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('OnboardingWizard', () => {
@@ -183,14 +182,14 @@ describe('Onboarding Flow', () => {
 
     it('shows loading states during submission', async () => {
       // Mock delayed response
-      global.fetch = jest.fn(() => 
+      global.fetch = vi.fn(() => 
         new Promise(resolve => 
           setTimeout(() => resolve({
             ok: true,
             json: () => Promise.resolve({ success: true })
           } as Response), 1000)
         )
-      );
+      ) as any;
       
       render(<OnboardingWizard />);
       

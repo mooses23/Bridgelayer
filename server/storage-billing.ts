@@ -135,16 +135,13 @@ export class BillingStorage {
       .leftJoin(clients, eq(invoices.clientId, clients.id))
       .leftJoin(cases, eq(invoices.caseId, cases.id));
 
-    if (status && status !== 'all') {
-      query = query.where(and(
-        eq(invoices.firmId, firmId),
-        eq(invoices.status, status)
-      ));
-    } else {
-      query = query.where(eq(invoices.firmId, firmId));
-    }
+    const whereConditions = status && status !== 'all' 
+      ? and(eq(invoices.firmId, firmId), eq(invoices.status, status))
+      : eq(invoices.firmId, firmId);
 
-    const results = await query.orderBy(desc(invoices.createdAt));
+    const results = await query
+      .where(whereConditions)
+      .orderBy(desc(invoices.createdAt));
     
     return results.map(invoice => ({
       ...invoice,
@@ -196,7 +193,11 @@ export class BillingStorage {
     } else {
       const [created] = await db
         .insert(firmBillingSettings)
-        .values({ firmId, ...settings })
+        .values({ 
+          firmId, 
+          settings: settings.settings || {},
+          ...settings 
+        })
         .returning();
       return created;
     }

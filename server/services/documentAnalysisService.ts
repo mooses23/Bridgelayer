@@ -12,6 +12,7 @@ const openai = new OpenAI({
 
 export interface DocumentAnalysisRequest {
   documentId: number;
+  firmId: number; // Add firmId field
   documentType: string;
   content: string;
   fileName: string;
@@ -162,20 +163,16 @@ ${request.content}`;
 
       // Store analysis in database (metadata only, not full content)
       const analysisRecord = await db.insert(documentAnalyses).values({
+        firmId: request.firmId, // Add required firmId field
         documentId: request.documentId,
         analysisType: 'ai_powered',
-        summary: parsedAnalysis.summary || 'Analysis completed',
-        keyFindings: JSON.stringify(parsedAnalysis.keyPoints || []),
-        riskAssessment: parsedAnalysis.riskLevel || 'medium',
-        confidence: 0.85,
-        metadata: JSON.stringify({
-          documentType: request.documentType,
-          fileName: request.fileName,
-          analysisTimestamp: new Date().toISOString(),
-          model: 'gpt-4o'
-        }),
-        createdAt: new Date(),
-        createdBy: request.userId
+        result: {
+          summary: parsedAnalysis.summary || 'Analysis completed',
+          keyFindings: parsedAnalysis.keyPoints || [],
+          riskAssessment: parsedAnalysis.riskLevel || 'medium',
+          ...parsedAnalysis
+        },
+        confidence: 85
       }).returning();
 
       console.log(`[AI Analysis] Completed for ${request.fileName}, analysis ID: ${analysisRecord[0].id}`);

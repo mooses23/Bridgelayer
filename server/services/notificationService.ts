@@ -19,11 +19,8 @@ export class NotificationService {
         type: params.type,
         title: params.title,
         message: params.message,
-        resourceType: params.resourceType,
-        resourceId: params.resourceId,
         priority: params.priority || 'normal',
         isRead: false,
-        isEmailSent: false,
       };
 
       await storage.createNotification(notification);

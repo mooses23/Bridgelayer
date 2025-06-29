@@ -49,7 +49,7 @@ export class IntegrationService {
     const integrationData = {
       ...data,
       // Store API credentials at firm level for shared integrations
-      apiCredentials: data.apiKey ? { apiKey: data.apiKey } : null
+      apiCredentials: data.apiKey ? JSON.stringify({ apiKey: data.apiKey }) : null
     };
 
     const [integration] = await db
@@ -230,6 +230,12 @@ export class IntegrationService {
     }
 
     const limit = rateLimit[0];
+    
+    // Check for required rate limit fields
+    if (!limit.windowMinutes || !limit.maxRequests || limit.currentCount === null) {
+      return true; // Invalid rate limit config, allow request
+    }
+    
     const now = new Date();
     const windowStart = new Date(now.getTime() - (limit.windowMinutes * 60 * 1000));
 
@@ -248,22 +254,24 @@ export class IntegrationService {
   }
 
   async getIntegrationAuditLogs(firmId: number, integrationId?: number): Promise<any[]> {
+    let whereClause;
+    if (integrationId) {
+      whereClause = and(
+        eq(integrationAuditLogs.firmId, firmId),
+        eq(integrationAuditLogs.integrationId, integrationId)
+      );
+    } else {
+      whereClause = eq(integrationAuditLogs.firmId, firmId);
+    }
+
     const query = db
       .select()
       .from(integrationAuditLogs)
-      .where(eq(integrationAuditLogs.firmId, firmId))
+      .where(whereClause)
       .orderBy(desc(integrationAuditLogs.createdAt));
-
-    if (integrationId) {
-      query.where(and(
-        eq(integrationAuditLogs.firmId, firmId),
-        eq(integrationAuditLogs.integrationId, integrationId)
-      ));
-    }
 
     return await query;
   }
-
   // Complete Integration Dashboard Data
   async getIntegrationDashboardData(firmId: number | null): Promise<{
     availableIntegrations: PlatformIntegration[];

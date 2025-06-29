@@ -65,7 +65,8 @@ export function TemplatedDashboard() {
       if (!response.ok) {
         throw new Error('Failed to load firm configuration');
       }
-      return response.json() as FirmConfig;
+      const data = await response.json();
+      return data as FirmConfig;
     },
     enabled: !!tenantId,
   });

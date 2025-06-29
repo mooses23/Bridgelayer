@@ -5,12 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Search, Download, Eye, Calendar } from "lucide-react";
 import { useSession } from "@/contexts/SessionContext";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import type { Invoice } from "../../../../shared/schema";
 
 export default function ClientInvoices() {
   const { user } = useSession();
 
-  const { data: invoices = [], isLoading } = useQuery({
+  const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ['/api/client/invoices', user?.id],
+    queryFn: () => apiRequest('GET', `/api/client/invoices?clientId=${user?.id}`),
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
@@ -35,33 +38,66 @@ export default function ClientInvoices() {
     }).format(amount);
   };
 
-  const fallbackInvoices = [
+  const fallbackInvoices: Invoice[] = [
     {
-      id: "INV-001",
+      id: 1,
+      firmId: 1,
+      clientId: user?.id || 1,
+      caseId: null,
       invoiceNumber: "INV-001",
-      description: "Legal Services - Contract Review",
-      totalAmount: 3500.00,
-      issueDate: "Jan 15, 2025",
-      dueDate: "Feb 14, 2025",
-      status: "Paid"
+      status: "paid",
+      amount: 350000, // amount in cents
+      subtotal: 350000,
+      taxAmount: 0,
+      total: 350000,
+      issueDate: new Date("2025-01-15"),
+      notes: "Legal Services - Contract Review",
+      paidDate: new Date("2025-01-20"),
+      dueDate: new Date("2025-02-14"),
+      terms: "Net 30",
+      createdBy: 1,
+      createdAt: new Date("2025-01-15"),
+      updatedAt: new Date("2025-01-20")
     },
     {
-      id: "INV-002",
+      id: 2,
+      firmId: 1,
+      clientId: user?.id || 1,
+      caseId: null,
       invoiceNumber: "INV-002",
-      description: "Legal Services - Amendment Drafting",
-      totalAmount: 1200.00,
-      issueDate: "Jan 22, 2025",
-      dueDate: "Feb 21, 2025",
-      status: "Pending"
+      status: "pending",
+      amount: 120000, // amount in cents
+      subtotal: 120000,
+      taxAmount: 0,
+      total: 120000,
+      issueDate: new Date("2025-01-22"),
+      notes: "Legal Services - Amendment Drafting",
+      paidDate: null,
+      dueDate: new Date("2025-02-21"),
+      terms: "Net 30",
+      createdBy: 1,
+      createdAt: new Date("2025-01-22"),
+      updatedAt: new Date("2025-01-22")
     },
     {
-      id: "INV-003",
+      id: 3,
+      firmId: 1,
+      clientId: user?.id || 1,
+      caseId: null,
       invoiceNumber: "INV-003",
-      description: "Legal Consultation - Business Formation",
-      totalAmount: 2800.00,
-      issueDate: "Jan 25, 2025",
-      dueDate: "Feb 24, 2025",
-      status: "Pending"
+      status: "pending",
+      amount: 280000, // amount in cents
+      subtotal: 280000,
+      taxAmount: 0,
+      total: 280000,
+      issueDate: new Date("2025-01-25"),
+      notes: "Legal Consultation - Business Formation",
+      paidDate: null,
+      dueDate: new Date("2025-02-24"),
+      terms: "Net 30",
+      createdBy: 1,
+      createdAt: new Date("2025-01-25"),
+      updatedAt: new Date("2025-01-25")
     }
   ];
 
@@ -111,12 +147,12 @@ export default function ClientInvoices() {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatAmount(displayInvoices
-                .filter((inv: any) => inv.status === 'Pending')
-                .reduce((sum: number, inv: any) => sum + inv.totalAmount, 0)
+                .filter((inv: Invoice) => inv.status === 'pending')
+                .reduce((sum: number, inv: Invoice) => sum + (inv.total / 100), 0)
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {displayInvoices.filter((inv: any) => inv.status === 'Pending').length} pending invoices
+              {displayInvoices.filter((inv: Invoice) => inv.status === 'pending').length} pending invoices
             </p>
           </CardContent>
         </Card>
@@ -128,12 +164,12 @@ export default function ClientInvoices() {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatAmount(displayInvoices
-                .filter((inv: any) => inv.status === 'Paid')
-                .reduce((sum: number, inv: any) => sum + inv.totalAmount, 0)
+                .filter((inv: Invoice) => inv.status === 'paid')
+                .reduce((sum: number, inv: Invoice) => sum + (inv.total / 100), 0)
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {displayInvoices.filter((inv: any) => inv.status === 'Paid').length} paid invoices
+              {displayInvoices.filter((inv: Invoice) => inv.status === 'paid').length} paid invoices
             </p>
           </CardContent>
         </Card>
@@ -144,7 +180,7 @@ export default function ClientInvoices() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatAmount(displayInvoices.reduce((sum: number, inv: any) => sum + inv.totalAmount, 0))}
+              {formatAmount(displayInvoices.reduce((sum: number, inv: Invoice) => sum + (inv.total / 100), 0))}
             </div>
             <p className="text-xs text-muted-foreground">
               {displayInvoices.length} total invoices
@@ -169,7 +205,7 @@ export default function ClientInvoices() {
             </div>
           ) : (
             <div className="space-y-4">
-              {displayInvoices.map((invoice: any) => (
+              {displayInvoices.map((invoice: Invoice) => (
                 <div
                   key={invoice.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
@@ -181,15 +217,15 @@ export default function ClientInvoices() {
                         {invoice.status}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600">{invoice.description}</p>
+                    <p className="text-sm text-gray-600">{invoice.notes}</p>
                     <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>Issued: {invoice.issueDate}</span>
-                      <span>Due: {invoice.dueDate}</span>
+                      <span>Issued: {invoice.issueDate?.toLocaleDateString()}</span>
+                      <span>Due: {invoice.dueDate?.toLocaleDateString()}</span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <p className="font-semibold">{formatAmount(invoice.totalAmount)}</p>
+                      <p className="font-semibold">{formatAmount(invoice.total / 100)}</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button variant="ghost" size="sm">

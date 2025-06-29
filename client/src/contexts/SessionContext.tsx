@@ -21,9 +21,10 @@ interface SessionContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   authMethod: 'session' | 'jwt' | null;
-  login: (email: string, password: string) => Promise<LoginResult>;
+  // added mode and code for firm login
+  login: (email: string, password: string, mode?: 'bridgelayer' | 'firm', code?: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
-  checkSession: () => Promise<void>;
+  checkSession: () => Promise<boolean>;
   setToken: (token: string | null) => void;
   refreshSession: () => Promise<void>;
 }
@@ -53,49 +54,46 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ Session data received:', sessionData);
         setUser(sessionData.user);
         setAuthMethod(sessionData.authMethod || 'session');
+        return true;
       } else {
         console.log('❌ No active session');
-        // Don't clear user immediately on session check failure during page loads
-        // The user might be logged in but session validation is having timing issues
-        if (!user) {
-          setUser(null);
-        }
+        // Clear user state if session check fails
+        setUser(null);
+        setAuthMethod(null);
+        return false;
       }
     } catch (error) {
       console.error('Session check failed:', error);
-      if (!user) {
-        setUser(null);
-      }
+      // Clear user state on network/server errors
+      setUser(null);
+      setAuthMethod(null);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string): Promise<LoginResult> => {
+  const login = async (email: string, password: string, mode: 'bridgelayer' | 'firm' = 'bridgelayer', code?: string): Promise<LoginResult> => {
     try {
       console.log('🔐 Attempting login with credentials: include');
+      // include mode and code for firm login
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, mode, code }),
         credentials: 'include'
       });
 
       if (response.ok) {
         const loginData = await response.json();
-        console.log("✅ Login successful, redirectPath:", loginData.redirectPath);
-        
-        // Set user data immediately from login response
+        console.log("✅ Login successful, user:", loginData.user);
+        // Set user data immediately
         setUser(loginData.user);
         setIsLoading(false);
-        
-        // Don't check session immediately - we have the user data already
-        console.log("📤 Login result:", { success: true, redirectPath: loginData.redirectPath });
-        
-        return {
-          success: true,
-          redirectPath: loginData.redirectPath
-        };
+        // Determine redirect path based on mode
+        const redirectPath = mode === 'firm' ? '/app/dashboard' : '/admin';
+        console.log("📤 Redirecting to:", redirectPath);
+        return { success: true, redirectPath };
       } else {
         const errorData = await response.json();
         console.error('Login failed:', errorData.message);

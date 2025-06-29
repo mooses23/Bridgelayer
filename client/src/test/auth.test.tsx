@@ -1,6 +1,5 @@
-
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, jest } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, mockFetch, mockApiError, mockApiResponses } from './test-utils';
 import LoginPage from '@/pages/Public/LoginPage';
 import { SessionProvider } from '@/contexts/SessionContext';
@@ -8,7 +7,7 @@ import { SessionProvider } from '@/contexts/SessionContext';
 describe('Authentication Flow', () => {
   beforeEach(() => {
     localStorage.clear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('LoginPage', () => {
@@ -78,7 +77,7 @@ describe('Authentication Flow', () => {
     });
 
     it('handles network errors', async () => {
-      global.fetch = jest.fn(() => Promise.reject(new Error('Network error')));
+      global.fetch = vi.fn(() => Promise.reject(new Error('Network error'))) as any;
       
       render(<LoginPage />);
       
@@ -98,14 +97,14 @@ describe('Authentication Flow', () => {
 
     it('shows loading state during authentication', async () => {
       // Mock delayed response
-      global.fetch = jest.fn(() => 
+      global.fetch = vi.fn(() => 
         new Promise(resolve => 
           setTimeout(() => resolve({
             ok: true,
             json: () => Promise.resolve(mockApiResponses.user)
           } as Response), 100)
         )
-      );
+      ) as any;
       
       render(<LoginPage />);
       
@@ -142,8 +141,8 @@ describe('Authentication Flow', () => {
       mockFetch({ '/api/auth/logout': { success: true } });
       
       render(
-        <SessionProvider initialUser={mockApiResponses.user}>
-          <button onClick={() => /* logout function */}>Logout</button>
+        <SessionProvider>
+          <button onClick={() => { /* logout function */ }}>Logout</button>
         </SessionProvider>
       );
       
@@ -159,7 +158,7 @@ describe('Authentication Flow', () => {
       mockApiError(401, 'Token expired');
       
       render(
-        <SessionProvider initialUser={mockApiResponses.user}>
+        <SessionProvider>
           <div>Protected Content</div>
         </SessionProvider>
       );
