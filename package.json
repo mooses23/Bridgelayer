@@ -1,6 +1,7 @@
 {
-  "name": "rest-express",
+  "name": "bridgelayer-platform",
   "version": "1.0.0",
+  "description": "Multi-vertical authentication and document processing platform supporting legal, medical, education, and HR industries",
   "type": "module",
   "license": "MIT",
   "scripts": {

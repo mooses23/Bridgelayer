@@ -1,31 +1,55 @@
 ---
-mode: ---
 mode: agent
 ---
 Expected output and any relevant constraints for this task. 
-You are a developer and programmer working on a regenerative firmsync website which is a tool to help small lawfirms use ai as a silent work engine. this was built on replit so there needs major audit and refactoring to make it production ready.
-The website Bridgelayer was set up just as a login so far, and plans to develop its ownership structure of firmsync, medsync (comming soon), or other industries that Bridgelayer may build in the future aside lawfirms.
-The Bridgelayer Login credentials will be used to acces live data from all its companies, but being that Bridgelayer doesnt even have one full regenertive website ie. firmsync, we will leave bridgelayer alone for now but keep the  logic and structure in mind as we build out the firmsync website
+You are a developer and programmer working on the BridgeLayer platform - a comprehensive multi-vertical authentication and document management system. The platform supports multiple industry verticals including FIRMSYNC (legal), MEDSYNC (medical), EDUSYNC (education), and HRSYNC (HR), with a sophisticated three-tier role model.
 
-The firmsync website is our first regenerative website, with the structure as follows
-- Bridgelayers (Outsource sales) plan is for face to face meetings with a lawfirm, gather their unique info, and then use the regenerative website to customize the firmsync website to their needs
-- Bridgelayer will have an admin dashboard to manage the firmsync website, which will be used to onboard law firms and customize their experience on the firmsync website.
+The BridgeLayer platform features:
+- **Multi-Vertical Architecture**: Extensible plugin system supporting multiple industries
+- **Three-Tier Role Model**: Platform Admin → Owner (Bridgelayer) → Tenant (Individual Firms)
+- **Dual Authentication**: Session-based web + JWT API authentication
+- **Multi-Tenant Isolation**: Complete data segregation per firm across all verticals
 
- 
- 
-   - Admin role is to (a) see what the firmsync template looks like (b) create a firm onboarding file (c) use that onboarding file to customize the firmsync website to the lawfirms needs (d) complete the prosess by creating a new lawfirm user account and sending them the log in credentials
-   - the lawfirms will then login with their credentials and see a customized firmsync website that has their unique info, and they can use the firmsync website to manage their lawfirm, while keeping lawfirm -lawfirm data private and secure.
-   -  (d) the admins responsible for configuring 3rd party integrations to the firmsync website as a whole, and then the lawfirms can choose to use those integrations or not. 
+The platform is production-ready with comprehensive authentication, document processing, and multi-industry support built into the core architecture.
+
+The BridgeLayer platform's multi-vertical structure enables:
+
+**Platform Admin Role** (handles ALL firm onboarding):
+- Cross-platform system administration and firm onboarding across all verticals
+- **Admin Navigation**: Left side nav with dual workspace onboarding system and integrated verification
+- Comprehensive firm onboarding through multi-step wizard in admin interface
+- Final verification step integrated into admin navigation (previously "ghost mode")
+- Platform-level configuration and multi-vertical oversight
+
+**Owner (Bridgelayer) Role** (operational management only):
+- Multi-tenant operational management within assigned verticals (post-onboarding)
+- **NO firm onboarding responsibilities** (this is exclusively an Admin function)
+- Client relationship management and service delivery oversight
+- Access to onboarded firms for operational purposes
+
+**Tenant (Individual Firms) Role**:
+- Individual firms using vertical-specific services (legal, medical, education, HR)
+- Document processing and internal user management within firm boundaries
+- Isolated firm-scoped access within assigned vertical 
 
 
-- Admin Dashboard;
-  - greeting page with welcome to Bridgelayer, please select the website you would like to manage? Firmsync website or Medsync website (coming soon)
-    - Firmsync Website Management;
-      - left side Dashboard "Home";
-         - Overview of the firmsync website's features and capabilities
-         - Quick links to create a law firm onboarding file, manage law firm profiles, and configure 3rd party integrations
-         - Notifications for any pending tasks or updates
-    - left side Dashboard "Law Firms" for creating, editing, and deleting law firm user accounts, creating a File for the law firm onboarding process, and managing law firm profiles
+**Platform Admin Dashboard** (handles ALL firm onboarding):
+- Product selector: Choose vertical to manage (FIRMSYNC, MEDSYNC, EDUSYNC, HRSYNC)
+- **Left Side Navigation with Dual Workspace Onboarding**:
+  - **Firms**: Create and manage firm records across all verticals
+  - **Onboarding**: Multi-step wizard with integrated verification (final step)
+  - **Vertical Configs**: Industry-specific configurations and prompts
+  - **Integrations**: Cross-platform third-party integrations
+  - **Analytics**: Multi-vertical platform oversight
+  - **Settings**: System-wide platform configuration
+
+**Multi-Vertical Onboarding Process** (Admin-only):
+1. **Platform Admin** creates new firm record (any vertical)
+2. **Admin** runs comprehensive onboarding wizard through left navigation
+3. **Admin** completes integrated verification step (final onboarding step)
+4. **Admin** launches firm for client use
+5. **Owner (Bridgelayer)** manages operational aspects post-onboarding
+6. **Tenant (Firm)** accesses vertical-specific customized portal
         - Step1: Create Law Firm Onboarding File
         - Step 1: Enter Law Firm Information;
           - Sub-step: Enter law firm name, address, phone number, email, and logo
@@ -46,7 +70,11 @@ The firmsync website is our first regenerative website, with the structure as fo
         - Sub-step: Run a test to ensure the integration is working correctly
         - Sub-step: Review test results and make adjustments if necessary
     - left side Dashboard "Templated Onboarding" for customizing the firmsync website template for each law firm and managing and completing the onboarding process
-      - the one and only template is the firmsync website template, and is opened here with mock firm data. the mock data can be customized for each law firm, by providing a unique onboarding file for each law firm.
+**Multi-Vertical Template System**:
+- **Vertical-Specific Templates**: Industry-tailored templates for legal, medical, education, and HR
+- **Dynamic Configuration**: Templates automatically adapt based on firm's assigned vertical
+- **Admin Customization**: Platform Admin customizes templates during onboarding wizard
+- **Integrated Verification**: Final step includes access verification and firm launch capabilities
         - Step1: View Template;
             - Sub-step: View the firmsync website template with mock firm data
         - Step2: Customize Template; upload the llm prompts,integrations, and the remaining info needed to fuly customize the firmsync website for the law firm

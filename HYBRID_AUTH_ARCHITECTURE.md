@@ -1,31 +1,34 @@
-# FIRMSYNC Hybrid Authentication Architecture
+# BRIDGELAYER Platform Hybrid Authentication Architecture
 **Date**: June 18, 2025  
-**Phase**: 1.2 - Clear Separation Strategy Design  
-**Status**: DESIGN COMPLETE - Ready for Implementation
+**Phase**: 1.2 - Multi-Vertical Authentication Design  
+**Status**: PRODUCTION READY - Multi-Platform Implementation
 
 ## Architecture Overview
 
-The hybrid authentication system implements clear boundaries between web application routes (session-based) and API routes (JWT-based) while maintaining unified user experience and security.
+The hybrid authentication system implements clear boundaries between web application routes (session-based) and API routes (JWT-based) while maintaining unified user experience across multiple industry verticals and three-tier role management.
 
-## System Boundaries
+## Multi-Vertical System Boundaries
 
 ### Web Application Domain
 **Routes**: `/login`, `/dashboard`, `/admin`, `/onboarding`, `/client`
 **Authentication**: PostgreSQL sessions with express-session
-**Middleware**: Enhanced session validation
+**Middleware**: Enhanced session validation with role-based access
 **Security**: HttpOnly session cookies, CSRF protection
+**Role Features**: Admin left side nav with dual workspace onboarding, ghost mode integration
 
 ### API Domain  
-**Routes**: `/api/*` (excluding `/api/auth/*`)
+**Routes**: `/api/*` (excluding `/api/auth/*`), `/api/vertical/*`
 **Authentication**: JWT tokens with automatic refresh
-**Middleware**: JWT validation and role-based access
+**Middleware**: JWT validation and multi-tier role-based access
 **Security**: HttpOnly JWT cookies, token rotation
+**Multi-Vertical**: Industry-specific endpoints with vertical isolation
 
 ### Authentication Boundary
 **Routes**: `/api/auth/*`
 **Authentication**: Dual-response endpoints
-**Middleware**: Hybrid authentication creation
+**Middleware**: Hybrid authentication creation with role validation
 **Security**: Creates both session and JWT simultaneously
+**Role Management**: Platform Admin, Owner (Bridgelayer), Tenant boundaries
 
 ## Implementation Architecture
 

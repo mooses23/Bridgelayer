@@ -1,6 +1,21 @@
-# 🧪 Authentication Routes Testing
+# 🧪 BridgeLayer Platform Authentication Testing
 
-This directory contains comprehensive testing tools for the unified authentication system.
+This directory contains comprehensive testing tools for the multi-vertical platform's dual authentication system.
+
+## Platform Testing Overview
+
+BridgeLayer uses a sophisticated three-tier role model with dual authentication (Session + JWT) across multiple industry verticals.
+
+### 🏗️ **Role-Based Testing**
+- **Platform Admin**: Firm onboarding, cross-platform access, ghost mode
+- **Owner (Bridgelayer)**: Multi-tenant operational management (NO onboarding)  
+- **Tenant (Firms)**: Isolated vertical-specific access
+
+### 🌐 **Multi-Vertical Testing**
+- **FIRMSYNC** (Legal): Law firm document processing
+- **MEDSYNC** (Medical): Healthcare document analysis
+- **EDUSYNC** (Education): Educational workflows
+- **HRSYNC** (HR): Human resources management
 
 ## Test Files
 
@@ -34,20 +49,23 @@ chmod +x quick-auth-test.sh
 
 ## Test Coverage
 
-### ✅ Owner Authentication
-- Valid owner login with master key
-- Missing master key rejection
-- Invalid master key rejection
-- Non-super-admin user rejection
+### ✅ Platform Admin Authentication
+- Cross-platform system access
+- Firm onboarding via left side nav
+- Ghost mode verification (renamed, integrated into admin nav)
+- Multi-vertical system configuration
 
-### ✅ Admin Authentication  
-- Valid admin login
-- Non-admin user rejection
-- Invalid credentials rejection
-- Tenant isolation enforcement
+### ✅ Owner (Bridgelayer) Authentication  
+- Multi-tenant operational access
+- **NO onboarding capabilities** (Admin-exclusive)
+- Client relationship management
+- Vertical-specific oversight
 
-### ✅ Tenant Authentication
-- Valid tenant/client login
+### ✅ Tenant (Firm) Authentication
+- Isolated firm-scoped access
+- Vertical-specific document processing
+- Role-based permissions within firm
+- Cross-tenant access prevention
 - Invalid credentials rejection  
 - Unregistered user rejection
 - Proper role-based redirects

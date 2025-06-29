@@ -1,5 +1,12 @@
-# 🎯 **FIRMSYNC COPILOT EXECUTION BLUEPRINT**
-**Ultra-High Confidence Development Strategy for AI-Powered Legal Platform**
+# 🎯 **BRIDGELAYER PLATFORM COPILOT EXECUTION BLUEPRINT**
+**Ultra-High Confidence Development Strategy for Multi-Vertical AI-Powered Platform**
+
+**Platform Overview**: BridgeLayer is a comprehensive multi-vertical authentication and document management system supporting legal (FIRMSYNC), medical (MEDSYNC), education (EDUSYNC), and HR (HRSYNC) verticals.
+
+**Three-Tier Architecture**:
+- **Platform Admin**: Handles ALL firm onboarding via left side nav dual workspace system
+- **Owner (Bridgelayer)**: Multi-vertical operational management (NO onboarding responsibilities)
+- **Tenant (Firms)**: Industry-specific portal access after admin onboarding
 
 ## **COPILOT OPTIMIZATION ANALYSIS**
 

@@ -11,7 +11,7 @@ import {
 
 // Mock useSession hook
 vi.mock('@/hooks/useSession');
-const mockUseSession = useSession as jest.MockedFunction<typeof useSession>;
+const mockUseSession = useSession as vi.MockedFunction<typeof useSession>;
 
 // Test components
 const TestComponent = () => <div>Protected Content</div>;

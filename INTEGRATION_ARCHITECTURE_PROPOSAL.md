@@ -1,47 +1,64 @@
-# Integration System Architecture Proposal
+# BridgeLayer Platform Integration Architecture Proposal
 
-## Current Challenge
-The integration system needs to serve two distinct purposes:
-1. **Admin Marketplace Management**: Configure available integrations, API endpoints, schemas
-2. **Firm Onboarding Step 2**: Firms select and configure their integrations
+## Current Multi-Vertical Challenge
+The BridgeLayer platform integration system must serve multiple distinct purposes:
+1. **Platform Admin Marketplace Management**: Configure cross-vertical integrations, API endpoints, schemas
+2. **Multi-Vertical Firm Onboarding**: Firms select industry-specific integrations during Admin-led onboarding
+3. **FIRMSYNC Replica Logic**: Legal firms (as onboarded tenants) use existing FIRMSYNC integration patterns
 
-## Recommended Architecture: "Hub and Spoke" Model
+**Key Principle**: Platform Admin handles ALL firm onboarding. Owner (Bridgelayer) manages operations. FIRMSYNC logic stays as tenant replica.
 
-### 1. Admin (Hub) - Marketplace Management
+## Recommended Architecture: "Multi-Vertical Hub and Spoke" Model
+
+### 1. Platform Admin (Central Hub) - Cross-Vertical Marketplace Management
 ```
-/admin/integrations (no code) → Marketplace Mode
-- Manage platform_integrations table
-- Set up integration templates
-- Configure API schemas, webhooks
-- Define what's available to all firms
-```
-
-### 2. Firm (Spoke) - Integration Selection  
-```
-/admin/integrations?code=ABC123 → Firm Mode
-- Show available integrations from platform_integrations
-- Firm selects which to enable
-- Store in firm_integrations table
-- Validate firm's API keys in real-time
+/admin/integrations → Multi-Vertical Platform Mode
+- Manage platform_integrations table across all verticals (FIRMSYNC, MEDSYNC, EDUSYNC, HRSYNC)
+- Set up vertical-specific integration templates
+- Configure industry-appropriate API schemas, webhooks
+- Define what's available to firms per vertical
+- **NO direct firm onboarding** (Admin handles via left nav)
 ```
 
-### 3. API Flow with Bouncing (Highly Recommended)
-
-#### Scenario: Firm Enabling an Integration
+### 2. Platform Admin Onboarding (Integration Step) - Firm Configuration
 ```
-1. Firm UI → Admin Server: "Enable Clio integration"
-2. Admin Server → Firm's API: "Validate Clio credentials" 
-3. Firm's API → Clio API: "Test connection"
-4. Clio API → Firm's API: "Connection successful"
-5. Firm's API → Admin Server: "Credentials valid"
-6. Admin Server → Firm UI: "Integration enabled"
+/admin/onboarding → Multi-Step Wizard with Integration Step
+- Platform Admin configures firm integrations during onboarding process
+- Show available integrations based on firm's vertical (legal, medical, education, HR)
+- Store in firm_integrations table with vertical context
+- Validate firm's API keys in real-time during Admin-led setup
 ```
 
-#### Benefits of API Bouncing:
-- **Security**: Firm credentials never leave firm's environment
-- **Real-time validation**: Immediate feedback on integration health
-- **Scalability**: Each firm manages their own API limits
-- **Reliability**: Distributed load, not all on admin server
+### 3. FIRMSYNC Tenant Logic (Onboarded Firm Replica) - Operational Use
+```
+/app/integrations → FIRMSYNC Logic as Tenant Replica
+- Legal firms (onboarded tenants) use existing FIRMSYNC integration patterns
+- Access integrations configured by Platform Admin during onboarding
+- Manage day-to-day integration operations within legal vertical scope
+- **Preserves all existing FIRMSYNC logic as tenant implementation**
+```
+
+### 4. Multi-Vertical API Flow with Platform Admin Orchestration
+
+#### Scenario: Platform Admin Configuring Firm Integration During Onboarding
+```
+1. Platform Admin → Admin Onboarding Wizard: "Configure integrations for legal firm"
+2. Admin Onboarding → Platform Integration API: "Get available legal integrations"
+3. Platform API → Admin UI: "Show legal-specific integrations (Clio, Westlaw, etc.)"
+4. Platform Admin → Firm Integration Setup: "Configure Clio for this firm"
+5. Admin System → FIRMSYNC Replica Validation: "Test Clio connection"
+6. FIRMSYNC Logic → Clio API: "Validate firm credentials" 
+7. Clio API → FIRMSYNC Logic: "Connection successful"
+8. FIRMSYNC Logic → Admin System: "Integration validated"
+9. Admin System → Platform Database: "Store firm integration config"
+```
+
+#### Benefits of Multi-Vertical Platform Orchestration:
+- **Admin Control**: Platform Admin manages all firm integrations during onboarding
+- **Vertical Awareness**: Industry-specific integrations per vertical (legal, medical, education, HR)
+- **FIRMSYNC Preservation**: Existing legal logic remains as tenant replica
+- **Security**: Firm credentials validated through existing FIRMSYNC patterns
+- **Scalability**: Each vertical maintains its specific integration patterns
 
 ## Implementation Strategy
 
