@@ -1,3 +1,13 @@
+# 🚨 DOCUMENTATION SINGLE SOURCE OF TRUTH
+
+**All documentation lives in the `documentation-master` branch.**
+- Never edit .md files in any other branch!
+- To update docs: switch to `documentation-master`, make changes, commit, and push.
+- To get latest docs in your branch: `git merge documentation-master --no-ff -m "docs: sync from documentation-master"`
+- Always check docs are current before merging pull requests.
+
+---
+
 # � BridgeLayer Platform
 
 ### 👥 **Three-Tier Role Architecture**
