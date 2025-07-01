@@ -54,7 +54,11 @@ import { toast } from '@/lib/toast';
 
 // Import step components
 import { FirmInfoStep } from './steps/FirmInfoStep';
+import { BrandingStep } from './steps/BrandingStep';
 import { IntegrationsStep } from './steps/EnhancedIntegrationsStep';
+import { DocumentTemplatesStep } from './steps/DocumentTemplatesStep';
+import { ClientIntakeStep } from './steps/ClientIntakeStep';
+import { ReviewStep } from './steps/ReviewStep';
 
 export interface UnifiedOnboardingData {
   // Step 1: Firm Setup
@@ -70,49 +74,54 @@ export interface UnifiedOnboardingData {
   practiceAreas: string[];
   practiceRegion: string;
   firmSize: 'solo' | 'small' | 'medium' | 'large';
+  acceptedNDA: boolean;
+  acceptedTerms: boolean;
+  ndaSignedAt?: Date;
+  termsSignedAt?: Date;
   
-  // Step 2: Integrations (3rd Party Marketplace)
+  // Step 2: Branding & Customization
+  logo: File | null;
+  primaryColor: string;
+  secondaryColor: string;
+  firmDisplayName: string;
+  timezone: string;
+  
+  // Step 3: Storage & Integrations
+  storageProvider: 'google' | 'dropbox' | 'onedrive' | 'aws_s3' | '';
+  oauthTokens: Record<string, any>;
+  apiKeys: Record<string, string>;
   selectedIntegrations: string[];
-  apiCredentials: Record<string, string>;
-  marketplaceConnections: Record<string, any>;
-  storageProvider: 'google' | 'dropbox' | 'onedrive' | '';
+  integrationConfigs: Record<string, any>;
   
-  // Step 3: LLM Agent Config
-  llmProvider: 'openai' | 'anthropic' | 'custom' | '';
-  llmApiKey: string;
-  firmWideAgents: Array<{
-    id: string;
-    name: string;
-    purpose: string;
-    prompt: string;
-    enabled: boolean;
-  }>;
-  agentSettings: {
-    defaultModel: string;
-    maxTokens: number;
-    temperature: number;
-  };
+  // Step 4: Document Templates & Preferences
+  documentTemplates: File[];
+  defaultLanguage: string;
+  fileRetentionDays: number;
+  auditTrailEnabled: boolean;
+  folderStructure: Record<string, any>;
+  caseTypes: string[];
   
-  // Step 4: Doc+ (Document-Specific Agents)
-  documentAgents: Array<{
+  // Step 5: Client Intake Form
+  intakeFormTitle: string;
+  intakeFormDescription: string;
+  intakeFormFields: Array<{
     id: string;
-    name: string;
-    documentType: string;
-    workflow: string;
-    prompt: string;
-    enabled: boolean;
+    label: string;
+    type: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'radio' | 'checkbox';
+    required: boolean;
+    options?: string[];
   }>;
-  paralegalWorkflows: string[];
+  autoResponseEnabled: boolean;
+  autoResponseMessage: string;
 }
 
-// Backward compatibility alias
-export type OnboardingFormData = UnifiedOnboardingData;
-
 const ENHANCED_STEPS = [
-  { id: 1, title: 'Firm Setup', description: 'Complete firm details and generate unique code' },
-  { id: 2, title: 'Integrations', description: '3rd party marketplace and API credentials' },
-  { id: 3, title: 'LLM Agent Config', description: 'Configure AI agents for your firm' },
-  { id: 4, title: 'Doc+ Agents', description: 'Add document-specific agents for workflows' }
+  { id: 1, title: 'Firm Setup', description: 'Basic information and legal agreements' },
+  { id: 2, title: 'Branding', description: 'Logo, colors, and customization' },
+  { id: 3, title: 'Integrations', description: 'Storage and third-party services' },
+  { id: 4, title: 'Documents', description: 'Templates and file management' },
+  { id: 5, title: 'Client Intake', description: 'Intake form configuration' },
+  { id: 6, title: 'Review', description: 'Review and confirm setup' }
 ];
 
 export function OnboardingWizard() {
@@ -135,30 +144,48 @@ export function OnboardingWizard() {
       practiceAreas: [],
       practiceRegion: '',
       firmSize: 'solo',
+      acceptedNDA: false,
+      acceptedTerms: false,
       
-      // Step 2: Integrations (3rd Party Marketplace)
-      selectedIntegrations: [],
-      apiCredentials: {},
-      marketplaceConnections: {},
+      // Step 2: Branding & Customization
+      logo: null,
+      primaryColor: '#2563eb', // Default primary color
+      secondaryColor: '#e2e8f0', // Default secondary color
+      firmDisplayName: '',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      
+      // Step 3: Storage & Integrations
       storageProvider: '',
+      oauthTokens: {},
+      apiKeys: {},
+      selectedIntegrations: [],
+      integrationConfigs: {},
       
-      // Step 3: LLM Agent Config
-      llmProvider: '',
-      llmApiKey: '',
-      firmWideAgents: [],
-      agentSettings: {
-        defaultModel: 'gpt-3.5-turbo',
-        maxTokens: 1000,
-        temperature: 0.7,
+      // Step 4: Document Templates & Preferences
+      documentTemplates: [],
+      defaultLanguage: 'en',
+      fileRetentionDays: 365,
+      auditTrailEnabled: true,
+      folderStructure: {
+        byMatter: true,
+        byDate: false,
+        customFolders: []
       },
+      caseTypes: [],
       
-      // Step 4: Doc+ (Document-Specific Agents)
-      documentAgents: [],
-      paralegalWorkflows: [],
+      // Step 5: Client Intake Form
+      intakeFormTitle: '',
+      intakeFormDescription: '',
+      intakeFormFields: [],
+      autoResponseEnabled: true,
+      autoResponseMessage: ''
     };
   });
 
   const { mutate: completeOnboarding, isPending } = useOnboardingApi();
+
+  // Calculate progress percentage
+  const progress = (currentStep / ENHANCED_STEPS.length) * 100;
 
   // Auto-save functionality with backend integration
   const { isSaving, saveError, lastSaved, manualSave } = useAutoSave(
@@ -180,7 +207,7 @@ export function OnboardingWizard() {
   };
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep < ENHANCED_STEPS.length) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -194,9 +221,9 @@ export function OnboardingWizard() {
   const handleComplete = async () => {
     try {
       await completeOnboarding(formData);
-      toast.success("Onboarding Complete! Welcome to FirmSync. Your dashboard is being prepared.");
+      toast.success("Onboarding Complete! Your firm's portal is being prepared.");
       // Redirect to firm dashboard
-      window.location.href = '/dashboard';
+      window.location.href = `/admin/firms/${formData.subdomain}/dashboard`;
     } catch (error) {
       toast.error("Onboarding Failed. Please check your information and try again.");
     }
@@ -214,7 +241,7 @@ export function OnboardingWizard() {
         );
       case 2:
         return (
-          <IntegrationsStep
+          <BrandingStep
             data={formData}
             updateData={updateFormData}
             onNext={handleNext}
@@ -223,7 +250,7 @@ export function OnboardingWizard() {
         );
       case 3:
         return (
-          <LLMConfigStep
+          <IntegrationsStep
             data={formData}
             updateData={updateFormData}
             onNext={handleNext}
@@ -232,102 +259,91 @@ export function OnboardingWizard() {
         );
       case 4:
         return (
-          <DocAgentsStep
+          <DocumentTemplatesStep
             data={formData}
             updateData={updateFormData}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        );
+      case 5:
+        return (
+          <ClientIntakeStep
+            data={formData}
+            updateData={updateFormData}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        );
+      case 6:
+        return (
+          <ReviewStep
+            data={formData}
             onComplete={handleComplete}
             onPrevious={handlePrevious}
             isLoading={isPending}
           />
         );
-      default:
-        return null;
     }
   };
 
-  const progress = ((currentStep) / 4) * 100;
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-2 md:p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            Welcome to FirmSync
-          </h1>
-          <p className="text-sm md:text-base text-gray-600">
-            Let's get your law firm set up in just a few steps
-          </p>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mb-6 md:mb-8">
-          <Progress value={progress} className="h-2 mb-4" />
-          <div className="hidden md:flex justify-between">
-            {ENHANCED_STEPS.map((step) => (
-              <div key={step.id} className="flex flex-col items-center">
-                <div className="flex items-center mb-2">
-                  {currentStep > step.id ? (
-                    <CheckCircle className="w-6 h-6 text-green-500" />
-                  ) : currentStep === step.id ? (
-                    <Circle className="w-6 h-6 text-blue-500 fill-current" />
-                  ) : (
-                    <Circle className="w-6 h-6 text-gray-300" />
-                  )}
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-gray-900">{step.title}</p>
-                  <p className="text-xs text-gray-500">{step.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Mobile step indicator */}
-          <div className="md:hidden text-center">
-            <p className="text-sm font-medium text-gray-900 mb-1">
-              Step {currentStep + 1} of {ENHANCED_STEPS.length}: {ENHANCED_STEPS[currentStep]?.title}
-            </p>
-            <p className="text-xs text-gray-500">
-              {ENHANCED_STEPS[currentStep]?.description}
-            </p>
-          </div>
-        </div>
-
-        {/* Auto-Save Status */}
-        {(isSaving || saveError || lastSaved) && (
-          <div className="mb-4">
-            <Alert variant={saveError ? "destructive" : "default"} className="max-w-md mx-auto">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {saveError ? (
-                  <span className="text-red-600">Auto-save failed: {saveError}</span>
-                ) : isSaving ? (
-                  <span className="flex items-center space-x-2">
-                    <Save className="h-3 w-3 animate-pulse" />
-                    <span>Saving progress...</span>
-                  </span>
-                ) : lastSaved ? (
-                  <span className="text-green-600">
-                    Progress saved at {lastSaved?.toLocaleTimeString()}
-                  </span>
-                ) : null}
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
-
-        {/* Step Content */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>{ENHANCED_STEPS[currentStep]?.title}</CardTitle>
-            <CardDescription>{ENHANCED_STEPS[currentStep]?.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {renderStep()}
-          </CardContent>
-        </Card>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="text-center mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+          Welcome to FirmSync
+        </h1>
+        <p className="text-sm md:text-base text-gray-600">
+          Let's get your law firm set up in just a few steps
+        </p>
       </div>
+
+      {/* Progress Bar */}
+      <div className="mb-6 md:mb-8">
+        <Progress value={progress} className="h-2 mb-4" />
+        <div className="hidden md:flex justify-between">
+          {ENHANCED_STEPS.map((step) => (
+            <div key={step.id} className="flex flex-col items-center">
+              <div className="flex items-center mb-2">
+                {currentStep > step.id ? (
+                  <CheckCircle className="w-6 h-6 text-green-500" />
+                ) : currentStep === step.id ? (
+                  <Circle className="w-6 h-6 text-blue-500 fill-current" />
+                ) : (
+                  <Circle className="w-6 h-6 text-gray-300" />
+                )}
+              </div>
+              <span className="text-xs text-gray-600">{step.title}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Auto-save Status */}
+      {isSaving && (
+        <Alert className="mb-4">
+          <Save className="w-4 h-4" />
+          <AlertDescription>
+            Saving your progress...
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {saveError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="w-4 h-4" />
+          <AlertDescription>
+            Failed to save progress. Your changes will be saved locally.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Current Step */}
+      <Card>
+        <CardContent className="pt-6">
+          {renderStep()}
+        </CardContent>
+      </Card>
     </div>
   );
 }

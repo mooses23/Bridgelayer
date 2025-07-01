@@ -48,10 +48,11 @@ const onboardingSchema = z.object({
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number')
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
-  confirmPassword: z.string(),
-  storageProvider: z.enum(['google', 'dropbox', 'onedrive']),
-  oauthTokens: z.string().optional(),
-  apiKeys: z.string().optional()
+  openaiApiKey: z.string()
+    .regex(/^sk-[A-Za-z0-9]{48}$/, 'Invalid OpenAI API key format'),
+  practiceAreas: z.array(z.string()).min(1, 'At least one practice area is required'),
+  description: z.string().optional(),
+  website: z.string().url().optional().or(z.literal(''))
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -674,6 +675,80 @@ router.post('/generate-firm-code', async (req, res) => {
       firmName: req.body.firmName,
       fallback: true
     });
+  }
+});
+
+// Create new firm with onboarding code
+router.post('/create', async (req, res) => {
+  try {
+    const {
+      firmName,
+      subdomain,
+      adminName,
+      adminEmail,
+      password,
+      openaiApiKey,
+      practiceAreas,
+      description,
+      website
+    } = onboardingSchema.parse(req.body);
+
+    // Check if subdomain is available
+    const existingFirm = await db.query.firms.findFirst({
+      where: eq(firms.subdomain, subdomain)
+    });
+
+    if (existingFirm) {
+      return res.status(400).json({ error: 'Subdomain is already taken' });
+    }
+
+    // Generate onboarding code
+    const onboardingCode = generateOnboardingCode();
+
+    // Create firm with encrypted OpenAI key
+    const [firm] = await db.insert(firms).values({
+      name: firmName,
+      subdomain,
+      onboardingCode,
+      openaiApiKey: encryptApiKey(openaiApiKey),
+      settings: {
+        practiceAreas,
+        description,
+        website
+      },
+      status: 'onboarding',
+      onboardingStep: 1
+    }).returning();
+
+    // Create admin user for the firm
+    const [admin] = await db.insert(users).values({
+      firmId: firm.id,
+      name: adminName,
+      email: adminEmail,
+      password: await hashPassword(password),
+      role: 'firm_admin'
+    }).returning();
+
+    // Create initial firm settings
+    await db.insert(firmSettings).values({
+      firmId: firm.id,
+      theme: 'light',
+      timezone: 'UTC',
+      features: {
+        documentProcessing: true,
+        aiAssistant: true
+      }
+    });
+
+    res.json({
+      success: true,
+      firmId: firm.id,
+      onboardingCode
+    });
+
+  } catch (error) {
+    console.error('Firm creation error:', error);
+    res.status(500).json({ error: 'Failed to create firm' });
   }
 });
 
