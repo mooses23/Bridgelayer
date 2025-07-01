@@ -1,13 +1,86 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, uuid, pgEnum, varchar, bigint, json, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// ============================================================================
-// TABLE DEFINITIONS (ALL TABLES FIRST)
-// ============================================================================
+// Enums
+export const roleEnum = pgEnum('role', ['admin', 'firm_user']);
+export const oauthProviderEnum = pgEnum('oauth_provider', ['google', 'microsoft', 'github']);
 
-// Firms table for multi-tenancy
-export const firms = pgTable("firms", {
+// Users
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  email: varchar('email', { length: 255 }).notNull(),
+  passwordHash: varchar('password_hash', { length: 255 }),
+  role: roleEnum('role').notNull().default('firm_user'),
+  oauthProvider: oauthProviderEnum('oauth_provider'),
+  oauthId: varchar('oauth_id', { length: 255 }),
+  lastLoginAt: timestamp('last_login_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+  deletedAt: timestamp('deleted_at')
+}, (table) => ({
+  emailIdx: uniqueIndex('users_email_idx').on(table.email),
+  oauthIdx: index('users_oauth_idx').on(table.oauthProvider, table.oauthId)
+}));
+
+// Refresh Tokens
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: serial('id').primaryKey(),
+  token: varchar('token', { length: 255 }).notNull(),
+  userId: integer('user_id').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  expiresAt: timestamp('expires_at').notNull()
+});
+
+// Firms
+export const firms = pgTable('firms', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  subdomain: varchar('subdomain', { length: 63 }),
+  openaiKey: varchar('openai_key', { length: 255 }),
+  practiceAreas: json('practice_areas').$type<string[]>(),
+  billingPlan: varchar('billing_plan', { length: 255 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+  deletedAt: timestamp('deleted_at')
+}, (table) => ({
+  subdomainIdx: uniqueIndex('firms_subdomain_idx').on(table.subdomain)
+}));
+
+// Firm Users
+export const firmUsers = pgTable('firm_users', {
+  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  firmId: bigint('firm_id', { mode: 'number' }).references(() => firms.id, { onDelete: 'cascade' }),
+  userId: bigint('user_id', { mode: 'number' }).references(() => users.id, { onDelete: 'cascade' }),
+  isOwner: boolean('is_owner').notNull().default(false),
+  role: varchar('role', { length: 255 }).notNull().default('member'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+}, (table) => ({
+  firmUserIdx: uniqueIndex('firm_users_firm_user_idx').on(table.firmId, table.userId)
+}));
+
+// Admin Settings
+export const adminSettings = pgTable('admin_settings', {
+  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  platformOpenaiKey: varchar('platform_openai_key', { length: 255 }),
+  platformOpenaiModel: varchar('platform_openai_model', { length: 255 }),
+  minPasswordLength: integer('min_password_length').notNull().default(8),
+  maxLoginAttempts: integer('max_login_attempts').notNull().default(5),
+  refreshTokenExpiry: integer('refresh_token_expiry').notNull().default(7), // days
+  updatedAt: timestamp('updated_at')
+});
+
+// Platform-wide settings table
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  encrypted: boolean("encrypted").default(false),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// ============================================================================
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
@@ -17,10 +90,13 @@ export const firms = pgTable("firms", {
   status: text("status").notNull().default("active"),
   onboarded: boolean("onboarded").notNull().default(false),
   onboardingComplete: boolean("onboarding_complete").default(false),
+  onboardingCode: text("onboarding_code").unique(),
+  onboardingStep: integer("onboarding_step").default(1),
+  openaiApiKey: text("openai_api_key"),
   logoUrl: text("logo_url"),
   settings: jsonb("settings"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Users table
@@ -36,7 +112,7 @@ export const users = pgTable("users", {
   status: text("status").notNull().default("active"),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm users table
@@ -48,7 +124,7 @@ export const firmUsers = pgTable("firm_users", {
   role: text("role").notNull().default("firm_user"),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Clients table
@@ -62,7 +138,7 @@ export const clients = pgTable("clients", {
   status: text("status").notNull().default("active"),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Cases table
@@ -76,7 +152,7 @@ export const cases = pgTable("cases", {
   status: text("status").notNull().default("active"),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Folders table
@@ -88,7 +164,7 @@ export const folders = pgTable("folders", {
   description: text("description"),
   createdBy: integer("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Documents table
@@ -112,7 +188,7 @@ export const documents = pgTable("documents", {
   tags: text("tags").array(),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Document analyses table
@@ -126,7 +202,7 @@ export const documentAnalyses = pgTable("document_analyses", {
   reviewedBy: integer("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
   isApproved: boolean("is_approved").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Time logs table
@@ -145,7 +221,7 @@ export const timeLogs = pgTable("time_logs", {
   invoiceId: integer("invoice_id"),
   loggedAt: timestamp("logged_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Invoices table
@@ -167,7 +243,7 @@ export const invoices = pgTable("invoices", {
   terms: text("terms"),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Invoice line items table
@@ -180,7 +256,7 @@ export const invoiceLineItems = pgTable("invoice_line_items", {
   rate: integer("rate").notNull(),
   amount: integer("amount").notNull(),
   sortOrder: integer("sort_order").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Billing permissions table
@@ -192,7 +268,7 @@ export const billingPermissions = pgTable("billing_permissions", {
   canEditBilling: boolean("can_edit_billing").default(false),
   canCreateInvoices: boolean("can_create_invoices").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm billing settings table
@@ -201,7 +277,7 @@ export const firmBillingSettings = pgTable("firm_billing_settings", {
   firmId: integer("firm_id").references(() => firms.id).notNull(),
   settings: jsonb("settings").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Audit logs table
@@ -217,7 +293,7 @@ export const auditLogs = pgTable("audit_logs", {
   details: jsonb("details"),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
-  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull()
 });
 
 // Client intakes table
@@ -237,7 +313,7 @@ export const clientIntakes = pgTable("client_intakes", {
   assignedTo: integer("assigned_to").references(() => users.id),
   submittedAt: timestamp("submitted_at").defaultNow(),
   processedAt: timestamp("processed_at"),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Payments table
@@ -250,7 +326,7 @@ export const payments = pgTable("payments", {
   amount: integer("amount").notNull(),
   status: text("status").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Client auth table
@@ -260,7 +336,7 @@ export const clientAuth = pgTable("client_auth", {
   loginToken: text("login_token"),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Billing forms table
@@ -269,7 +345,7 @@ export const billingForms = pgTable("billing_forms", {
   firmId: integer("firm_id").references(() => firms.id).notNull(),
   formType: text("form_type"),
   formData: jsonb("form_data").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // System alerts table
@@ -280,7 +356,7 @@ export const systemAlerts = pgTable("system_alerts", {
   type: text("type").notNull(),
   isActive: boolean("is_active").default(true),
   isRead: boolean("is_read").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Notifications table
@@ -297,7 +373,7 @@ export const notifications = pgTable("notifications", {
   actionUrl: text("action_url"),
   metadata: jsonb("metadata"),
   expiresAt: timestamp("expires_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Calendar events table
@@ -320,7 +396,7 @@ export const calendarEvents = pgTable("calendar_events", {
   attendees: jsonb("attendees"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // AI triage results table
@@ -340,7 +416,7 @@ export const aiTriageResults = pgTable("ai_triage_results", {
   reviewedAt: timestamp("reviewed_at"),
   reviewNotes: text("review_notes"),
   metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Communication logs table
@@ -365,7 +441,7 @@ export const communicationLogs = pgTable("communication_logs", {
   billingRate: integer("billing_rate"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Admin ghost sessions table
@@ -384,7 +460,7 @@ export const adminGhostSessions = pgTable("admin_ghost_sessions", {
   endedAt: timestamp("ended_at"),
   lastActivityAt: timestamp("last_activity_at").defaultNow(),
   actionsPerformed: jsonb("actions_performed"),
-  metadata: jsonb("metadata"),
+  metadata: jsonb("metadata")
 });
 
 // Onboarding sessions table
@@ -396,7 +472,7 @@ export const onboardingSessions = pgTable("onboarding_sessions", {
   stepData: jsonb("step_data"),
   status: text("status").notNull().default("in_progress"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Onboarding profiles table
@@ -425,7 +501,7 @@ export const onboardingProfiles = pgTable("onboarding_profiles", {
   totalStepsCompleted: integer("total_steps_completed").default(0),
   progressPercentage: integer("progress_percentage").default(0),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm analysis settings table
@@ -434,7 +510,7 @@ export const firmAnalysisSettings = pgTable("firm_analysis_settings", {
   firmId: integer("firm_id").references(() => firms.id).notNull(),
   settings: jsonb("settings").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Message threads table
@@ -448,7 +524,7 @@ export const messageThreads = pgTable("message_threads", {
   resolvedAt: timestamp("resolved_at"),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Messages table
@@ -459,7 +535,7 @@ export const messages = pgTable("messages", {
   firmId: integer("firm_id").references(() => firms.id).notNull(),
   content: text("content").notNull(),
   readBy: jsonb("read_by"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // System admins table
@@ -468,7 +544,7 @@ export const systemAdmins = pgTable("system_admins", {
   userId: integer("user_id").references(() => users.id).notNull(),
   email: text("email").notNull().unique(),
   permissions: jsonb("permissions"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Platform settings table
@@ -476,11 +552,8 @@ export const platformSettings = pgTable("platform_settings", {
   id: serial("id").primaryKey(),
   key: text("key").notNull().unique(),
   value: text("value"),
-  description: text("description"),
-  category: text("category"),
-  updatedBy: integer("updated_by").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  encrypted: boolean("encrypted").default(false),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Document type templates table
@@ -493,7 +566,7 @@ export const documentTypeTemplates = pgTable("document_type_templates", {
   category: text("category"),
   displayName: text("display_name"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Available integrations table
@@ -503,7 +576,7 @@ export const availableIntegrations = pgTable("available_integrations", {
   description: text("description"),
   type: text("type").notNull(),
   configSchema: jsonb("config_schema"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Firm settings table
@@ -515,7 +588,7 @@ export const firmSettings = pgTable("firm_settings", {
   apiKeys: text("api_keys"),
   features: text("features"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Platform integrations table
@@ -538,7 +611,7 @@ export const platformIntegrations = pgTable("platform_integrations", {
   configSchema: jsonb("config_schema"),
   settings: jsonb("settings"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm integrations table
@@ -559,7 +632,7 @@ export const firmIntegrations = pgTable("firm_integrations", {
   errorMessage: text("error_message"),
   enabledBy: integer("enabled_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // User integration permissions table
@@ -576,7 +649,7 @@ export const userIntegrationPermissions = pgTable("user_integration_permissions"
   permissions: jsonb("permissions"),
   grantedBy: integer("granted_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Integration audit logs table
@@ -591,7 +664,7 @@ export const integrationAuditLogs = pgTable("integration_audit_logs", {
   userAgent: text("user_agent"),
   success: boolean("success").default(true),
   errorMessage: text("error_message"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // Integration rate limits table
@@ -609,7 +682,7 @@ export const integrationRateLimits = pgTable("integration_rate_limits", {
   lastResetAt: timestamp("last_reset_at").defaultNow(),
   isBlocked: boolean("is_blocked").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // LLM settings table
@@ -626,7 +699,7 @@ export const firmLlmSettings = pgTable("firm_llm_settings", {
   currentMonthUsage: integer("current_month_usage").default(0),
   lastUsageReset: timestamp("last_usage_reset").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // LLM prompt templates table
@@ -645,7 +718,7 @@ export const llmPromptTemplates = pgTable("llm_prompt_templates", {
   version: integer("version").default(1),
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm prompt configurations table
@@ -663,7 +736,7 @@ export const firmPromptConfigurations = pgTable("firm_prompt_configurations", {
   lastTestedAt: timestamp("last_tested_at"),
   testResults: jsonb("test_results"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // LLM usage logs table
@@ -680,7 +753,7 @@ export const llmUsageLogs = pgTable("llm_usage_logs", {
   requestHash: text("request_hash"),
   cost: integer("cost"),
   model: text("model").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // LLM response cache table
@@ -694,7 +767,7 @@ export const llmResponseCache = pgTable("llm_response_cache", {
   expiresAt: timestamp("expires_at").notNull(),
   hitCount: integer("hit_count").default(0),
   lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
 });
 
 // LLM providers table
@@ -706,7 +779,7 @@ export const llmProviders = pgTable("llm_providers", {
   endpoint: text("endpoint"),
   requiresApiKey: boolean("requires_api_key").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // LLM models table
@@ -719,7 +792,7 @@ export const llmModels = pgTable("llm_models", {
   costPer1kTokens: integer("cost_per_1k_tokens"), // Stored as integer (cost in cents)
   enabled: boolean("enabled").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Document stencils table
@@ -734,7 +807,7 @@ export const documentStencils = pgTable("document_stencils", {
   uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm branding table
@@ -755,7 +828,7 @@ export const firmBranding = pgTable("firm_branding", {
   socialMedia: jsonb("social_media"),
   brandingSettings: jsonb("branding_settings"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm preferences table
@@ -775,7 +848,7 @@ export const firmPreferences = pgTable("firm_preferences", {
   customFields: jsonb("custom_fields"),
   workflowSettings: jsonb("workflow_settings"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Firm templates table
@@ -795,7 +868,7 @@ export const firmTemplates = pgTable("firm_templates", {
   createdBy: integer("created_by").references(() => users.id).notNull(),
   lastModifiedBy: integer("last_modified_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Compliance agreements table
@@ -811,7 +884,7 @@ export const complianceAgreements = pgTable("compliance_agreements", {
   acceptanceIpAddress: text("acceptance_ip_address"),
   acceptanceUserAgent: text("acceptance_user_agent"),
   expiresAt: timestamp("expires_at"),
-  metadata: jsonb("metadata"),
+  metadata: jsonb("metadata")
 });
 
 // ============================================================================
@@ -821,256 +894,256 @@ export const complianceAgreements = pgTable("compliance_agreements", {
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   lastLoginAt: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertDocumentSchema = createInsertSchema(documents).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertAnalysisSchema = createInsertSchema(documentAnalyses).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertClientSchema = createInsertSchema(clients).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertCaseSchema = createInsertSchema(cases).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertTimeLogSchema = createInsertSchema(timeLogs).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertBillingPermissionSchema = createInsertSchema(billingPermissions).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertFirmBillingSettingsSchema = createInsertSchema(firmBillingSettings).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   id: true,
-  timestamp: true,
+  timestamp: true
 });
 
 export const insertOnboardingSessionSchema = createInsertSchema(onboardingSessions).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertOnboardingProfileSchema = createInsertSchema(onboardingProfiles).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertClientIntakeSchema = createInsertSchema(clientIntakes).omit({
   id: true,
   submittedAt: true,
   processedAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertFolderSchema = createInsertSchema(folders).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertFirmAnalysisSettingsSchema = createInsertSchema(firmAnalysisSettings).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertMessageThreadSchema = createInsertSchema(messageThreads).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
   id: true,
   createdAt: true,
-  readAt: true,
+  readAt: true
 });
 
 export const insertCommunicationLogSchema = createInsertSchema(communicationLogs).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertAdminGhostSessionSchema = createInsertSchema(adminGhostSessions).omit({
   id: true,
   sessionToken: true,
   startedAt: true,
-  endedAt: true,
+  endedAt: true
 });
 
 export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertAiTriageResultSchema = createInsertSchema(aiTriageResults).omit({
   id: true,
   createdAt: true,
-  reviewedAt: true,
+  reviewedAt: true
 });
 
 export const insertInvoiceLineItemSchema = createInsertSchema(invoiceLineItems).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertClientAuthSchema = createInsertSchema(clientAuth).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertBillingFormSchema = createInsertSchema(billingForms).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertSystemAlertSchema = createInsertSchema(systemAlerts).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertSystemAdminSchema = createInsertSchema(systemAdmins).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertPlatformSettingSchema = createInsertSchema(platformSettings).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertDocumentTypeTemplateSchema = createInsertSchema(documentTypeTemplates).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertAvailableIntegrationSchema = createInsertSchema(availableIntegrations).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertFirmSettingsSchema = createInsertSchema(firmSettings).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertPlatformIntegrationSchema = createInsertSchema(platformIntegrations).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertFirmIntegrationSchema = createInsertSchema(firmIntegrations).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertUserIntegrationPermissionSchema = createInsertSchema(userIntegrationPermissions).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertIntegrationAuditLogSchema = createInsertSchema(integrationAuditLogs).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertIntegrationRateLimitSchema = createInsertSchema(integrationRateLimits).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertFirmLlmSettingsSchema = createInsertSchema(firmLlmSettings).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertLlmPromptTemplateSchema = createInsertSchema(llmPromptTemplates).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertFirmPromptConfigurationSchema = createInsertSchema(firmPromptConfigurations).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertLlmUsageLogSchema = createInsertSchema(llmUsageLogs).omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 });
 
 export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 export const insertLlmModelSchema = createInsertSchema(llmModels).omit({
   id: true,
   createdAt: true,
-  updatedAt: true,
+  updatedAt: true
 });
 
 // ============================================================================
