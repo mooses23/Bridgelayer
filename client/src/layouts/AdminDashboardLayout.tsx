@@ -21,7 +21,7 @@ const navigation = [
   { name: "Integrations", href: "/admin/integrations", icon: LinkIcon, description: "Third-party connections" },
   { name: "Agents", href: "/admin/agents", icon: FileText, description: "Document agent configuration" },
   { name: "LLM", href: "/admin/llm", icon: Brain, description: "Agent workflow designer" },
-  { name: "Preview", href: "/admin/preview", icon: Eye, description: "Firm workspace simulation" },
+  { name: "VR", href: "/admin/vr", icon: Eye, description: "Firm workspace simulation" },
   { name: "Settings", href: "/admin/settings", icon: Settings, description: "System configuration" },
 ];
 

@@ -8,6 +8,7 @@ import LLMWorkflowTab from '@/pages/Admin/tabs/LLMWorkflowTab';
 import IntegrationsTab from '@/pages/Admin/tabs/IntegrationsTab';
 import AgentsTab from '@/pages/Admin/tabs/AgentsTab';
 import PreviewTab from '@/pages/Admin/tabs/PreviewTab';
+import VRTab from '@/pages/Admin/tabs/VRTab';
 import SettingsTab from '@/pages/Admin/tabs/SettingsTab';
 
 export default function AdminDashboard() {
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
     { key: 'Integrations', label: 'Integrations', icon: Puzzle },
     { key: 'Agents', label: 'Agents', icon: Bot },
     { key: 'LLM Workflow', label: 'LLM Workflow', icon: Brain },
+    { key: 'VR', label: 'VR', icon: Eye },
     { key: 'Preview', label: 'Preview', icon: Eye },
     { key: 'Settings', label: 'Settings', icon: Settings },
   ];
@@ -63,6 +65,7 @@ export default function AdminDashboard() {
         {activeTab === 'Integrations' && <IntegrationsTab code={code} />}
         {activeTab === 'Agents' && <AgentsTab />}
         {activeTab === 'LLM Workflow' && <LLMWorkflowTab code={code} />}
+        {activeTab === 'VR' && <VRTab />}
         {activeTab === 'Preview' && (
           <PreviewTab code={code} />
         )}

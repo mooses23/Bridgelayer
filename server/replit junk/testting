@@ -1,0 +1,267 @@
+abc ### Admin Navigation Menu Items
+1. **Dashboard** (`# FIRMSYNC FEATURE AUDIT
+**Current Date:** June 22, 2025  
+**Purpose:** Complete inventory of all features in the codebase for keep/delete decisions
+
+---
+
+## ADMIN FEATURES
+
+### Core Admin Layout & Navigation
+- **ModernAdminLayout.tsx** - Main admin layout wrapper keep
+- **AdminSidebar.tsx** - Left navigation sidebar with all admin links keep
+
+### Admin Dashboard Features
+- **UnifiedAdminDashboard** - Main admin dashboard component keep
+- **Owner Dashboard** - Separate dashboard for owner role users keep
+- **Dashboard Overview** - Quick actions and metrics overview keep
+/admin`) - Overview & Quick Actions  keep this design stlye. delete dashboard navigation as this will be duplicated logic 
+2. **Law Firms** (`/admin/firms`) - Manage Firm Accounts (Badge: "Active") delete but reinsert logic smarrtly
+3. **Ghost Mode** (`/admin/ghost`) - Firm Experience Simulator (Badge: "Security") delete but keep dependecies 
+4. **LLM Prompts** (`/admin/llm-prompts`) - Configure AI Assistants (Badge: "New")keep
+5. **Firm Integrations** (`/admin/integrations`) - 3rd Party Connections keep
+6. **Unified Onboarding** (`/admin/onboarding`) - Single Firm Setup System (Badge: "UNIFIED") keep and this is admin the dashboard nav structure
+7. **User Management** (`/admin/users`) - Accounts & Permissions keep for owner
+8. **System Health** (`/admin/system-health`) - Performance & Logs keep for owner
+9. **Analytics** (`/admin/analytics`) - Usage & Insights keep logic keep for owner
+10. **Settings** (`/admin/settings`) - System Configuration keep logic
+
+### Owner-Specific Features
+1. **Owner Dashboard** (`/owner/dashboard`) - Business Metrics & KPIs keep 
+2. **Revenue Analytics** (`/owner/revenue`) - Financial Performance keep
+3. **Growth Metrics** (`/owner/growth`) - User Growth & Engagement keep
+4. **Firm Overview** (`/owner/firms`) - All Registered Firms keep 
+
+### Admin Pages (in /pages/Admin/)
+- **SystemHealthPage** - System monitoring and logs dete but keep logic
+- **GhostModePage** - Firm simulation/impersonation tool delete  this logic needs to be spread about the admin page properly and its actual page delted
+
+### Admin Components (in /components/admin/)
+- **UnifiedAdminDashboard** - Main admin dashboard 
+- **OwnerDashboard** - Owner-specific dashboard
+- **OnboardingPortal** - Onboarding wizard interface-  keep logic delete page
+- **AdminSidebar** - Navigation sidebar merge wtu other side bar and keep best of both
+
+---
+
+## AUTHENTICATION FEATURES
+
+### Auth Components
+- **AuthErrorBoundary** - Error handling for auth failures keep
+- **ModeToggle** - Toggle between Bridgelayer/FirmSync login modes keep 
+- **ProtectedRoute components** - AdminRoute, FirmUserRoute, ClientRoute, PublicRoute - perfect. 
+
+### Auth Pages
+- **LoginPage** (`/login`) - Unified login with mode toggle - keep
+- **RegisterPage** (`/register`) - User registration - keep
+- **LogoutPage** - Logout handling and redirect - keep
+
+### Auth Contexts & Hooks
+- **SessionContext** - User session management - keep
+- **useSession hook** - Session state and methods keep
+
+---
+
+## FIRM PORTAL FEATURES
+
+### Firm Layout & Navigation
+- **FirmLayout.tsx** - Main firm portal layout
+- **FirmDashboardLayout.tsx** - Alternative firm dashboard layout
+
+### Firm Pages (accessed via /app/*)
+1. **Dashboard** (`/app/dashboard`) - Firm overview and stats 
+2. **Documents** (`/app/documents`) - Document management and generation
+3. **Billing** (`/app/billing`) - Invoices and payments
+4. **Settings** (`/app/settings`) - Firm profile and configuration
+
+### Firm Page Components (in FirmLayout.tsx)
+- **FirmDashboardPage** - Dashboard content with stats cards
+- **FirmDocumentsPage** - Document library and template dropdown
+- **FirmBillingPage** - Billing and payment interface
+- **FirmSettingsPage** - Firm settings and profile
+
+### Dedicated Firm Pages (in /pages/Firm/)
+- **DashboardPage** - Firm dashboard (imported from pages)
+- **DocumentsPage** - Documents page (imported from pages)
+- **BillingPage** - Billing page (imported from pages)
+- **SettingsPage** - Settings page (imported from pages)
+
+---
+
+## CLIENT PORTAL FEATURES
+
+### Client Layout & Components
+- **ClientLayout.tsx** - Client portal layout
+- **ClientRoute** - Protected route for clients
+
+---
+
+## DOCUMENT FEATURES
+
+### Document Pages
+- **documents.tsx** - Main documents page
+- **documents-new.tsx** - Alternative/newer documents implementation
+- **intake.tsx** - Document intake form
+
+### Document Types & Templates
+- **Document generator** - Custom template system for law firms
+- **Template dropdown** - Firm-specific templates instead of generic docs
+- **AI Document Review** - Document analysis and suggestions
+
+---
+
+## BILLING & PAYMENTS
+
+### Billing Pages
+- **billing.tsx** - Main billing interface
+- **billing-analytics.tsx** - Billing analytics and reports
+
+### Payment Features
+- **Stripe integration** - Payment processing
+- **Invoice management** - Create and manage invoices
+- **Payment tracking** - Track payment status
+
+---
+
+## CLIENT MANAGEMENT
+
+### Client Features
+- **clients.tsx** - Client management interface
+- **Client portal access** - Separate client login and dashboard
+
+---
+
+## MESSAGING & COMMUNICATION
+
+### Communication Features
+- **messages.tsx** - Messaging system
+- **Communication tracking** - Client interaction logs
+
+---
+
+## ANALYTICS & REPORTING
+
+### Analytics Features
+- **Analytics.tsx** - Analytics dashboard (removed but may have remnants)
+- **Billing analytics** - Financial reporting
+- **Usage analytics** - System usage tracking
+- **Growth metrics** - User growth tracking
+
+---
+
+## SETTINGS & CONFIGURATION
+
+### Settings Pages
+- **settings.tsx** - General settings interface
+- **team.tsx** - Team management
+
+---
+
+## ONBOARDING SYSTEM
+
+### Onboarding Components
+- **OnboardingPortal** - Main onboarding interface
+- **6-step wizard** - Multi-step firm setup process
+- **Onboarding codes** - Code generation and management
+
+### Onboarding Steps (mentioned in plan)
+1. **FirmSetupStep** - Basic firm information
+2. **BrandingStep** - Firm branding and visual identity
+3. **IntegrationsStep** - Third-party integrations
+4. **TemplatesStep** - Document templates setup
+5. **PreviewStep** - Review configuration
+6. **LLMReviewStep** - AI-powered review and optimization
+
+---
+
+## TENANT & MULTI-TENANCY
+
+### Tenant Features
+- **TenantContext** - Tenant-specific configuration
+- **TenantProvider** - Tenant state management
+- **useTenantSafe hook** - Safe tenant access
+
+---
+
+## ROUTING & NAVIGATION
+
+### Router Features
+- **RoleRouter** - Role-based routing logic
+- **App.tsx** - Main app routing setup
+- **Wouter router** - Client-side routing
+
+---
+
+## ERROR HANDLING & UTILITIES
+
+### Error Components
+- **ErrorBoundary** - React error boundary
+- **LoadingSpinner** - Loading state component
+- **Toast notifications** - User feedback system
+
+---
+
+## AI & LLM FEATURES
+
+### AI Components (removed but may have API remnants)
+- **AI review system** - Document analysis and suggestions
+- **LLM prompt management** - AI assistant configuration
+- **OpenAI integration** - GPT-4 API calls
+
+---
+
+## DATABASE & API
+
+### Database Features
+- **SQLite database** (firmsync.db)
+- **Drizzle ORM** - Database management
+- **Migration system** - Database schema updates
+
+### API Endpoints Structure
+```
+/api/auth/*          - Authentication endpoints
+/api/onboarding/*    - Onboarding management
+/api/app/*           - Firm portal endpoints
+/api/admin/*         - Admin panel endpoints
+/api/client/*        - Client portal endpoints
+```
+
+---
+
+## LEGACY & UNUSED FILES
+
+### Potentially Unused Features
+- **Ghost Mode** - Admin impersonation of firms
+- **Complex analytics** - Advanced reporting features
+- **User management** - Admin user CRUD operations
+- **System health monitoring** - Performance tracking
+- **Multiple dashboard variants** - Different dashboard implementations
+
+---
+
+## EXTERNAL INTEGRATIONS
+
+### Current Integrations
+- **Stripe** - Payment processing
+- **OpenAI** - AI document analysis
+- **SendGrid** - Email services
+- **Google APIs** - Potential Google Drive/Docs integration
+- **Dropbox** - File storage integration
+
+---
+
+## INSTRUCTIONS FOR REVIEW
+
+**For each feature/component above, please respond with:**
+- **KEEP** - Feature aligns with the plan and should remain
+- **DELETE** - Feature contradicts the plan or is unnecessary bloat
+- **MODIFY** - Feature is partially correct but needs changes to match the plan
+
+**Priority should be given to:**
+1. Simple admin interface (product picker + onboarding wizard)
+2. Clean firm portal (/app/* routes)
+3. Basic authentication with mode toggle
+4. Essential document generation for law firms
+5. Basic billing integration
+
+**Everything else is likely legacy bloat that contradicts the focused plan.**

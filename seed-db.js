@@ -1,11 +1,15 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
-import * as schema from "./shared/schema.js";
+import * as schema from "../shared/schema"; // use TS schema via tsx
 
 neonConfig.webSocketConstructor = ws;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL is not set');
+  process.exit(1);
+}
 const db = drizzle({ client: pool, schema });
 
 async function seed() {

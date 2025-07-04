@@ -8,6 +8,10 @@ import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes-hybrid";
 import { setupVite, serveStatic, log } from "./vite";
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger';
+import { ScheduledTasks } from './utils/scheduled-tasks';
+import { logger } from './utils/logger';
 
 import { pool } from "./db";
 
@@ -90,22 +94,17 @@ const PgSession = connectPgSimple(session);
 
 app.use(session({
   store: new PgSession({
-    pool: pool,
-    tableName: 'session',
-    createTableIfMissing: true,
-    schemaName: 'public'
+    conString: process.env.DATABASE_URL,
+    tableName: 'session'
   }),
-  secret: process.env.SESSION_SECRET || 'firmsync-session-secret-change-in-production',
-  name: 'connect.sid',
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
-  rolling: true,
   cookie: {
-    secure: false, // Set to false for development
-    httpOnly: true, // Enable for security
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax', // Changed from 'none' to 'lax' for better compatibility
-    domain: undefined // Let browser handle domain automatically
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   }
 }));
 
@@ -139,11 +138,17 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 (async () => {
   try {
     console.log('Starting FIRMSYNC server...');
     
     const server = await registerRoutes(app);
+
+    // Start scheduled tasks
+    logger.info('Starting scheduled tasks');
+    ScheduledTasks.startAll();
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
@@ -173,6 +178,9 @@ app.use((req, res, next) => {
     } else {
       log(`server already listening on port ${port}`);
     }
+
+    // Start scheduled tasks
+    ScheduledTasks.start();
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

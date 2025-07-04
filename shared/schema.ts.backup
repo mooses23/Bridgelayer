@@ -1,19 +1,109 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, uuid, pgEnum, varchar, bigint, json, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Firms table for multi-tenancy
-export const firms = pgTable("firms", {
+// Enums
+export const roleEnum = pgEnum('role', ['admin', 'firm_user']);
+export const oauthProviderEnum = pgEnum('oauth_provider', ['google', 'microsoft', 'github']);
+
+// Users
+export const users = pgTable('users', {
+  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  email: varchar('email', { length: 255 }).notNull(),
+  passwordHash: varchar('password_hash', { length: 255 }),
+  role: roleEnum('role').notNull().default('firm_user'),
+  oauthProvider: oauthProviderEnum('oauth_provider'),
+  oauthId: varchar('oauth_id', { length: 255 }),
+  lastLoginAt: timestamp('last_login_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  emailIdx: uniqueIndex('users_email_idx').on(table.email),
+  oauthIdx: index('users_oauth_idx').on(table.oauthProvider, table.oauthId),
+}));
+
+// Refresh Tokens
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  token: varchar('token', { length: 255 }).notNull(),
+  userId: bigint('user_id', { mode: 'number' })
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  revokedAt: timestamp('revoked_at'),
+}, (table) => ({
+  tokenIdx: uniqueIndex('refresh_tokens_token_idx').on(table.token),
+  userIdx: index('refresh_tokens_user_idx').on(table.userId),
+}));
+
+// Firms
+export const firms = pgTable('firms', {
+  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  name: varchar('name', { length: 255 }).notNull(),
+  subdomain: varchar('subdomain', { length: 63 }),
+  openaiKey: varchar('openai_key', { length: 255 }),
+  practiceAreas: json('practice_areas').$type<string[]>(),
+  billingPlan: varchar('billing_plan', { length: 255 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => ({
+  subdomainIdx: uniqueIndex('firms_subdomain_idx').on(table.subdomain),
+}));
+
+// Firm Users
+export const firmUsers = pgTable('firm_users', {
+  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  firmId: bigint('firm_id', { mode: 'number' })
+    .references(() => firms.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: bigint('user_id', { mode: 'number' })
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  isOwner: boolean('is_owner').notNull().default(false),
+  role: varchar('role', { length: 255 }).notNull().default('member'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+}, (table) => ({
+  firmUserIdx: uniqueIndex('firm_users_firm_user_idx').on(table.firmId, table.userId),
+}));
+
+// Admin Settings
+export const adminSettings = pgTable('admin_settings', {
+  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  platformOpenaiKey: varchar('platform_openai_key', { length: 255 }),
+  platformOpenaiModel: varchar('platform_openai_model', { length: 255 }),
+  minPasswordLength: integer('min_password_length').notNull().default(8),
+  maxLoginAttempts: integer('max_login_attempts').notNull().default(5),
+  refreshTokenExpiry: integer('refresh_token_expiry').notNull().default(7), // days
+  updatedAt: timestamp('updated_at'),
+});
+
+// Platform-wide settings table
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  encrypted: boolean("encrypted").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ============================================================================
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
-  subdomain: text("subdomain").unique(), // Add subdomain field for tenancy
+  subdomain: text("subdomain").unique(),
   domain: text("domain"),
   plan: text("plan").notNull().default("starter"),
   status: text("status").notNull().default("active"),
   onboarded: boolean("onboarded").notNull().default(false),
-  onboardingComplete: boolean("onboarding_complete").default(false), // Add onboardingComplete field
-  logoUrl: text("logo_url"), // Add logoUrl field
+  onboardingComplete: boolean("onboarding_complete").default(false),
+  onboardingCode: text("onboarding_code").unique(),
+  onboardingStep: integer("onboarding_step").default(1),
+  openaiApiKey: text("openai_api_key"),
+  logoUrl: text("logo_url"),
   settings: jsonb("settings"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -28,7 +118,6 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  // name: text("name"), // Temporarily removed - causing DB issues
   role: text("role").notNull().default("viewer"),
   status: text("status").notNull().default("active"),
   lastLoginAt: timestamp("last_login_at"),
@@ -36,7 +125,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Add new table for firm_users
+// Firm users table
 export const firmUsers = pgTable("firm_users", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -44,96 +133,6 @@ export const firmUsers = pgTable("firm_users", {
   password: text("password").notNull(),
   role: text("role").notNull().default("firm_user"),
   status: text("status").notNull().default("active"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Documents table
-export const documents = pgTable("documents", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  folderId: integer("folder_id"),
-  fileName: text("file_name").notNull(),
-  originalName: text("original_name").notNull(),
-  fileSize: integer("file_size").notNull(),
-  mimeType: text("mime_type").notNull(),
-  documentType: text("document_type"),
-  uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
-  uploadedAt: timestamp("uploaded_at").defaultNow(), // Add uploadedAt field
-  assignedReviewer: integer("assigned_reviewer").references(() => users.id),
-  reviewStatus: text("review_status").notNull().default("pending"),
-  status: text("status").default("processing"), // Add status field
-  analyzedAt: timestamp("analyzed_at"), // Add analyzedAt field
-  content: text("content"), // Add content field for document text
-  userId: integer("user_id").references(() => users.id), // Add userId field
-  tags: text("tags").array(),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Document analyses table
-export const documentAnalyses = pgTable("document_analyses", {
-  id: serial("id").primaryKey(),
-  documentId: integer("document_id").references(() => documents.id).notNull(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  analysisType: text("analysis_type").notNull(),
-  result: jsonb("result").notNull(),
-  confidence: integer("confidence"),
-  reviewedBy: integer("reviewed_by").references(() => users.id),
-  reviewedAt: timestamp("reviewed_at"),
-  isApproved: boolean("is_approved").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Onboarding sessions table (missing)
-export const onboardingSessions = pgTable("onboarding_sessions", {
-  id: serial("id").primaryKey(),
-  sessionId: text("session_id").notNull().unique(),
-  adminUserId: integer("admin_user_id").references(() => users.id),
-  currentStep: integer("current_step").notNull().default(1),
-  stepData: jsonb("step_data"),
-  status: text("status").notNull().default("in_progress"), // in_progress, completed, abandoned
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Onboarding code coordination system for 6-tab admin workflow
-export const onboardingProfiles = pgTable("onboarding_profiles", {
-  id: serial("id").primaryKey(),
-  code: text("code").notNull().unique(), // Auto-generated unique codes: #101, #102, #103, etc.
-  firmId: integer("firm_id").references(() => firms.id),
-  status: text("status").notNull().default("in_progress"), // in_progress, completed, abandoned
-  
-  // Tab 1 - Firm Data
-  step1_firmData: jsonb("step1_firm_data"), // Firm creation form data
-  step1_complete: boolean("step1_complete").default(false),
-  step1_completedAt: timestamp("step1_completed_at"),
-  
-  // Tab 2 - Integrations Selection  
-  step2_selectedIntegrations: jsonb("step2_selected_integrations"), // Array of selected integration IDs
-  step2_integrationConfigs: jsonb("step2_integration_configs"), // Configuration for each integration
-  step2_complete: boolean("step2_complete").default(false),
-  step2_completedAt: timestamp("step2_completed_at"),
-  
-  // Tab 3 - LLM Prompts Customization
-  step3_customPrompts: jsonb("step3_custom_prompts"), // Tab-specific prompt customizations
-  step3_llmSettings: jsonb("step3_llm_settings"), // AI model preferences, token limits
-  step3_complete: boolean("step3_complete").default(false),
-  step3_completedAt: timestamp("step3_completed_at"),
-  
-  // Tab 4 - Final Configuration File
-  step4_finalConfiguration: jsonb("step4_final_configuration"), // Generated complete config
-  step4_generatedFile: text("step4_generated_file"), // URL or path to generated onboarding file
-  step4_complete: boolean("step4_complete").default(false),
-  step4_completedAt: timestamp("step4_completed_at"),
-  
-  // Metadata
-  createdBy: integer("created_by").references(() => users.id).notNull(),
-  notes: text("notes"), // Admin notes about the onboarding process
-  totalStepsCompleted: integer("total_steps_completed").default(0),
-  progressPercentage: integer("progress_percentage").default(0),
-  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -158,12 +157,62 @@ export const cases = pgTable("cases", {
   firmId: integer("firm_id").references(() => firms.id).notNull(),
   clientId: integer("client_id").references(() => clients.id).notNull(),
   title: text("title").notNull(),
-  name: text("name").notNull(), // Add name field
+  name: text("name").notNull(),
   description: text("description"),
   status: text("status").notNull().default("active"),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Folders table
+export const folders = pgTable("folders", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  parentId: integer("parent_id"),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Documents table
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  folderId: integer("folder_id"),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  documentType: text("document_type"),
+  uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  assignedReviewer: integer("assigned_reviewer").references(() => users.id),
+  reviewStatus: text("review_status").notNull().default("pending"),
+  status: text("status").default("processing"),
+  analyzedAt: timestamp("analyzed_at"),
+  content: text("content"),
+  userId: integer("user_id").references(() => users.id),
+  tags: text("tags").array(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Document analyses table
+export const documentAnalyses = pgTable("document_analyses", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").references(() => documents.id).notNull(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  analysisType: text("analysis_type").notNull(),
+  result: jsonb("result").notNull(),
+  confidence: integer("confidence"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  isApproved: boolean("is_approved").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Time logs table
@@ -194,11 +243,11 @@ export const invoices = pgTable("invoices", {
   invoiceNumber: text("invoice_number").notNull(),
   status: text("status").notNull().default("draft"),
   amount: integer("amount").notNull(),
-  subtotal: integer("subtotal").notNull(), // Add subtotal field
-  taxAmount: integer("tax_amount").notNull().default(0), // Add taxAmount field
-  total: integer("total").notNull(), // Add total field
-  issueDate: timestamp("issue_date").defaultNow(), // Add issueDate field
-  notes: text("notes"), // Add notes field
+  subtotal: integer("subtotal").notNull(),
+  taxAmount: integer("tax_amount").notNull().default(0),
+  total: integer("total").notNull(),
+  issueDate: timestamp("issue_date").defaultNow(),
+  notes: text("notes"),
   paidDate: timestamp("paid_date"),
   dueDate: timestamp("due_date"),
   terms: text("terms"),
@@ -241,7 +290,7 @@ export const firmBillingSettings = pgTable("firm_billing_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Audit logs table - Fixed with all required columns
+// Audit logs table
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -277,11 +326,11 @@ export const clientIntakes = pgTable("client_intakes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Other required tables for full functionality
+// Payments table
 export const payments = pgTable("payments", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
-  clientId: integer("client_id").references(() => clientAuth.id), // Add clientId field
+  clientId: integer("client_id").references(() => clientAuth.id),
   invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   amount: integer("amount").notNull(),
@@ -290,6 +339,7 @@ export const payments = pgTable("payments", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Client auth table
 export const clientAuth = pgTable("client_auth", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
@@ -299,25 +349,259 @@ export const clientAuth = pgTable("client_auth", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Billing forms table
 export const billingForms = pgTable("billing_forms", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
-  formType: text("form_type"), // Add formType field
+  formType: text("form_type"),
   formData: jsonb("form_data").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// System alerts table
 export const systemAlerts = pgTable("system_alerts", {
   id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id), // Add firmId field
+  firmId: integer("firm_id").references(() => firms.id),
   message: text("message").notNull(),
   type: text("type").notNull(),
   isActive: boolean("is_active").default(true),
-  isRead: boolean("is_read").default(false), // Add isRead field
+  isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Integration system tables (CRITICAL for Tab 2)
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull().default("info"),
+  priority: text("priority").notNull().default("normal"),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  actionUrl: text("action_url"),
+  metadata: jsonb("metadata"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Calendar events table
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id),
+  caseId: integer("case_id").references(() => cases.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  location: text("location"),
+  eventType: text("event_type").notNull().default("meeting"),
+  status: text("status").notNull().default("scheduled"),
+  reminderMinutes: integer("reminder_minutes").default(15),
+  isRecurring: boolean("is_recurring").default(false),
+  recurrenceRule: text("recurrence_rule"),
+  attendees: jsonb("attendees"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// AI triage results table
+export const aiTriageResults = pgTable("ai_triage_results", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  clientIntakeId: integer("client_intake_id").references(() => clientIntakes.id),
+  documentId: integer("document_id").references(() => documents.id),
+  analysisResults: jsonb("analysis_results").notNull(),
+  confidenceScore: integer("confidence_score").notNull(),
+  recommendedActions: jsonb("recommended_actions"),
+  riskAssessment: text("risk_assessment"),
+  urgencyLevel: text("urgency_level").notNull().default("medium"),
+  assignedTo: integer("assigned_to").references(() => users.id),
+  status: text("status").notNull().default("pending"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Communication logs table
+export const communicationLogs = pgTable("communication_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  clientId: integer("client_id").references(() => clients.id),
+  caseId: integer("case_id").references(() => cases.id),
+  communicationType: text("communication_type").notNull(),
+  direction: text("direction").notNull(),
+  subject: text("subject"),
+  content: text("content"),
+  participants: jsonb("participants"),
+  duration: integer("duration"),
+  outcome: text("outcome"),
+  followUpRequired: boolean("follow_up_required").default(false),
+  followUpDate: timestamp("follow_up_date"),
+  attachments: jsonb("attachments"),
+  isConfidential: boolean("is_confidential").default(false),
+  billable: boolean("billable").default(true),
+  billingRate: integer("billing_rate"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Admin ghost sessions table
+export const adminGhostSessions = pgTable("admin_ghost_sessions", {
+  id: serial("id").primaryKey(),
+  adminUserId: integer("admin_user_id").references(() => users.id).notNull(),
+  targetFirmId: integer("target_firm_id").references(() => firms.id).notNull(),
+  targetUserId: integer("target_user_id").references(() => users.id),
+  sessionToken: text("session_token").notNull().unique(),
+  purpose: text("purpose").notNull(),
+  permissionsGranted: jsonb("permissions_granted"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  isActive: boolean("is_active").default(true),
+  startedAt: timestamp("started_at").defaultNow(),
+  endedAt: timestamp("ended_at"),
+  lastActivityAt: timestamp("last_activity_at").defaultNow(),
+  actionsPerformed: jsonb("actions_performed"),
+  metadata: jsonb("metadata"),
+});
+
+// Onboarding sessions table
+export const onboardingSessions = pgTable("onboarding_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  adminUserId: integer("admin_user_id").references(() => users.id),
+  currentStep: integer("current_step").notNull().default(1),
+  stepData: jsonb("step_data"),
+  status: text("status").notNull().default("in_progress"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Onboarding profiles table
+export const onboardingProfiles = pgTable("onboarding_profiles", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  firmId: integer("firm_id").references(() => firms.id),
+  status: text("status").notNull().default("in_progress"),
+  step1_firmData: jsonb("step1_firm_data"),
+  step1_complete: boolean("step1_complete").default(false),
+  step1_completedAt: timestamp("step1_completed_at"),
+  step2_selectedIntegrations: jsonb("step2_selected_integrations"),
+  step2_integrationConfigs: jsonb("step2_integration_configs"),
+  step2_complete: boolean("step2_complete").default(false),
+  step2_completedAt: timestamp("step2_completed_at"),
+  step3_customPrompts: jsonb("step3_custom_prompts"),
+  step3_llmSettings: jsonb("step3_llm_settings"),
+  step3_complete: boolean("step3_complete").default(false),
+  step3_completedAt: timestamp("step3_completed_at"),
+  step4_finalConfiguration: jsonb("step4_final_configuration"),
+  step4_generatedFile: text("step4_generated_file"),
+  step4_complete: boolean("step4_complete").default(false),
+  step4_completedAt: timestamp("step4_completed_at"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  notes: text("notes"),
+  totalStepsCompleted: integer("total_steps_completed").default(0),
+  progressPercentage: integer("progress_percentage").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Firm analysis settings table
+export const firmAnalysisSettings = pgTable("firm_analysis_settings", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  settings: jsonb("settings").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Message threads table
+export const messageThreads = pgTable("message_threads", {
+  id: serial("id").primaryKey(),
+  threadId: text("thread_id").unique(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  title: text("title").notNull(),
+  isResolved: boolean("is_resolved").default(false),
+  resolvedBy: integer("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Messages table
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  threadId: integer("thread_id").references(() => messageThreads.id).notNull(),
+  senderId: integer("sender_id").references(() => users.id).notNull(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  content: text("content").notNull(),
+  readBy: jsonb("read_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// System admins table
+export const systemAdmins = pgTable("system_admins", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  email: text("email").notNull().unique(),
+  permissions: jsonb("permissions"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Platform settings table
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  encrypted: boolean("encrypted").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Document type templates table
+export const documentTypeTemplates = pgTable("document_type_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  template: text("template").notNull(),
+  vertical: text("vertical"),
+  category: text("category"),
+  displayName: text("display_name"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Available integrations table
+export const availableIntegrations = pgTable("available_integrations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type").notNull(),
+  configSchema: jsonb("config_schema"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Firm settings table
+export const firmSettings = pgTable("firm_settings", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  storageProvider: text("storage_provider"),
+  oauthTokens: text("oauth_tokens"),
+  apiKeys: text("api_keys"),
+  features: text("features"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Platform integrations table
 export const platformIntegrations = pgTable("platform_integrations", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -328,7 +612,7 @@ export const platformIntegrations = pgTable("platform_integrations", {
   logoUrl: text("logo_url"),
   webhookUrl: text("webhook_url"),
   apiBaseUrl: text("api_base_url"),
-  authType: text("auth_type").notNull(), // oauth2, api_key, webhook
+  authType: text("auth_type").notNull(),
   status: text("status").default("active"),
   version: text("version"),
   isActive: boolean("is_active").default(true),
@@ -340,6 +624,7 @@ export const platformIntegrations = pgTable("platform_integrations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Firm integrations table
 export const firmIntegrations = pgTable("firm_integrations", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -360,6 +645,7 @@ export const firmIntegrations = pgTable("firm_integrations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User integration permissions table
 export const userIntegrationPermissions = pgTable("user_integration_permissions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -376,6 +662,7 @@ export const userIntegrationPermissions = pgTable("user_integration_permissions"
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Integration audit logs table
 export const integrationAuditLogs = pgTable("integration_audit_logs", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -390,6 +677,7 @@ export const integrationAuditLogs = pgTable("integration_audit_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Integration rate limits table
 export const integrationRateLimits = pgTable("integration_rate_limits", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -407,7 +695,7 @@ export const integrationRateLimits = pgTable("integration_rate_limits", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// LLM system tables (CRITICAL for Tab 3)
+// LLM settings table
 export const firmLlmSettings = pgTable("firm_llm_settings", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull().unique(),
@@ -424,6 +712,7 @@ export const firmLlmSettings = pgTable("firm_llm_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// LLM prompt templates table
 export const llmPromptTemplates = pgTable("llm_prompt_templates", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id),
@@ -442,6 +731,7 @@ export const llmPromptTemplates = pgTable("llm_prompt_templates", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Firm prompt configurations table
 export const firmPromptConfigurations = pgTable("firm_prompt_configurations", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -459,6 +749,7 @@ export const firmPromptConfigurations = pgTable("firm_prompt_configurations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// LLM usage logs table
 export const llmUsageLogs = pgTable("llm_usage_logs", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -475,6 +766,7 @@ export const llmUsageLogs = pgTable("llm_usage_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// LLM response cache table
 export const llmResponseCache = pgTable("llm_response_cache", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
@@ -488,6 +780,169 @@ export const llmResponseCache = pgTable("llm_response_cache", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// LLM providers table
+export const llmProviders = pgTable("llm_providers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  apiKeyName: text("api_key_name").notNull(), // The name of the key in firmLlmSettings, e.g., "openaiApiKey"
+  status: text("status").default("active"),
+  endpoint: text("endpoint"),
+  requiresApiKey: boolean("requires_api_key").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// LLM models table
+export const llmModels = pgTable("llm_models", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  providerId: integer("provider_id").references(() => llmProviders.id).notNull(),
+  description: text("description"),
+  contextWindow: integer("context_window"),
+  costPer1kTokens: integer("cost_per_1k_tokens"), // Stored as integer (cost in cents)
+  enabled: boolean("enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// AI Agent Management Tables
+// =========================
+
+// AI agents table - individual agents with their configurations
+export const llmAgents = pgTable("llm_agents", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  role: text("role").notNull(), // 'head', 'contract', 'compliance', 'risk', 'summary', 'doc_plus', 'custom'
+  agentType: text("agent_type").notNull().default("processor"), // 'head', 'processor', 'synthesizer'
+  systemPrompt: text("system_prompt").notNull(),
+  contextInstructions: text("context_instructions"),
+  responseFormat: text("response_format").default("json"),
+  temperature: integer("temperature").default(70),
+  maxTokens: integer("max_tokens").default(4000),
+  model: text("model").default("gpt-4o"),
+  providerId: integer("provider_id").references(() => llmProviders.id),
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false),
+  version: integer("version").default(1),
+  parentAgentId: integer("parent_agent_id").references(() => llmAgents.id),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  firmAgentIdx: index('llm_agents_firm_idx').on(table.firmId),
+  roleIdx: index('llm_agents_role_idx').on(table.role),
+  activeIdx: index('llm_agents_active_idx').on(table.isActive),
+}));
+
+// Agent chains table - defines the execution flow of agents
+export const agentChains = pgTable("agent_chains", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  chainType: text("chain_type").notNull().default("sequential"), // 'sequential', 'parallel', 'conditional'
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false),
+  version: integer("version").default(1),
+  metadata: jsonb("metadata"), // Store chain configuration, conditions, etc.
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  firmChainIdx: index('agent_chains_firm_idx').on(table.firmId),
+  typeIdx: index('agent_chains_type_idx').on(table.chainType),
+  activeIdx: index('agent_chains_active_idx').on(table.isActive),
+}));
+
+// Agent chain steps table - individual steps in a chain
+export const agentChainSteps = pgTable("agent_chain_steps", {
+  id: serial("id").primaryKey(),
+  chainId: integer("chain_id").references(() => agentChains.id, { onDelete: 'cascade' }).notNull(),
+  agentId: integer("agent_id").references(() => llmAgents.id).notNull(),
+  stepOrder: integer("step_order").notNull(),
+  stepName: text("step_name"),
+  inputSource: text("input_source"), // 'document', 'previous_step', 'parallel_merge'
+  outputTarget: text("output_target"), // 'next_step', 'final_output', 'branch'
+  conditions: jsonb("conditions"), // Conditions for conditional execution
+  retryCount: integer("retry_count").default(3),
+  timeoutSeconds: integer("timeout_seconds").default(300),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  chainStepIdx: index('agent_chain_steps_chain_idx').on(table.chainId),
+  orderIdx: index('agent_chain_steps_order_idx').on(table.chainId, table.stepOrder),
+  agentIdx: index('agent_chain_steps_agent_idx').on(table.agentId),
+}));
+
+// Document mappings table - maps document types to agent chains
+export const documentMappings = pgTable("document_mappings", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  documentTypeId: integer("document_type_id").references(() => documentStencils.id),
+  documentTypeName: text("document_type_name"), // For custom document types
+  chainId: integer("chain_id").references(() => agentChains.id).notNull(),
+  processingRules: jsonb("processing_rules"), // autoProcess, requiresApproval, outputFormat, etc.
+  priority: integer("priority").default(0),
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  firmDocTypeIdx: index('document_mappings_firm_type_idx').on(table.firmId, table.documentTypeId),
+  chainIdx: index('document_mappings_chain_idx').on(table.chainId),
+  activeIdx: index('document_mappings_active_idx').on(table.isActive),
+}));
+
+// Agent execution logs table - tracks agent execution history
+export const agentExecutionLogs = pgTable("agent_execution_logs", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  documentId: integer("document_id"), // Reference to processed document
+  chainId: integer("chain_id").references(() => agentChains.id).notNull(),
+  agentId: integer("agent_id").references(() => llmAgents.id).notNull(),
+  stepId: integer("step_id").references(() => agentChainSteps.id),
+  executionId: text("execution_id").notNull(), // UUID for grouping chain execution
+  status: text("status").notNull(), // 'pending', 'running', 'completed', 'failed', 'cancelled'
+  inputData: jsonb("input_data"),
+  outputData: jsonb("output_data"),
+  errorMessage: text("error_message"),
+  executionTimeMs: integer("execution_time_ms"),
+  tokensUsed: integer("tokens_used"),
+  cost: integer("cost"), // In cents
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  firmExecIdx: index('agent_execution_logs_firm_idx').on(table.firmId),
+  executionIdx: index('agent_execution_logs_execution_idx').on(table.executionId),
+  statusIdx: index('agent_execution_logs_status_idx').on(table.status),
+  createdAtIdx: index('agent_execution_logs_created_idx').on(table.createdAt),
+}));
+
+// Doc+ injection rules table - for dynamic agent injection
+export const docPlusRules = pgTable("doc_plus_rules", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  agentId: integer("agent_id").references(() => llmAgents.id).notNull(),
+  insertionPoint: integer("insertion_point").notNull(), // Step order to insert at
+  conditions: jsonb("conditions").notNull(), // Document conditions for activation
+  priority: integer("priority").default(0),
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  firmRuleIdx: index('doc_plus_rules_firm_idx').on(table.firmId),
+  agentIdx: index('doc_plus_rules_agent_idx').on(table.agentId),
+  activeIdx: index('doc_plus_rules_active_idx').on(table.isActive),
+}));
+
+// Document stencils table
 export const documentStencils = pgTable("document_stencils", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id),
@@ -502,7 +957,87 @@ export const documentStencils = pgTable("document_stencils", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Insert schemas
+// Firm branding table
+export const firmBranding = pgTable("firm_branding", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull().unique(),
+  logoUrl: text("logo_url"),
+  primaryColor: text("primary_color").default("#2563eb"),
+  secondaryColor: text("secondary_color").default("#64748b"),
+  accentColor: text("accent_color").default("#f59e0b"),
+  customCss: text("custom_css"),
+  headerLogo: text("header_logo"),
+  emailLogo: text("email_logo"),
+  faviconUrl: text("favicon_url"),
+  brandName: text("brand_name"),
+  tagline: text("tagline"),
+  websiteUrl: text("website_url"),
+  socialMedia: jsonb("social_media"),
+  brandingSettings: jsonb("branding_settings"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Firm preferences table
+export const firmPreferences = pgTable("firm_preferences", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull().unique(),
+  timezone: text("timezone").default("America/New_York"),
+  dateFormat: text("date_format").default("MM/DD/YYYY"),
+  timeFormat: text("time_format").default("12h"),
+  currency: text("currency").default("USD"),
+  language: text("language").default("en"),
+  notifications: jsonb("notifications"),
+  features: jsonb("features"),
+  integrationSettings: jsonb("integration_settings"),
+  billingSettings: jsonb("billing_settings"),
+  securitySettings: jsonb("security_settings"),
+  customFields: jsonb("custom_fields"),
+  workflowSettings: jsonb("workflow_settings"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Firm templates table
+export const firmTemplates = pgTable("firm_templates", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  category: text("category"),
+  description: text("description"),
+  content: text("content").notNull(),
+  variables: jsonb("variables"),
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false),
+  version: integer("version").default(1),
+  metadata: jsonb("metadata"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  lastModifiedBy: integer("last_modified_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Compliance agreements table
+export const complianceAgreements = pgTable("compliance_agreements", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  agreementType: text("agreement_type").notNull(),
+  version: text("version").notNull(),
+  content: text("content").notNull(),
+  isAccepted: boolean("is_accepted").default(false),
+  acceptedAt: timestamp("accepted_at"),
+  acceptanceIpAddress: text("acceptance_ip_address"),
+  acceptanceUserAgent: text("acceptance_user_agent"),
+  expiresAt: timestamp("expires_at"),
+  metadata: jsonb("metadata"),
+});
+
+// ============================================================================
+// INSERT SCHEMAS (AFTER ALL TABLES)
+// ============================================================================
+
 export const insertFirmSchema = createInsertSchema(firms).omit({
   id: true,
   createdAt: true,
@@ -567,7 +1102,6 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   timestamp: true,
 });
 
-// Onboarding schemas
 export const insertOnboardingSessionSchema = createInsertSchema(onboardingSessions).omit({
   id: true,
   createdAt: true,
@@ -673,8 +1207,6 @@ export const insertSystemAdminSchema = createInsertSchema(systemAdmins).omit({
   createdAt: true,
 });
 
-// Old insertFirmIntegrationSchema removed - duplicate definition resolved
-
 export const insertPlatformSettingSchema = createInsertSchema(platformSettings).omit({
   id: true,
   createdAt: true,
@@ -692,9 +1224,9 @@ export const insertAvailableIntegrationSchema = createInsertSchema(availableInte
 });
 
 export const insertFirmSettingsSchema = createInsertSchema(firmSettings).omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertPlatformIntegrationSchema = createInsertSchema(platformIntegrations).omit({
@@ -726,7 +1258,6 @@ export const insertIntegrationRateLimitSchema = createInsertSchema(integrationRa
   updatedAt: true,
 });
 
-// LLM Insert Schemas
 export const insertFirmLlmSettingsSchema = createInsertSchema(firmLlmSettings).omit({
   id: true,
   createdAt: true,
@@ -750,239 +1281,451 @@ export const insertLlmUsageLogSchema = createInsertSchema(llmUsageLogs).omit({
   createdAt: true,
 });
 
-export const insertLlmResponseCacheSchema = createInsertSchema(llmResponseCache).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertDocumentStencilSchema = createInsertSchema(documentStencils).omit({
+export const insertLlmProviderSchema = createInsertSchema(llmProviders).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-// Insert schemas for firm branding, preferences, templates, and compliance
-export const insertFirmBrandingSchema = createInsertSchema(firmBranding).omit({
+export const insertLlmModelSchema = createInsertSchema(llmModels).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertFirmPreferencesSchema = createInsertSchema(firmPreferences).omit({
+// AI Agent Insert Schemas
+export const insertLlmAgentSchema = createInsertSchema(llmAgents).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertFirmTemplateSchema = createInsertSchema(firmTemplates).omit({
+export const insertAgentChainSchema = createInsertSchema(agentChains).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAgentChainStepSchema = createInsertSchema(agentChainSteps).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDocumentMappingSchema = createInsertSchema(documentMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAgentExecutionLogSchema = createInsertSchema(agentExecutionLogs).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertComplianceAgreementSchema = createInsertSchema(complianceAgreements).omit({
+export const insertDocPlusRuleSchema = createInsertSchema(docPlusRules).omit({
   id: true,
-  acceptedAt: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
-// Types
+// Enhanced Features Insert Schemas
+export const insertAgentChainValidationSchema = createInsertSchema(agentChainValidations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPromptVersionSchema = createInsertSchema(promptVersions).omit({
+  id: true,
+  createdAt: true,
+  archivedAt: true,
+});
+
+export const insertPromptVersionAuditSchema = createInsertSchema(promptVersionAudits).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertIntegrationHealthCheckSchema = createInsertSchema(integrationHealthChecks).omit({
+  id: true,
+  lastChecked: true,
+  createdAt: true,
+});
+
+export const insertIntegrationHealthAlertSchema = createInsertSchema(integrationHealthAlerts).omit({
+  id: true,
+  createdAt: true,
+  resolvedAt: true,
+});
+
+export const insertNotificationSubscriptionSchema = createInsertSchema(notificationSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWebsocketSessionSchema = createInsertSchema(websocketSessions).omit({
+  id: true,
+  createdAt: true,
+  disconnectedAt: true,
+});
+
+export const insertNotificationDeliveryLogSchema = createInsertSchema(notificationDeliveryLogs).omit({
+  id: true,
+  createdAt: true,
+  deliveredAt: true,
+});
+
+export const insertDocumentProcessingWorkflowSchema = createInsertSchema(documentProcessingWorkflows).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+  createdAt: true,
+});
+
+export const insertSystemMetricSchema = createInsertSchema(systemMetrics).omit({
+  id: true,
+  timestamp: true,
+});
+
+// ============================================================================
+// TYPE DEFINITIONS (AFTER ALL INSERT SCHEMAS)
+// ============================================================================
+
 export type InsertFirm = z.infer<typeof insertFirmSchema>;
 export type Firm = typeof firms.$inferSelect;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
+
 export type InsertAnalysis = z.infer<typeof insertAnalysisSchema>;
 export type DocumentAnalysis = typeof documentAnalyses.$inferSelect;
+
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
+
 export type InsertCase = z.infer<typeof insertCaseSchema>;
 export type Case = typeof cases.$inferSelect;
+
 export type InsertTimeLog = z.infer<typeof insertTimeLogSchema>;
 export type TimeLog = typeof timeLogs.$inferSelect;
+
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Invoice = typeof invoices.$inferSelect;
+
 export type InsertBillingPermission = z.infer<typeof insertBillingPermissionSchema>;
 export type BillingPermission = typeof billingPermissions.$inferSelect;
+
 export type InsertFirmBillingSettings = z.infer<typeof insertFirmBillingSettingsSchema>;
 export type FirmBillingSettings = typeof firmBillingSettings.$inferSelect;
+
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
-export type InsertClientIntake = z.infer<typeof insertClientIntakeSchema>;
-export type ClientIntake = typeof clientIntakes.$inferSelect;
-export type InsertFirmAnalysisSettings = z.infer<typeof insertFirmAnalysisSettingsSchema>;
-export type FirmAnalysisSettings = typeof firmAnalysisSettings.$inferSelect;
 
-// Analysis Features Configuration Type
-export interface AnalysisFeatures {
-  summarization: boolean;
-  riskAnalysis: boolean;
-  clauseExtraction: boolean;
-  crossReference: boolean;
-  formatting: boolean;
-  [key: string]: boolean;
-}
-export type InsertFolder = z.infer<typeof insertFolderSchema>;
-export type Folder = typeof folders.$inferSelect;
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type Message = typeof messages.$inferSelect;
-export type InsertMessageThread = z.infer<typeof insertMessageThreadSchema>;
-export type MessageThread = typeof messageThreads.$inferSelect;
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-export type Notification = typeof notifications.$inferSelect;
-export type InsertCommunicationLog = z.infer<typeof insertCommunicationLogSchema>;
-export type CommunicationLog = typeof communicationLogs.$inferSelect;
-export type InsertAdminGhostSession = z.infer<typeof insertAdminGhostSessionSchema>;
-export type AdminGhostSession = typeof adminGhostSessions.$inferSelect;
-export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
-export type CalendarEvent = typeof calendarEvents.$inferSelect;
-export type InsertAiTriageResult = z.infer<typeof insertAiTriageResultSchema>;
-export type AiTriageResult = typeof aiTriageResults.$inferSelect;
-export type InsertInvoiceLineItem = z.infer<typeof insertInvoiceLineItemSchema>;
-export type InvoiceLineItem = typeof invoiceLineItems.$inferSelect;
-export type InsertPayment = z.infer<typeof insertPaymentSchema>;
-export type Payment = typeof payments.$inferSelect;
-export type InsertClientAuth = z.infer<typeof insertClientAuthSchema>;
-export type ClientAuth = typeof clientAuth.$inferSelect;
-export type InsertBillingForm = z.infer<typeof insertBillingFormSchema>;
-export type BillingForm = typeof billingForms.$inferSelect;
-export type InsertSystemAlert = z.infer<typeof insertSystemAlertSchema>;
-export type SystemAlert = typeof systemAlerts.$inferSelect;
-export type InsertSystemAdmin = z.infer<typeof insertSystemAdminSchema>;
-export type SystemAdmin = typeof systemAdmins.$inferSelect;
-export type InsertPlatformSetting = z.infer<typeof insertPlatformSettingSchema>;
-export type PlatformSetting = typeof platformSettings.$inferSelect;
-export type InsertDocumentTypeTemplate = z.infer<typeof insertDocumentTypeTemplateSchema>;
-export type DocumentTypeTemplate = typeof documentTypeTemplates.$inferSelect;
-export type InsertAvailableIntegration = z.infer<typeof insertAvailableIntegrationSchema>;
-export type AvailableIntegration = typeof availableIntegrations.$inferSelect;
-export type InsertFirmSettings = z.infer<typeof insertFirmSettingsSchema>;
-export type FirmSettings = typeof firmSettings.$inferSelect;
+export type InsertOnboardingSession = z.infer<typeof insertOnboardingSessionSchema>;
+export type OnboardingSession = typeof onboardingSessions.$inferSelect;
 
-// New Integration Architecture Types
-export type InsertPlatformIntegration = z.infer<typeof insertPlatformIntegrationSchema>;
-export type PlatformIntegration = typeof platformIntegrations.$inferSelect;
-export type InsertFirmIntegration = z.infer<typeof insertFirmIntegrationSchema>;
-export type FirmIntegration = typeof firmIntegrations.$inferSelect;
-export type InsertUserIntegrationPermission = z.infer<typeof insertUserIntegrationPermissionSchema>;
-export type UserIntegrationPermission = typeof userIntegrationPermissions.$inferSelect;
-export type InsertIntegrationAuditLog = z.infer<typeof insertIntegrationAuditLogSchema>;
-export type IntegrationAuditLog = typeof integrationAuditLogs.$inferSelect;
-export type InsertIntegrationRateLimit = z.infer<typeof insertIntegrationRateLimitSchema>;
-export type IntegrationRateLimit = typeof integrationRateLimits.$inferSelect;
-
-// LLM Types
-export type InsertFirmLlmSettings = z.infer<typeof insertFirmLlmSettingsSchema>;
-export type FirmLlmSettings = typeof firmLlmSettings.$inferSelect;
-export type InsertLlmPromptTemplate = z.infer<typeof insertLlmPromptTemplateSchema>;
-export type LlmPromptTemplate = typeof llmPromptTemplates.$inferSelect;
-export type InsertFirmPromptConfiguration = z.infer<typeof insertFirmPromptConfigurationSchema>;
-export type FirmPromptConfiguration = typeof firmPromptConfigurations.$inferSelect;
-export type InsertLlmUsageLog = z.infer<typeof insertLlmUsageLogSchema>;
-export type LlmUsageLog = typeof llmUsageLogs.$inferSelect;
-export type InsertLlmResponseCache = z.infer<typeof insertLlmResponseCacheSchema>;
-export type LlmResponseCache = typeof llmResponseCache.$inferSelect;
-export type InsertDocumentStencil = z.infer<typeof insertDocumentStencilSchema>;
-export type DocumentStencil = typeof documentStencils.$inferSelect;
-
-// Onboarding Types
 export type InsertOnboardingProfile = z.infer<typeof insertOnboardingProfileSchema>;
 export type OnboardingProfile = typeof onboardingProfiles.$inferSelect;
 
-// New tables for firm branding, preferences, templates, and compliance agreements
-export const firmBranding = pgTable("firm_branding", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull().unique(),
-  logoUrl: text("logo_url"),
-  primaryColor: text("primary_color").default("#2563eb"),
-  secondaryColor: text("secondary_color").default("#64748b"),
-  accentColor: text("accent_color").default("#f59e0b"),
-  customCss: text("custom_css"),
-  headerLogo: text("header_logo"),
-  emailLogo: text("email_logo"),
-  faviconUrl: text("favicon_url"),
-  brandName: text("brand_name"),
-  tagline: text("tagline"),
-  websiteUrl: text("website_url"),
-  socialMedia: jsonb("social_media"),
-  brandingSettings: jsonb("branding_settings"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export type InsertClientIntake = z.infer<typeof insertClientIntakeSchema>;
+export type ClientIntake = typeof clientIntakes.$inferSelect;
 
-export const firmPreferences = pgTable("firm_preferences", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull().unique(),
-  timezone: text("timezone").default("America/New_York"),
-  dateFormat: text("date_format").default("MM/DD/YYYY"),
-  timeFormat: text("time_format").default("12h"),
-  currency: text("currency").default("USD"),
-  language: text("language").default("en"),
-  notifications: jsonb("notifications"),
-  features: jsonb("features"),
-  integrationSettings: jsonb("integration_settings"),
-  billingSettings: jsonb("billing_settings"),
-  securitySettings: jsonb("security_settings"),
-  customFields: jsonb("custom_fields"),
-  workflowSettings: jsonb("workflow_settings"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export type InsertFolder = z.infer<typeof insertFolderSchema>;
+export type Folder = typeof folders.$inferSelect;
 
-export const firmTemplates = pgTable("firm_templates", {
+export type InsertFirmAnalysisSettings = z.infer<typeof insertFirmAnalysisSettingsSchema>;
+export type FirmAnalysisSettings = typeof firmAnalysisSettings.$inferSelect;
+
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+
+export type InsertMessageThread = z.infer<typeof insertMessageThreadSchema>;
+export type MessageThread = typeof messageThreads.$inferSelect;
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+
+export type InsertCommunicationLog = z.infer<typeof insertCommunicationLogSchema>;
+export type CommunicationLog = typeof communicationLogs.$inferSelect;
+
+export type InsertAdminGhostSession = z.infer<typeof insertAdminGhostSessionSchema>;
+export type AdminGhostSession = typeof adminGhostSessions.$inferSelect;
+
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+
+export type InsertAiTriageResult = z.infer<typeof insertAiTriageResultSchema>;
+export type AiTriageResult = typeof aiTriageResults.$inferSelect;
+
+export type InsertInvoiceLineItem = z.infer<typeof insertInvoiceLineItemSchema>;
+export type InvoiceLineItem = typeof invoiceLineItems.$inferSelect;
+
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Payment = typeof payments.$inferSelect;
+
+export type InsertClientAuth = z.infer<typeof insertClientAuthSchema>;
+export type ClientAuth = typeof clientAuth.$inferSelect;
+
+export type InsertBillingForm = z.infer<typeof insertBillingFormSchema>;
+export type BillingForm = typeof billingForms.$inferSelect;
+
+export type InsertSystemAlert = z.infer<typeof insertSystemAlertSchema>;
+export type SystemAlert = typeof systemAlerts.$inferSelect;
+
+export type InsertSystemAdmin = z.infer<typeof insertSystemAdminSchema>;
+export type SystemAdmin = typeof systemAdmins.$inferSelect;
+
+export type InsertPlatformSetting = z.infer<typeof insertPlatformSettingSchema>;
+export type PlatformSetting = typeof platformSettings.$inferSelect;
+
+export type InsertDocumentTypeTemplate = z.infer<typeof insertDocumentTypeTemplateSchema>;
+export type DocumentTypeTemplate = typeof documentTypeTemplates.$inferSelect;
+
+export type InsertAvailableIntegration = z.infer<typeof insertAvailableIntegrationSchema>;
+export type AvailableIntegration = typeof availableIntegrations.$inferSelect;
+
+export type InsertFirmSettings = z.infer<typeof insertFirmSettingsSchema>;
+export type FirmSetting = typeof firmSettings.$inferSelect;
+
+export type InsertPlatformIntegration = z.infer<typeof insertPlatformIntegrationSchema>;
+export type PlatformIntegration = typeof platformIntegrations.$inferSelect;
+
+export type InsertFirmIntegration = z.infer<typeof insertFirmIntegrationSchema>;
+export type FirmIntegration = typeof firmIntegrations.$inferSelect;
+
+export type InsertUserIntegrationPermission = z.infer<typeof insertUserIntegrationPermissionSchema>;
+export type UserIntegrationPermission = typeof userIntegrationPermissions.$inferSelect;
+
+export type InsertIntegrationAuditLog = z.infer<typeof insertIntegrationAuditLogSchema>;
+export type IntegrationAuditLog = typeof integrationAuditLogs.$inferSelect;
+
+export type InsertIntegrationRateLimit = z.infer<typeof insertIntegrationRateLimitSchema>;
+export type IntegrationRateLimit = typeof integrationRateLimits.$inferSelect;
+
+export type InsertLlmSettings = z.infer<typeof insertFirmLlmSettingsSchema>;
+export type LlmSettings = typeof firmLlmSettings.$inferSelect;
+
+export type InsertLlmPromptTemplate = z.infer<typeof insertLlmPromptTemplateSchema>;
+export type LlmPromptTemplate = typeof llmPromptTemplates.$inferSelect;
+
+export type InsertFirmPromptConfiguration = z.infer<typeof insertFirmPromptConfigurationSchema>;
+export type FirmPromptConfiguration = typeof firmPromptConfigurations.$inferSelect;
+
+export type InsertLlmUsageLog = z.infer<typeof insertLlmUsageLogSchema>;
+export type LlmUsageLog = typeof llmUsageLogs.$inferSelect;
+
+export type InsertLlmProvider = z.infer<typeof insertLlmProviderSchema>;
+export type LlmProvider = typeof llmProviders.$inferSelect;
+
+export type InsertLlmModel = z.infer<typeof insertLlmModelSchema>;
+export type LlmModel = typeof llmModels.$inferSelect;
+
+// AI Agent Types
+export type InsertLlmAgent = z.infer<typeof insertLlmAgentSchema>;
+export type LlmAgent = typeof llmAgents.$inferSelect;
+
+export type InsertAgentChain = z.infer<typeof insertAgentChainSchema>;
+export type AgentChain = typeof agentChains.$inferSelect;
+
+export type InsertAgentChainStep = z.infer<typeof insertAgentChainStepSchema>;
+export type AgentChainStep = typeof agentChainSteps.$inferSelect;
+
+export type InsertDocumentMapping = z.infer<typeof insertDocumentMappingSchema>;
+export type DocumentMapping = typeof documentMappings.$inferSelect;
+
+export type InsertAgentExecutionLog = z.infer<typeof insertAgentExecutionLogSchema>;
+export type AgentExecutionLog = typeof agentExecutionLogs.$inferSelect;
+
+export type InsertDocPlusRule = z.infer<typeof insertDocPlusRuleSchema>;
+export type DocPlusRule = typeof docPlusRules.$inferSelect;
+
+// Enhanced Features Tables
+// =========================
+
+// Agent chain validation results table
+export const agentChainValidations = pgTable("agent_chain_validations", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
-  name: text("name").notNull(),
-  type: text("type").notNull(), // email, document, contract, letter
-  category: text("category"),
+  chainId: integer("chain_id").references(() => agentChains.id).notNull(),
+  validationData: jsonb("validation_data").notNull(),
+  isValid: boolean("is_valid").notNull(),
+  errors: jsonb("errors"),
+  warnings: jsonb("warnings"),
+  executionOrder: jsonb("execution_order"),
+  complexity: text("complexity").notNull(), // 'simple', 'moderate', 'complex'
+  validatedBy: integer("validated_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  firmChainIdx: index('agent_chain_validations_firm_chain_idx').on(table.firmId, table.chainId),
+  validIdx: index('agent_chain_validations_valid_idx').on(table.isValid),
+}));
+
+// Prompt versions table for versioning and rollback
+export const promptVersions = pgTable("prompt_versions", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").references(() => llmPromptTemplates.id).notNull(),
+  version: integer("version").notNull(),
+  content: text("content").notNull(),
+  systemPrompt: text("system_prompt").notNull(),
+  hash: text("hash").notNull().unique(),
+  isActive: boolean("is_active").default(false),
+  parentVersion: integer("parent_version"),
   description: text("description"),
-  content: text("content").notNull(),
-  variables: jsonb("variables"),
-  isActive: boolean("is_active").default(true),
-  isDefault: boolean("is_default").default(false),
-  version: integer("version").default(1),
-  metadata: jsonb("metadata"),
+  tags: jsonb("tags"),
+  performanceMetrics: jsonb("performance_metrics"),
   createdBy: integer("created_by").references(() => users.id).notNull(),
-  lastModifiedBy: integer("last_modified_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+  archivedAt: timestamp("archived_at"),
+}, (table) => ({
+  templateVersionIdx: index('prompt_versions_template_version_idx').on(table.templateId, table.version),
+  hashIdx: index('prompt_versions_hash_idx').on(table.hash),
+  activeIdx: index('prompt_versions_active_idx').on(table.isActive),
+}));
 
-export const complianceAgreements = pgTable("compliance_agreements", {
+// Prompt version audit logs
+export const promptVersionAudits = pgTable("prompt_version_audits", {
+  id: serial("id").primaryKey(),
+  templateId: integer("template_id").references(() => llmPromptTemplates.id).notNull(),
+  action: text("action").notNull(), // 'create', 'activate', 'rollback', 'archive'
+  fromVersion: integer("from_version"),
+  toVersion: integer("to_version"),
+  reason: text("reason"),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  templateActionIdx: index('prompt_version_audits_template_action_idx').on(table.templateId, table.action),
+  createdAtIdx: index('prompt_version_audits_created_idx').on(table.createdAt),
+}));
+
+// Integration health check results
+export const integrationHealthChecks = pgTable("integration_health_checks", {
   id: serial("id").primaryKey(),
   firmId: integer("firm_id").references(() => firms.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  agreementType: text("agreement_type").notNull(), // privacy, terms, compliance, data_retention
-  version: text("version").notNull(),
-  content: text("content").notNull(),
-  isAccepted: boolean("is_accepted").default(false),
-  acceptedAt: timestamp("accepted_at"),
-  acceptanceIpAddress: text("acceptance_ip_address"),
-  acceptanceUserAgent: text("acceptance_user_agent"),
-  expiresAt: timestamp("expires_at"),
+  integrationId: text("integration_id").notNull(), // External integration identifier
+  integrationName: text("integration_name").notNull(),
+  status: text("status").notNull(), // 'healthy', 'warning', 'error', 'unknown'
+  responseTime: integer("response_time").notNull(),
+  errorMessage: text("error_message"),
   metadata: jsonb("metadata"),
-});
+  lastChecked: timestamp("last_checked").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  firmIntegrationIdx: index('integration_health_firm_integration_idx').on(table.firmId, table.integrationId),
+  statusIdx: index('integration_health_status_idx').on(table.status),
+  checkedAtIdx: index('integration_health_checked_idx').on(table.lastChecked),
+}));
 
-// Insert schemas for firm branding, preferences, templates, and compliance
-export const insertFirmBrandingSchema = createInsertSchema(firmBranding).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Integration health alerts
+export const integrationHealthAlerts = pgTable("integration_health_alerts", {
+  id: serial("id").primaryKey(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  integrationId: text("integration_id").notNull(),
+  alertType: text("alert_type").notNull(), // 'warning', 'error', 'critical'
+  message: text("message").notNull(),
+  isResolved: boolean("is_resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: integer("resolved_by").references(() => users.id),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  firmAlertIdx: index('integration_health_alerts_firm_idx').on(table.firmId),
+  typeIdx: index('integration_health_alerts_type_idx').on(table.alertType),
+  resolvedIdx: index('integration_health_alerts_resolved_idx').on(table.isResolved),
+}));
 
-export const insertFirmPreferencesSchema = createInsertSchema(firmPreferences).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Real-time notification subscriptions
+export const notificationSubscriptions = pgTable("notification_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  channel: text("channel").notNull(),
+  isActive: boolean("is_active").default(true),
+  preferences: jsonb("preferences"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  userChannelIdx: index('notification_subscriptions_user_channel_idx').on(table.userId, table.channel),
+  firmChannelIdx: index('notification_subscriptions_firm_channel_idx').on(table.firmId, table.channel),
+  activeIdx: index('notification_subscriptions_active_idx').on(table.isActive),
+}));
 
-export const insertFirmTemplateSchema = createInsertSchema(firmTemplates).omit({
-  id: true,
-  createdAt: true,
-});
+// WebSocket connection sessions
+export const websocketSessions = pgTable("websocket_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  connectionId: text("connection_id").notNull(),
+  isActive: boolean("is_active").default(true),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  subscriptions: jsonb("subscriptions"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  disconnectedAt: timestamp("disconnected_at"),
+}, (table) => ({
+  sessionIdx: index('websocket_sessions_session_idx').on(table.sessionId),
+  userIdx: index('websocket_sessions_user_idx').on(table.userId),
+  activeIdx: index('websocket_sessions_active_idx').on(table.isActive),
+}));
 
-export const insertComplianceAgreementSchema = createInsertSchema(complianceAgreements).omit({
-  id: true,
-  acceptedAt: true,
-});
+// Notification delivery logs
+export const notificationDeliveryLogs = pgTable("notification_delivery_logs", {
+  id: serial("id").primaryKey(),
+  notificationId: text("notification_id").notNull(),
+  userId: integer("user_id").references(() => users.id),
+  firmId: integer("firm_id").references(() => firms.id),
+  channel: text("channel"),
+  deliveryMethod: text("delivery_method").notNull(), // 'websocket', 'email', 'sms', 'push'
+  status: text("status").notNull(), // 'sent', 'delivered', 'failed', 'queued'
+  errorMessage: text("error_message"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  notificationIdx: index('notification_delivery_logs_notification_idx').on(table.notificationId),
+  userDeliveryIdx: index('notification_delivery_logs_user_idx').on(table.userId),
+  statusIdx: index('notification_delivery_logs_status_idx').on(table.status),
+}));
 
-// Missing tables referenced in insert schemas
+// Document processing workflows (for tracking AI agent chain executions)
+export const documentProcessingWorkflows = pgTable("document_processing_workflows", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").references(() => documents.id).notNull(),
+  firmId: integer("firm_id").references(() => firms.id).notNull(),
+  chainId: integer("chain_id").references(() => agentChains.id).notNull(),
+  workflowId: text("workflow_id").notNull().unique(),
+  status: text("status").notNull(), // 'pending', 'running', 'completed', 'failed', 'cancelled'
+  currentStep: integer("current_step").default(0),
+  totalSteps: integer("total_steps").notNull(),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  results: jsonb("results"),
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  documentWorkflowIdx: index('document_processing_workflows_document_idx').on(table.documentId),
+  firmWorkflowIdx: index('document_processing_workflows_firm_idx').on(table.firmId),
+  statusIdx: index('document_processing_workflows_status_idx').on(table.status),
+  workflowIdx: index('document_processing_workflows_workflow_idx').on(table.workflowId),
+}));
+
+// System performance metrics
+export const systemMetrics = pgTable("system_metrics", {
+  id: serial("id").primaryKey(),
+  metricType: text("metric_type").notNull(), // 'api_response_time', 'db_query_time', 'websocket_connections', etc.
+  metricName: text("metric_name").notNull(),
+  value: integer("value").notNull(),
+  unit: text("unit").notNull(), // 'ms', 'count', 'bytes', etc.
+  tags: jsonb("tags"),
+  firmId: integer("firm_id").references(() => firms.id),
+  timestamp: timestamp("timestamp").defaultNow(),
+}, (table) => ({
+  typeNameIdx: index('system_metrics_type_name_idx').on(table.metricType, table.metricName),
+  timestampIdx: index('system_metrics_timestamp_idx').on(table.timestamp),
+  firmIdx: index('system_metrics_firm_idx').on(table.firmId),
+}));
