@@ -40,32 +40,160 @@ The onboarding system is the **core operational workflow** where Admin (Avi) con
 
 ### **📋 4-Step Onboarding Flow**
 
-#### **� Step 1: Firm Setup** *(The Big One)*
-- **What**: Collects all core firm data needed to build their portal
-- **Complexity**: Broken into sub-sections (Basic Info, Practice Areas, Branding) because it's the heaviest step
+#### **🔵 Step 1: Firm Setup** *(The Foundation)*
+- **What**: Collects all core firm data needed to build their custom portal
+- **Complexity**: Broken into sub-sections (Basic Info, Practice Areas, Branding) because it's the most comprehensive step
 - **Output**: Generates **Onboarding Code** (workspace session token for tracking progress)
-- **Why Complex**: Real firms have real complexity—practice areas, branding requirements, staff hierarchies
+- **Why Complex**: Real firms have complex practice areas (criminal, family, corporate law) and district-specific requirements. This step captures that complexity to ensure each firm gets a tailored FirmSync experience.
 
 #### **🟣 Step 2: Integrations**
-- **Dual Design Purpose**:
-  - *With Onboarding Code*: Firm selects from available integrations marketplace
-  - *Without Code*: Admin adds new API/Webhook integrations to grow the marketplace
-- **Smart Scaling**: Same UI serves both firm selection and Admin marketplace expansion
+- **Purpose**:
+  - *With Onboarding Code*: Allows firms to select integrations from the marketplace catagoriesed by functionality (e.g., CRM, Document Management, Billing)
+  - *Without Onboarding Code*: Enables Admin to add new API/Webhook integrations to expand the marketplace
+- **Dual Design**: The same UI supports both firm-specific integration selection and Admin-driven marketplace growth
+- **Security**: Each integration uses scoped API keys and role-based access control to ensure data isolation
 
-#### **🟣 Step 3: Prompt Configuration** *(AI-Powered)*
-- **The Magic**: Uses Admin's OpenAI API key to auto-generate firm-specific AI agents
-- **Input**: All collected firm data from Steps 1 & 2
-- **Output**: Pre-configured Head Agent and Subtasks tailored to this firm
-- **Why This Matters**: Firms get usable AI out-of-the-box without needing their own API keys or prompt engineering skills
+#### **� Step 3: Base Agent Configuration** *(AI-Powered Core)*
+- **Purpose**: Configures the **core agents** that handle the firm's primary workflows. These agents are categorized by interaction type:
 
-#### **🟣 Step 4: Document + Agent Assignment** *(Doc+)*
-- **Purpose**: Maps specific AI agents to specific document types
-- **Result**: Firm's internal AI workflow for document analysis is defined
-- **Smart Default**: Agents have clear, pre-configured tasks for their document processing
+##### **Agent Categories**:
 
-#### **🟢 Admin Preview** *(QA, Not a Formal Step)*
-- **Reality Check**: Final review of fully configured FirmSync website template
-- **Purpose**: Ensures all firm data, integrations, and agents are correctly assembled before launch
+1. **Text-Box Agents (Paralegal+ Specific)**:
+   - **Doc Gen Agent**: Smart text box with filters for document type, jurisdiction, etc.
+   - **Case Analysis Agent**: Processes case details via user input forms
+   - **Legal Research Agent**: Handles research queries through structured input
+   - **Document Review Agent**: Reviews uploaded documents via user interface
+   
+2. **Data-Driven Agents (API/Database-Integrated)**:
+   - **Cases Agent**: Interacts with case management APIs or FirmSync database
+   - **Clients Agent**: Pulls client data from CRM integrations
+   - **Calendar Agent**: Syncs with calendar systems for scheduling
+   - **Billing Agent**: Processes billing data from integrated platforms
+
+##### **How It Works**:
+- **Text-Box Agents**: Users interact via forms/filters in Paralegal+ interface → agents consume input → generate dynamic prompts
+- **Data-Driven Agents**: Fetch data from APIs or FirmSync database (based on Step 2 selections) → process data → return insights
+- **Security**: Role-based access control ensures each agent only accesses authorized data sources
+- **Output**: 4 core workflow agents (Cases, Clients, Calendar, Billing) + 4 Paralegal+ interface agents
+
+#### **🔴 Step 4: Document Agent Assignment** *(Agent Chain Completion)*
+- **Purpose**: Creates **specialized document agents** that integrate into the agent chain system for document-specific processing
+
+##### **Agent Chain Architecture**:
+```typescript
+// Based on PROJECT_OUTLINE_AUTO.md Agent Chain System
+interface AgentChain {
+  id: string;
+  firmId: number;
+  name: string;
+  agents: {
+    agentId: string;
+    order: number;
+    role: 'head' | 'processor' | 'synthesizer';
+    inputFrom?: string;  // Previous agent ID
+    outputTo?: string;   // Next agent ID
+  }[];
+}
+```
+
+##### **Document Processing Flow**:
+```
+Document Input
+     ↓
+[🧠 Head Agent] - Analyzes document type and delegates
+     ↓
+[📄 Specialized Document Agent] - NDA, Contract, etc.
+     ↓
+[✍️ Synthesis Agent] - Combines outputs
+     ↓
+Final Report 
+```
+
+##### **How Document Agents Work**:
+1. **Agent Chain Integration**: Document agents become part of the processing chain
+   - Head Agent receives document and determines type
+   - Delegates to appropriate specialized agent (NDA Agent, Contract Agent, etc.)
+   - Synthesis Agent combines all outputs into final result
+
+2. **Dynamic Agent Injection (Doc+)**:
+   ```typescript
+   interface DocPlusAgent {
+     insertionPoint: number;  // Where in chain to insert
+     condition: (doc: Document) => boolean;  // When to activate
+     agent: Agent;  // The specialized agent to inject
+   }
+   ```
+
+3. **Paralegal+ User Experience**:
+   - Users see simple document type dropdowns
+   - Behind the scenes: Complex agent chain orchestration
+   - No technical complexity exposed to end users
+
+##### **Security & Validation**:
+- **Agent Chain Validation**: Prevents circular dependencies and ensures logical flow
+- **Data Scoping**: Each document agent only accesses its specific document type data
+- **Audit Logging**: All agent interactions tracked for compliance
+- **Error Handling**: Robust retry mechanisms for agent execution failures
+
+#### **🟢 Admin Preview** *(Final FirmSync Portal Assembly)*
+- **Purpose**: Shows the complete, assembled FirmSync portal with all integrations, agents, and branding applied
+- **Portal Structure**: Simple 7-tab layout - Dashboard, Clients, Cases, Calendar, Paralegal+, Billing, Settings
+
+##### **Cohesive Integration System**:
+```
+Step 2 Selections → Step 3 Agents → Portal Tabs with Embedded Tools
+
+Examples:
+- QuickBooks selected → Billing Agent configured → Billing tab shows embedded QuickBooks
+- CRM selected → Clients Agent configured → Clients tab shows embedded CRM  
+- Calendar integration → Calendar Agent configured → Calendar tab shows embedded scheduling
+- Paralegal+ tab → Always shows 4 text-box agents (Doc Gen, Research, etc.)
+```
+
+##### **Fallback Logic** (Complete Coverage):
+- **No QuickBooks?** → Use FirmSync billing system with document upload via agents
+- **No CRM?** → Use built-in client management with agent-assisted data entry
+- **No Calendar?** → Use FirmSync scheduling with deadline tracking
+- **Document Upload**: Agents automatically categorize and assign uploads to appropriate database systems
+
+##### **What Admin Sees in Preview**:
+- Final portal with firm branding (logo, colors)
+- All selected integrations embedded in their respective tabs
+- Fallback FirmSync tools for unselected integrations
+- Complete workflow ready for firm users
+- OpenAI usage analytics in Settings tab 
+
+## 🏗️ FirmSync Portal Structure
+
+### **Simple 7-Tab Layout** *(What Firms Get After Onboarding)*
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ HEADER: [Firm Logo] FirmSync Legal | Search | User Menu     │
+├─────────────────────────────────────────────────────────────┤
+│ TAB NAVIGATION:                                             │
+│ Dashboard | Clients | Cases | Calendar | Paralegal+ | Billing | Settings │
+├─────────────────────────────────────────────────────────────┤
+│ MAIN CONTENT: Integration-aware with fallback systems      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **Integration-First Design with Fallback**
+
+| Portal Tab | With Integration | Without Integration (Fallback) |
+|------------|------------------|--------------------------------|
+| **Clients** | Embedded CRM (Salesforce, etc.) | FirmSync client management + agent assistance |
+| **Cases** | Case management integration | Built-in case tracking + agent categorization |
+| **Calendar** | Google/Outlook calendar | FirmSync scheduling + deadline agents |
+| **Billing** | Embedded QuickBooks/billing | FirmSync billing + document upload agents |
+| **Paralegal+** | Always shows 4 text-box agents | Doc Gen, Research, Case Analysis, Document Review |
+| **Settings** | Firm profile + integration status | Firm profile + OpenAI usage analytics |
+
+### **Agent-Integration Harmony**
+- **Step 2** (Integrations) determines what tools embed in each tab
+- **Step 3** (Agents) configures AI assistance for each workflow area  
+- **Step 4** (Document Agents) adds specialized processing for each document type
+- **Result**: Seamless workflow where agents assist with both integrated tools and fallback systems
 
 ### **⚡️ Onboarding Code System**
 
@@ -77,6 +205,21 @@ onboardingCode: "FIRM-XYZ-2025-ABC123"
 // Loads: Firm data, current step, configured integrations, AI agents
 ```
 
+##### **Context-Aware Navigation System**
+
+The admin interface dynamically changes behavior based on onboarding context:
+
+| Nav Item | Without Code (Platform Mode) | With Code (Onboarding Mode) |
+|----------|------------------------------|------------------------------|
+| **Home** | Platform metrics dashboard | Onboarding progress tracker |
+| **Firms** | List all firms, create new | Step 1: Configure firm details |
+| **Integrations** | Manage marketplace | Step 2: Select firm integrations |
+| **LLM** | Template management | Step 3: Generate AI agents |
+| **Doc+** | Document type library | Step 4: Map agents to documents |
+| **VR** | View FirmSync template | Preview configured firm |
+
+This dual-mode navigation ensures admins can vie platform layout while seamlessly switching to firm-specific onboarding contexts.
+
 ## 🏗️ Architecture & Design Decisions
 
 ### **Why Multi-Tenant From Day One?**
@@ -86,9 +229,7 @@ Most SaaS platforms start single-tenant and retrofit multi-tenancy later—a pai
 - **Data Isolation**: Every query filtered by `firmId` prevents data leakage
 - **Role Boundaries**: Admin, Owner, and Firm roles have clear separation in code
 - **Scaling Vision**: When MedSync, EduSync, HRSYNC become real, the foundation exists
-- **Honest Growth**: Forces us to think about 100+ firms when we have 5
-
-### **Technology Stack** *(AI-Copilot Scaffolded)*
+- **Honest Growth**: Forces us to think about 100+ firms when we have none today
 
 ```typescript
 Frontend:
@@ -109,9 +250,9 @@ AI Integration:
 - Firm-specific agent generation
 ```
 
-### **Database Design Philosophy**
 
-```sql
+
+
 -- Every table includes firmId for complete tenant isolation
 -- Foreign keys maintain referential integrity across tenants
 -- Optimized indexes for performance at scale
@@ -239,14 +380,18 @@ SELECT * FROM documents WHERE firmId = ? AND userId = ?;
 ### **AI Workflow Architecture**
 
 ```typescript
-// Onboarding: Admin's OpenAI key auto-generates firm-specific agents
-Step 3: Firm Data → AI Prompt Assembly → Custom Head Agent + Subtasks
+// Onboarding: Admin's OpenAI key auto-generates firm-specific agent prompts
+Step 3: Firm Data → AI Prompt Assembly → Agent Chain Configuration
 
-// Production: Firm users upload documents
-Document Upload → Type Detection → Agent Assignment → AI Analysis → Review
+// Production: Firm's OpenAI key powers actual document processing
+Document Upload → Head Agent Analysis → Specialized Agents → Synthesis → Review
 ```
 
-**Why Admin's API Key?** Firms get pre-configured AI without needing their own OpenAI accounts or prompt engineering skills. Admin acts as the "AI factory" during onboarding.
+**Dual-Key System Benefits**:
+- **Cost Separation**: Platform pays for onboarding setup, firms pay for usage
+- **Security**: Firm keys encrypted at rest with AES-256-GCM
+- **Scalability**: Admin can onboard firms without requiring immediate OpenAI accounts
+- **Quality Control**: Admin-generated prompts ensure consistent, high-quality agent behavior
 
 ## � Why This Design? (Honest Assessment)
 
@@ -340,52 +485,10 @@ DELETE /api/documents/:id               # Delete document
 // Firm users restricted to their firm's data only
 ```
 
-## 📚 Documentation Policy
-
-- The ONLY authoritative source for architecture and requirements is `PROJECT_OUTLINE_AUTO.md`
-- Historical documents, audits, and reference materials are in the `/legacy` folder
-- Legacy files contain valuable insights but are NOT implementation requirements
-- If you find conflicting information, always defer to `PROJECT_OUTLINE_AUTO.md`
-- Future enhancements should follow the patterns in `PROJECT_OUTLINE_AUTO.md`
-
 ### 📂 Project Structure
 - `/` - Root directory containing active, current files
 - `/legacy` - Historical reference materials, past audits, and development artifacts
-- Additional directories as outlined in `PROJECT_OUTLINE_AUTO.md`
 
-## 🤝 Contributing
-
-**Contributing**:
-- Fork & clone
-- `npm install`  
-- Create feature branch
-- `npm run check` before PR
-- Follow TypeScript and ESLint standards
-- Write tests for new features
-
-## 📜 License & Status
-
-**License**: MIT - Use it, modify it, scale it commercially
-
-### **Current Status** *(Honest Assessment)*
-- ✅ **FirmSync**: Production-ready for legal document processing
-- ✅ **Multi-Tenant**: Real data isolation, scales to 100+ firms
-- ✅ **Admin Onboarding**: 4-step process generates working firm portals
-- ✅ **AI Integration**: Auto-generates firm-specific agents via Admin's API key
-- � **Code Quality**: AI-generated, inconsistent, but functional
-- � **Other Verticals**: Framework exists, implementation needed
-
-### **Roadmap** *(Vision vs. Reality)*
-
-**2025 Q3-Q4**:
-- Clean up AI-generated code inconsistencies
-- Implement MedSync (healthcare) vertical
-- Enhanced AI document analysis with GPT-4
-
-**2026**:
-- EduSync and HRSYNC verticals
-- Mobile applications
-- Enterprise integrations (DocuSign, QuickBooks)
 
 ## � Final Thoughts
 
