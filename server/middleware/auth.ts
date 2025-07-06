@@ -243,3 +243,114 @@ export const requireActiveOnboarding = async (req: Request, res: Response, next:
 
   next();
 };
+
+// Tenant validation helper functions for Phase 1 enhancement
+
+/**
+ * Validates that a user can access a specific tenant (firm)
+ * @param firmCode - The tenant's firm code from URL
+ * @param user - The authenticated user object
+ * @returns Promise<{valid: boolean, firm?: any, error?: string}>
+ */
+export const validateTenantScope = async (firmCode: string, user: any): Promise<{valid: boolean, firm?: any, error?: string}> => {
+  try {
+    // Admin users can access any tenant
+    if (user.role === 'admin' || user.role === 'platform_admin' || user.role === 'super_admin') {
+      // For admins, we still need to verify the firm exists
+      const firmService = new FirmService();
+      const firm = await firmService.getFirmBySlug(firmCode);
+      if (!firm) {
+        return { valid: false, error: 'Firm not found' };
+      }
+      return { valid: true, firm };
+    }
+
+    // Regular users must belong to the requested firm
+    if (!user.firmId) {
+      return { valid: false, error: 'User not associated with any firm' };
+    }
+
+    const firmService = new FirmService();
+    const userFirm = await firmService.getFirmById(user.firmId, 'default');
+    
+    if (!userFirm) {
+      return { valid: false, error: 'User firm not found' };
+    }
+
+    if (userFirm.slug !== firmCode) {
+      return { valid: false, error: 'Access denied: User can only access their own firm' };
+    }
+
+    return { valid: true, firm: userFirm };
+  } catch (error) {
+    console.error('Tenant scope validation error:', error);
+    return { valid: false, error: 'Tenant validation failed' };
+  }
+};
+
+/**
+ * Middleware to attach tenant information to request without strict validation
+ * Used for routes that need tenant context but don't require strict enforcement
+ */
+export const attachTenantInfo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { firmCode } = req.params;
+    const user = req.user;
+
+    if (firmCode && user) {
+      const validation = await validateTenantScope(firmCode, user);
+      if (validation.valid && validation.firm) {
+        req.tenantContext = {
+          subdomain: validation.firm.slug,
+          firmId: validation.firm.id
+        };
+      }
+    }
+
+    next();
+  } catch (error) {
+    // Don't fail the request, just log and continue
+    console.warn('Failed to attach tenant info:', error);
+    next();
+  }
+};
+
+/**
+ * Enhanced firm user middleware with tenant scope validation
+ * Replaces basic requireFirmUser for routes that need tenant isolation
+ */
+export const requireFirmUserWithTenant = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    // First ensure user is authenticated and is a firm user
+    if (!req.user) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    if (!['firm_admin', 'paralegal', 'firm_user'].includes(req.user.role)) {
+      res.status(403).json({ error: 'Firm user access required' });
+      return;
+    }
+
+    // Then validate tenant scope if firmCode is in params
+    const { firmCode } = req.params;
+    if (firmCode) {
+      const validation = await validateTenantScope(firmCode, req.user);
+      if (!validation.valid) {
+        res.status(403).json({ error: validation.error || 'Tenant access denied' });
+        return;
+      }
+      
+      // Attach validated tenant context
+      req.tenantContext = {
+        subdomain: validation.firm!.slug,
+        firmId: validation.firm!.id
+      };
+    }
+
+    next();
+  } catch (error) {
+    console.error('Firm user tenant validation error:', error);
+    res.status(500).json({ error: 'Authentication validation failed' });
+  }
+};

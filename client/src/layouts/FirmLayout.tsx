@@ -3,15 +3,22 @@ import { Route, Switch } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/contexts/SessionContext';
 
-// Import firm portal pages
-import DashboardPage from '@/pages/Firm/DashboardPage';
-import DocumentsPage from '@/pages/Firm/DocumentsPage';
-import BillingPage from '@/pages/Firm/BillingPage';
-import SettingsPage from '@/pages/Firm/SettingsPage';
+// Import firm portal pages - now from tenant/[slug]
+import DashboardPage from '@/pages/tenant/[slug]/dashboard';
+import DocumentsPage from '@/pages/tenant/[slug]/documents';
+import BillingPage from '@/pages/tenant/[slug]/billing';
+import SettingsPage from '@/pages/tenant/[slug]/settings';
+import CasesPage from '@/pages/tenant/[slug]/cases';
+import ClientsPage from '@/pages/tenant/[slug]/clients';
+import CalendarPage from '@/pages/tenant/[slug]/calendar';
+import ParalegalPage from '@/pages/tenant/[slug]/paralegal';
 
-// Layout for firm portal (/app/*)
+// Layout for tenant portal (/tenant/[slug]/*)
 export default function FirmLayout() {
   const { user, logout } = useSession();
+
+  // Get tenant slug from user context or URL
+  const tenantSlug = user?.firmId || 'default'; // fallback
 
   const handleLogout = async () => {
     await logout();
@@ -47,25 +54,43 @@ export default function FirmLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
             <a
-              href="/app/dashboard"
+              href={`/tenant/${tenantSlug}/dashboard`}
               className="py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium"
             >
               Dashboard
             </a>
             <a
-              href="/app/documents"
+              href={`/tenant/${tenantSlug}/clients`}
               className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700"
             >
-              Documents
+              Clients
             </a>
             <a
-              href="/app/billing"
+              href={`/tenant/${tenantSlug}/cases`}
+              className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+            >
+              Cases
+            </a>
+            <a
+              href={`/tenant/${tenantSlug}/calendar`}
+              className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+            >
+              Calendar
+            </a>
+            <a
+              href={`/tenant/${tenantSlug}/paralegal`}
+              className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+            >
+              Paralegal+
+            </a>
+            <a
+              href={`/tenant/${tenantSlug}/billing`}
               className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700"
             >
               Billing
             </a>
             <a
-              href="/app/settings"
+              href={`/tenant/${tenantSlug}/settings`}
               className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700"
             >
               Settings
@@ -77,12 +102,16 @@ export default function FirmLayout() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <Switch>
-          <Route path="/app/dashboard" component={DashboardPage} />
-          <Route path="/app/documents" component={DocumentsPage} />
-          <Route path="/app/billing" component={BillingPage} />
-          <Route path="/app/settings" component={SettingsPage} />
+          <Route path={`/tenant/${tenantSlug}/dashboard`} component={DashboardPage} />
+          <Route path={`/tenant/${tenantSlug}/clients`} component={ClientsPage} />
+          <Route path={`/tenant/${tenantSlug}/cases`} component={CasesPage} />
+          <Route path={`/tenant/${tenantSlug}/calendar`} component={CalendarPage} />
+          <Route path={`/tenant/${tenantSlug}/paralegal`} component={ParalegalPage} />
+          <Route path={`/tenant/${tenantSlug}/billing`} component={BillingPage} />
+          <Route path={`/tenant/${tenantSlug}/settings`} component={SettingsPage} />
+          <Route path={`/tenant/${tenantSlug}/documents`} component={DocumentsPage} />
           <Route>
-            <FirmDashboardPage />
+            <DashboardPage />
           </Route>
         </Switch>
       </main>

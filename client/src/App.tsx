@@ -48,9 +48,9 @@ function App() {
                   } 
                 />
                 
-                {/* Firm Routes */}
+                {/* Tenant Routes (FirmSync Portal) */}
                 <Route 
-                  path="/firm/*" 
+                  path="/tenant/*" 
                   element={
                     <RequireAuth role="firm_user">
                       <FirmLayout />

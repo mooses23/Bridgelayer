@@ -91,7 +91,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setUser(loginData.user);
         setIsLoading(false);
         // Determine redirect path based on mode
-        const redirectPath = mode === 'firm' ? '/app/dashboard' : '/admin';
+        const redirectPath = mode === 'firm' ? `/tenant/${loginData.user.firmId}/dashboard` : '/admin';
         console.log("📤 Redirecting to:", redirectPath);
         return { success: true, redirectPath };
       } else {

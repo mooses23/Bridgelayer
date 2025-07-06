@@ -33,19 +33,24 @@ export const refreshTokens = pgTable('refresh_tokens', {
 });
 
 // Firms
-export const firms = pgTable('firms', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  subdomain: varchar('subdomain', { length: 63 }),
-  openaiKey: varchar('openai_key', { length: 255 }),
-  practiceAreas: json('practice_areas').$type<string[]>(),
-  billingPlan: varchar('billing_plan', { length: 255 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at'),
-  deletedAt: timestamp('deleted_at')
-}, (table) => ({
-  subdomainIdx: uniqueIndex('firms_subdomain_idx').on(table.subdomain)
-}));
+export const firms = pgTable("firms", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  subdomain: text("subdomain").unique(),
+  domain: text("domain"),
+  plan: text("plan").notNull().default("starter"),
+  status: text("status").notNull().default("active"),
+  onboarded: boolean("onboarded").notNull().default(false),
+  onboardingComplete: boolean("onboarding_complete").default(false),
+  onboardingCode: text("onboarding_code").unique(),
+  onboardingStep: integer("onboarding_step").default(1),
+  openaiApiKey: text("openai_api_key"),
+  logoUrl: text("logo_url"),
+  settings: jsonb("settings"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
 
 // Firm Users
 export const firmUsers = pgTable('firm_users', {
