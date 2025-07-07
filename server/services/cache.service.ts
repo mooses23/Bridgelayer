@@ -147,29 +147,30 @@ export class CacheService {
       logger.error(`Failed to get cache for hash ${hash} field ${field}:`, error);
       return null;
     }
-  }    /**
-     * Cache query results with pagination support
-     */
-    public async cacheQueryResults<T>(
-        key: string,
-        queryFn: () => Promise<T>,
-        ttl: number = 300, // 5 minutes default
-        page?: number,
-        pageSize?: number
-    ): Promise<T> {
-        const cacheKey = page && pageSize 
-            ? `${key}:page=${page}:size=${pageSize}`
-            : key;
+  }
 
-        const cached = await this.get<T>(cacheKey);
-        if (cached) {
-            return cached;
-        }
+  /**
+   * Cache query results with pagination support
+   */
+  public async cacheQueryResults<T>(
+    key: string,
+    queryFn: () => Promise<T>,
+    ttl: number = 300, // 5 minutes default
+    page?: number,
+    pageSize?: number
+  ): Promise<T> {
+    const cacheKey = page && pageSize 
+        ? `${key}:page=${page}:size=${pageSize}`
+        : key;
 
-        const results = await queryFn();
-        await this.set(cacheKey, results, ttl);
-        return results;
+    const cached = await this.get<T>(cacheKey);
+    if (cached) {
+        return cached;
     }
+
+    const results = await queryFn();
+    await this.set(cacheKey, results, ttl);
+    return results;
   }
 
   /**

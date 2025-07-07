@@ -54,9 +54,9 @@ export const firms = pgTable("firms", {
 
 // Firm Users
 export const firmUsers = pgTable('firm_users', {
-  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
-  firmId: bigint('firm_id', { mode: 'number' }).references(() => firms.id, { onDelete: 'cascade' }),
-  userId: bigint('user_id', { mode: 'number' }).references(() => users.id, { onDelete: 'cascade' }),
+  id: serial('id').primaryKey(),
+  firmId: integer('firm_id').references(() => firms.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   isOwner: boolean('is_owner').notNull().default(false),
   role: varchar('role', { length: 255 }).notNull().default('member'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -67,7 +67,7 @@ export const firmUsers = pgTable('firm_users', {
 
 // Admin Settings
 export const adminSettings = pgTable('admin_settings', {
-  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
+  id: serial('id').primaryKey(),
   platformOpenaiKey: varchar('platform_openai_key', { length: 255 }),
   platformOpenaiModel: varchar('platform_openai_model', { length: 255 }),
   minPasswordLength: integer('min_password_length').notNull().default(8),
@@ -82,53 +82,6 @@ export const platformSettings = pgTable("platform_settings", {
   key: text("key").notNull().unique(),
   value: text("value"),
   encrypted: boolean("encrypted").default(false),
-  updatedAt: timestamp("updated_at").defaultNow()
-});
-
-// ============================================================================
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  subdomain: text("subdomain").unique(),
-  domain: text("domain"),
-  plan: text("plan").notNull().default("starter"),
-  status: text("status").notNull().default("active"),
-  onboarded: boolean("onboarded").notNull().default(false),
-  onboardingComplete: boolean("onboarding_complete").default(false),
-  onboardingCode: text("onboarding_code").unique(),
-  onboardingStep: integer("onboarding_step").default(1),
-  openaiApiKey: text("openai_api_key"),
-  logoUrl: text("logo_url"),
-  settings: jsonb("settings"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-});
-
-// Users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id),
-  email: text("email").notNull().unique(),
-  username: text("username"),
-  password: text("password").notNull(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  role: text("role").notNull().default("viewer"),
-  status: text("status").notNull().default("active"),
-  lastLoginAt: timestamp("last_login_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-});
-
-// Firm users table
-export const firmUsers = pgTable("firm_users", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("firm_user"),
-  status: text("status").notNull().default("active"),
-  createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
@@ -550,15 +503,6 @@ export const systemAdmins = pgTable("system_admins", {
   email: text("email").notNull().unique(),
   permissions: jsonb("permissions"),
   createdAt: timestamp("created_at").defaultNow()
-});
-
-// Platform settings table
-export const platformSettings = pgTable("platform_settings", {
-  id: serial("id").primaryKey(),
-  key: text("key").notNull().unique(),
-  value: text("value"),
-  encrypted: boolean("encrypted").default(false),
-  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Document type templates table

@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { config } from '../config/env';
+import { env } from '../config/env.js';
 import { UserRepository } from '../repositories/user.repository';
 import { FirmRepository } from '../repositories/firm.repository';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { users, firmUsers } from '../../shared/schema';
 import { FirmService } from '../services/firm.service';
 import { UserService } from '../services/user.service';
 
@@ -50,7 +49,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     }
 
     // Verify JWT token
-    const secret = config.JWT_SECRET || process.env.JWT_SECRET || 'fallback-secret-key';
+    const secret = env.JWT_SECRET || process.env.JWT_SECRET || 'fallback-secret-key';
     
     const decoded = jwt.verify(accessToken, secret) as any;
     
@@ -89,7 +88,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 };
 
 // Admin role middleware
-export const requireModernJWTAdmin = requireModernJWTAuth;
+export const requireModernJWTAdmin = requireAuth;
 
 // Role-based authorization middleware
 export const requireRole = (allowedRoles: string[]) => {
@@ -161,51 +160,6 @@ export const optionalModernAuth = async (req: Request, res: Response, next: Next
     // Silently continue without authentication
   }
   
-  next();
-};
-
-// Auth middleware for protecting routes based on role
-export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const secret = process.env.JWT_SECRET || 'fallback-secret-key';
-    const decoded = jwt.verify(token, secret) as any;
-
-    if (!decoded) {
-      return res.status(401).json({ error: 'Invalid token' });
-    }
-
-    // Attach decoded user to request
-    req.user = decoded;
-    
-    // If user is firm_user, attach firmId
-    if (decoded.role === 'firm_user') {
-      req.firmId = decoded.firmId;
-    }
-
-    next();
-  } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-  next();
-};
-
-export const requireFirmUser = (req: Request, res: Response, next: NextFunction) => {
-  if (!req.user || req.user.role !== 'firm_user' || !req.firmId) {
-    return res.status(403).json({ error: 'Firm access required' });
-  }
   next();
 };
 

@@ -4,11 +4,14 @@ import { createServer } from "http";
 import { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { authStrategyMiddleware } from "./auth/strategy-router";
-import { requireAuth, requireAdmin, requireFirmUser, validateFirmCode, createFirmUserWithValidationMiddleware } from "./auth/middleware/auth-middleware";
+import { requireAuth, requireTenantAccess, validateOnboardingCode, requireFirmUserWithTenant, requireFirmUser, requireRole } from "./middleware/auth.js";
 import { refreshJWTTokens } from "./auth/jwt-auth-clean";
 import { loginHandler } from "./services/authService";
 // Import new unified authentication controller
 import authController from './authController';
+
+// Create admin middleware
+const requireAdmin = requireRole(['admin', 'platform_admin', 'super_admin']);
 
 // Import LLM routes
 import llmRoutes from "./routes/llm";
@@ -214,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Firm portal API routes (protected by requireFirmUser middleware)
-  app.get('/api/app/profile/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/profile/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     try {
       const { firmCode } = req.params;
       const user = req.user as any;
@@ -231,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/app/dashboard/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/dashboard/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     try {
       const { firmCode } = req.params;
       const user = req.user as any;
@@ -251,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/app/documents/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/documents/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     try {
       const { firmCode } = req.params;
       const user = req.user as any;
@@ -319,7 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/app/billing/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/billing/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     try {
       const { firmCode } = req.params;
       const user = req.user as any;
@@ -465,7 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard summary endpoint - NOW REQUIRES TENANT SCOPING
-  app.get("/api/dashboard-summary/:firmCode", requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get("/api/dashboard-summary/:firmCode", requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     try {
       const { firmCode } = req.params;
       const user = req.user as any;
@@ -496,7 +499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cases endpoints - NOW REQUIRE TENANT SCOPING
-  app.get("/api/cases/:firmCode", requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get("/api/cases/:firmCode", requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     try {
       const { firmCode } = req.params;
       const user = req.user as any;
@@ -536,7 +539,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/cases-summary/:firmCode", requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get("/api/cases-summary/:firmCode", requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     try {
       const { firmCode } = req.params;
       const user = req.user as any;
@@ -975,7 +978,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Keep legacy routes with deprecation warnings for backward compatibility
 
   // MIGRATED: Profile route (was /api/app/profile/:firmCode)
-  app.get('/api/app/profile/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/profile/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     console.warn(`⚠️ DEPRECATED: /api/app/profile/${req.params.firmCode} called. Use /api/tenant/${req.params.firmCode}/profile instead`);
     
     // Add deprecation header
@@ -1003,7 +1006,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MIGRATED: Dashboard route (was /api/app/dashboard/:firmCode)  
-  app.get('/api/app/dashboard/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/dashboard/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     console.warn(`⚠️ DEPRECATED: /api/app/dashboard/${req.params.firmCode} called. Use /api/tenant/${req.params.firmCode}/dashboard instead`);
     
     res.set('X-Deprecation-Warning', 'This endpoint is deprecated. Use /api/tenant/:firmCode/dashboard instead');
@@ -1033,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MIGRATED: Documents route (was /api/app/documents/:firmCode)
-  app.get('/api/app/documents/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/documents/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     console.warn(`⚠️ DEPRECATED: /api/app/documents/${req.params.firmCode} called. Use /api/tenant/${req.params.firmCode}/documents instead`);
     
     res.set('X-Deprecation-Warning', 'This endpoint is deprecated. Use /api/tenant/:firmCode/documents instead');
@@ -1115,7 +1118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MIGRATED: Billing route (was /api/app/billing/:firmCode)
-  app.get('/api/app/billing/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/billing/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     console.warn(`⚠️ DEPRECATED: /api/app/billing/${req.params.firmCode} called. Use /api/tenant/${req.params.firmCode}/billing instead`);
     
     res.set('X-Deprecation-Warning', 'This endpoint is deprecated. Use /api/tenant/:firmCode/billing instead');
@@ -1223,7 +1226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MIGRATED: Templates route (was /api/app/templates/:firmCode)
-  app.get('/api/app/templates/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/templates/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     console.warn(`⚠️ DEPRECATED: /api/app/templates/${req.params.firmCode} called. Use /api/tenant/${req.params.firmCode}/templates instead`);
     
     res.set('X-Deprecation-Warning', 'This endpoint is deprecated. Use /api/tenant/:firmCode/templates instead');
@@ -1251,7 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MIGRATED: Document Generation route (was /api/app/documents/:firmCode/generate)
-  app.post('/api/app/documents/:firmCode/generate', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.post('/api/app/documents/:firmCode/generate', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     console.warn(`⚠️ DEPRECATED: /api/app/documents/${req.params.firmCode}/generate called. Use /api/tenant/${req.params.firmCode}/documents/generate instead`);
     
     res.set('X-Deprecation-Warning', 'This endpoint is deprecated. Use /api/tenant/:firmCode/documents/generate instead');
@@ -1287,7 +1290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // MIGRATED: Time Entries Get route (was /api/app/time-entries/:firmCode)
-  app.get('/api/app/time-entries/:firmCode', requireAuth, requireFirmUser, validateFirmCode, async (req, res) => {
+  app.get('/api/app/time-entries/:firmCode', requireAuth, requireFirmUser, requireFirmUserWithTenant, async (req, res) => {
     console.warn(`⚠️ DEPRECATED: /api/app/time-entries/${req.params.firmCode} called. Use /api/tenant/${req.params.firmCode}/time-entries instead`);
     
     res.set('X-Deprecation-Warning', 'This endpoint is deprecated. Use /api/tenant/:firmCode/time-entries instead');
@@ -1361,4 +1364,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return router;
 }
 
-export default createHybridRoutes;
+export default registerRoutes;

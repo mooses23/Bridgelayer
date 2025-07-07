@@ -10,6 +10,7 @@ import invoiceRoutes from './invoice.routes';
 import documentRoutes from './document.routes';
 import notificationRoutes from './notification.routes';
 import calendarRoutes from './calendar.routes';
+import tenantRoutes from './tenant.routes';
 
 const router = Router();
 
@@ -20,6 +21,9 @@ router.use('/firms', firmRoutes);
 router.use('/hybrid-auth', hybridAuthRoutes);
 router.use('/onboarding', onboardingRoutes);
 router.use('/admin', adminRoutes);
+
+// Tenant portal routes
+router.use('/tenant', tenantRoutes);
 
 // Agent routes for universal form handling
 router.post('/agent/submit', handleAgentSubmit);
