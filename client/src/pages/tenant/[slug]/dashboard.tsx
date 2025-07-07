@@ -2,14 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FeatureToggle from "@/components/FeatureToggle";
 import { useTenant } from "@/contexts/TenantContext";
 import { useQuery } from "@tanstack/react-query";
+import apiService from "@/services/api.service";
 
 export default function DashboardPage() {
   const { tenant, hasFeature } = useTenant();
   
   const { data: summary, isLoading } = useQuery({
-    queryKey: ["dashboard-summary", tenant?.id],
-    queryFn: () => fetch(`/api/dashboard-summary?tenant=${tenant?.id}`, { credentials: "include" }).then(r => r.json()),
-    enabled: !!tenant?.id
+    queryKey: ["dashboard-summary", tenant?.slug],
+    queryFn: async () => {
+      const response = await apiService.get(`/tenant/${tenant?.slug}/dashboard`);
+      return response.data;
+    },
+    enabled: !!tenant?.slug
   });
 
   return (

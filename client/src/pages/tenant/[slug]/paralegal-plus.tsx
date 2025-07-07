@@ -20,11 +20,27 @@ import {
 } from 'lucide-react';
 import DocumentUpload from '@/components/documents/DocumentUpload';
 import DocumentList from '@/components/documents/DocumentList';
+import { useQuery } from '@tanstack/react-query';
+import { useTenant } from '@/contexts/TenantContext';
+import apiService from '@/services/api.service';
+import { Document } from '@/types/schema';
 
-export default function ParalegalDashboard() {
+export default function ParalegalPlusDashboard() {
+  const { tenant } = useTenant();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('documents');
 
-  // Mock data for paralegal workflow
+  // Fetch documents using API service
+  const { data: documents = [], isLoading: documentsLoading } = useQuery({
+    queryKey: ['documents', tenant?.slug],
+    queryFn: async () => {
+      const response = await apiService.getDocuments(tenant?.slug || '');
+      return response.data;
+    },
+    enabled: !!tenant?.slug && activeTab === 'documents'
+  });
+
+  // Mock data for paralegal workflow - will be replaced with API data in future iterations
   const workQueue = [
     {
       id: 1,
@@ -55,16 +71,6 @@ export default function ParalegalDashboard() {
       status: 'pending',
       estimatedTime: '1.5 hours',
       complexity: 'standard'
-    },
-    {
-      id: 4,
-      type: 'Settlement Review',
-      client: 'Personal Injury Case #445',
-      priority: 'high',
-      deadline: '2025-06-27',
-      status: 'review-ready',
-      estimatedTime: '3 hours',
-      complexity: 'complex'
     }
   ];
 
@@ -105,271 +111,260 @@ export default function ParalegalDashboard() {
     averageProcessingTime: '1.2 hours'
   };
 
+  // Filter work queue based on search
+  const filteredQueue = workQueue.filter(item =>
+    item.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.client.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Filter documents based on search
+  const filteredDocuments = documents.filter((doc: Document) =>
+    doc.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.documentType?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Priority color mapping
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Status color mapping
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in-progress': return 'bg-blue-100 text-blue-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Handle document upload
+  const handleDocumentUpload = async (files: File[]) => {
+    if (!files.length || !tenant?.slug) return;
+    
+    const formData = new FormData();
+    formData.append('file', files[0]);
+    
+    try {
+      await apiService.uploadDocument(tenant.slug, formData);
+      // Refresh documents list
+    } catch (error) {
+      console.error('Error uploading document:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Paralegal Workstation</h1>
-        <p className="opacity-90">AI-powered legal document analysis and review dashboard</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Paralegal+</h1>
+          <p className="text-muted-foreground">
+            AI-powered legal document analysis and workflow automation
+          </p>
+        </div>
+        <Button onClick={() => setActiveTab('upload')}>
+          <Upload className="h-4 w-4 mr-2" />
+          Upload Document
+        </Button>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingReviews}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalWorkload - stats.pendingReviews} in progress
-            </p>
-          </CardContent>
-        </Card>
+      {/* Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search documents, workflows, or research..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completedToday}</div>
-            <p className="text-xs text-muted-foreground">
-              Documents reviewed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Workload</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalWorkload}</div>
-            <p className="text-xs text-muted-foreground">
-              Active assignments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Processing</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.averageProcessingTime}</div>
-            <p className="text-xs text-muted-foreground">
-              Per document
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Workflow Tabs */}
-      <Tabs defaultValue="queue" className="space-y-6">
+      {/* Main Content */}
+      <Tabs defaultValue="documents" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="queue">Work Queue</TabsTrigger>
-          <TabsTrigger value="upload">Document Upload</TabsTrigger>
-          <TabsTrigger value="analysis">Analysis Results</TabsTrigger>
-          <TabsTrigger value="research">Legal Research</TabsTrigger>
+          <TabsTrigger value="documents">
+            <FileText className="h-4 w-4 mr-2" />
+            Documents
+          </TabsTrigger>
+          <TabsTrigger value="workflows">
+            <Clock className="h-4 w-4 mr-2" />
+            Workflows
+          </TabsTrigger>
+          <TabsTrigger value="research">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Research
+          </TabsTrigger>
+          <TabsTrigger value="upload">
+            <Upload className="h-4 w-4 mr-2" />
+            Upload
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="queue" className="space-y-6">
-          {/* Priority Work Queue */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Scale className="h-5 w-5" />
-                Priority Work Queue
-              </CardTitle>
-              <CardDescription>Documents requiring paralegal review and analysis</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {workQueue.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full ${
-                        item.priority === 'high' ? 'bg-red-500' :
-                        item.priority === 'medium' ? 'bg-yellow-500' :
-                        'bg-green-500'
-                      }`} />
-                      <div>
-                        <h3 className="font-medium">{item.type}</h3>
-                        <p className="text-sm text-gray-600">{item.client}</p>
-                        <div className="flex items-center gap-4 mt-1">
-                          <span className="text-xs text-gray-500">
-                            Due: {item.deadline}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            Est: {item.estimatedTime}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {item.complexity}
-                          </Badge>
+        <TabsContent value="documents" className="space-y-4">
+          {documentsLoading ? (
+            <div className="text-center py-8">Loading documents...</div>
+          ) : filteredDocuments.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+              <h3 className="font-medium text-gray-600">No documents found</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Upload documents to analyze them with Paralegal+ AI
+              </p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setActiveTab('upload')}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload a Document
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredDocuments.map((doc: Document) => (
+                <Card key={doc.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <CardContent className="p-0">
+                    <div className="p-4 border-b flex items-center justify-between">
+                      <div className="flex items-center">
+                        <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                        <div>
+                          <h4 className="font-medium truncate max-w-xs">{doc.originalName}</h4>
+                          <p className="text-sm text-gray-500">
+                            {new Date(doc.uploadedAt).toLocaleDateString()} • {formatFileSize(doc.fileSize)}
+                          </p>
                         </div>
                       </div>
+                      <Badge>{doc.documentType || 'Document'}</Badge>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Badge variant={
-                        item.status === 'pending' ? 'secondary' :
-                        item.status === 'in-progress' ? 'default' :
-                        'outline'
-                      }>
-                        {item.status.replace('-', ' ')}
-                      </Badge>
-                      <Button size="sm">
-                        {item.status === 'review-ready' ? 'Review' : 'Start'}
-                      </Button>
+                    <div className="p-4">
+                      <div className="flex space-x-2 mb-2">
+                        <Button variant="outline" size="sm">
+                          <Brain className="h-3 w-3 mr-1" /> Analyze
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Scale className="h-3 w-3 mr-1" /> Review
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Last modified: {new Date(doc.updatedAt).toLocaleString()}
+                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="upload" className="space-y-6">
-          {/* Document Upload Interface */}
+        <TabsContent value="workflows" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Document Upload & Analysis
-              </CardTitle>
-              <CardDescription>Upload legal documents for AI-powered analysis</CardDescription>
+              <CardTitle>Active Workflows</CardTitle>
+              <CardDescription>Documents requiring review or action</CardDescription>
             </CardHeader>
             <CardContent>
-              <DocumentUpload 
-                onDocumentUploaded={(doc) => console.log('Document uploaded:', doc)}
-                onDocumentRemoved={() => console.log('Document removed')}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analysis" className="space-y-6">
-          {/* Analysis Results */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Recent Analysis Results
-              </CardTitle>
-              <CardDescription>AI analysis results for recent document reviews</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentDocuments.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <FileText className="h-8 w-8 text-blue-600" />
+              {filteredQueue.length === 0 ? (
+                <div className="text-center py-6">
+                  <CheckCircle className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                  <h3 className="font-medium text-gray-600">All caught up!</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    No pending workflows at the moment
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredQueue.map((item) => (
+                    <div 
+                      key={item.id}
+                      className="p-4 border rounded-lg flex items-center justify-between hover:bg-gray-50"
+                    >
                       <div>
-                        <h3 className="font-medium">{doc.name}</h3>
-                        <p className="text-sm text-gray-600">{doc.type}</p>
-                        <p className="text-xs text-gray-500">Uploaded {doc.uploadedAt}</p>
+                        <div className="flex items-center">
+                          <h4 className="font-medium">{item.type}</h4>
+                          <Badge className={getPriorityColor(item.priority)} className="ml-2">
+                            {item.priority}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {item.client} • {item.estimatedTime} • {item.complexity}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <div className="text-sm text-right">
+                          <div className="font-medium">Due: {new Date(item.deadline).toLocaleDateString()}</div>
+                          <Badge className={getStatusColor(item.status)}>
+                            {item.status}
+                          </Badge>
+                        </div>
+                        <Button>Start</Button>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-4">
-                      {doc.status === 'analyzed' && (
-                        <>
-                          <div className="text-center">
-                            <div className="text-sm font-medium">{doc.confidence}%</div>
-                            <div className="text-xs text-gray-500">Confidence</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm font-medium flex items-center gap-1">
-                              {doc.issues}
-                              <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                            </div>
-                            <div className="text-xs text-gray-500">Issues</div>
-                          </div>
-                        </>
-                      )}
-                      <Badge variant={
-                        doc.status === 'analyzed' ? 'default' :
-                        doc.status === 'processing' ? 'secondary' :
-                        'outline'
-                      }>
-                        {doc.status}
-                      </Badge>
-                      <Button size="sm" variant="outline">
-                        View Report
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="research" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Legal Research Assistant</CardTitle>
+              <CardDescription>Ask questions about legal topics and case law</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <MessageSquare className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                <h3 className="font-medium text-gray-600">Legal Research Assistant</h3>
+                <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
+                  Ask questions about statutes, case law, or legal concepts to get AI-powered research assistance
+                </p>
+                <Input 
+                  placeholder="What is the statute of limitations for..." 
+                  className="mt-4 max-w-md mx-auto"
+                />
+                <Button className="mt-2">
+                  <Search className="h-4 w-4 mr-2" />
+                  Research
+                </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="research" className="space-y-6">
-          {/* Legal Research Tools */}
+        <TabsContent value="upload" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Legal Research Assistant
-              </CardTitle>
-              <CardDescription>AI-powered legal research and case law analysis</CardDescription>
+              <CardTitle>Upload Documents</CardTitle>
+              <CardDescription>Upload legal documents for AI analysis</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <Input 
-                    placeholder="Search case law, statutes, or legal topics..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button>
-                    <Search className="h-4 w-4 mr-2" />
-                    Research
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <Scale className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                        <h3 className="font-medium">Case Law Search</h3>
-                        <p className="text-sm text-gray-600">Find relevant precedents</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <FileText className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                        <h3 className="font-medium">Statute Lookup</h3>
-                        <p className="text-sm text-gray-600">Search legal statutes</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <BookOpen className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                        <h3 className="font-medium">Legal Forms</h3>
-                        <p className="text-sm text-gray-600">Access legal templates</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+              <DocumentUpload onUpload={handleDocumentUpload} />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+// Helper function to format file size
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }

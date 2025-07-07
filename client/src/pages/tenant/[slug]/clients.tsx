@@ -21,51 +21,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useQuery } from '@tanstack/react-query';
+import apiService from '@/services/api.service';
+import { useTenant } from '@/contexts/TenantContext';
+import { Client } from '@/types/schema';
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Mock client data - would come from API
-  const clients = [
-    {
-      id: 1,
-      name: "TechCorp Inc",
-      type: "Corporate",
-      contact: "John Smith",
-      email: "john.smith@techcorp.com",
-      phone: "(555) 123-4567",
-      status: "Active",
-      activeCases: 3,
-      lastActivity: "2025-01-15"
+  const { tenant } = useTenant();
+  
+  // Fetch clients using API service
+  const { data: clients = [], isLoading, error } = useQuery({
+    queryKey: ['clients', tenant?.slug],
+    queryFn: async () => {
+      const response = await apiService.getClients(tenant?.slug || '');
+      return response.data;
     },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      type: "Individual",
-      contact: "Sarah Johnson",
-      email: "sarah.johnson@email.com", 
-      phone: "(555) 987-6543",
-      status: "Active",
-      activeCases: 1,
-      lastActivity: "2025-01-12"
-    },
-    {
-      id: 3,
-      name: "Manufacturing Solutions LLC",
-      type: "Corporate",
-      contact: "Michael Brown",
-      email: "m.brown@mansol.com",
-      phone: "(555) 456-7890",
-      status: "Inactive",
-      activeCases: 0,
-      lastActivity: "2024-12-20"
-    }
-  ];
+    enabled: !!tenant?.slug
+  });
 
-  const filteredClients = clients.filter(client =>
+  const filteredClients = clients.filter((client: Client) =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusColor = (status: string) => {

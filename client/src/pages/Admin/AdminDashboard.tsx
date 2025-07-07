@@ -7,11 +7,11 @@ import FirmsTab from '@/pages/Admin/tabs/FirmsTab';
 import LLMWorkflowTab from '@/pages/Admin/tabs/LLMWorkflowTab';
 import IntegrationsTab from '@/pages/Admin/tabs/IntegrationsTab';
 import AgentsTab from '@/pages/Admin/tabs/AgentsTab';
-import PreviewTab from '@/pages/Admin/tabs/PreviewTab';
+import EnhancedPreviewTab from '@/pages/Admin/tabs/EnhancedPreviewTab';
 import VRTab from '@/pages/Admin/tabs/VRTab';
 import SettingsTab from '@/pages/Admin/tabs/SettingsTab';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ code: propCode }: { code?: string }) {
   const { isLoading: sessionLoading, isAuthenticated } = useSession();
   const [, setLocation] = useLocation();
   
@@ -27,7 +27,11 @@ export default function AdminDashboard() {
   }
 
   const [activeTab, setActiveTab] = React.useState<string>('Dashboard');
-  const [code, setCode] = React.useState<string>('');
+  
+  // Use prop code or extract from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlCode = urlParams.get('code');
+  const code = propCode || urlCode || '';
   const tabs = [
     { key: 'Dashboard', label: 'Dashboard', icon: BarChart3 },
     { key: 'Firms', label: 'Firms', icon: Building2 },
@@ -67,7 +71,7 @@ export default function AdminDashboard() {
         {activeTab === 'LLM Workflow' && <LLMWorkflowTab code={code} />}
         {activeTab === 'VR' && <VRTab />}
         {activeTab === 'Preview' && (
-          <PreviewTab code={code} />
+          <EnhancedPreviewTab code={code} />
         )}
         {activeTab === 'Settings' && <SettingsTab />}
       </section>
