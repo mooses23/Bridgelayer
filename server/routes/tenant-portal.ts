@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth, requireFirmUser, validateFirmCode } from '../auth/middleware/auth-middleware.js';
+import { requireAuth, requireFirmUser } from '../auth/middleware/auth-middleware.js';
 import { requireTenantAccess, addTenantScope } from '../middleware/tenant-isolation.js';
 import { storage } from '../storage.js';
 
@@ -11,7 +11,7 @@ const router = Router();
  */
 
 // Apply tenant isolation middleware to all routes
-router.use('/:firmCode/*', requireAuth, requireFirmUser, validateFirmCode, requireTenantAccess, addTenantScope);
+router.use('/:firmCode/*', requireAuth, requireFirmUser, requireTenantAccess, addTenantScope);
 
 /**
  * HEALTH CHECK ENDPOINT

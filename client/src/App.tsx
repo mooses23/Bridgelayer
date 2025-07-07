@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider, useAuth } from '@/lib/auth';
+import { SessionProvider } from '@/contexts/SessionContext';
+import { useAuth } from '@/hooks/useAuth';
 import Login from '@/pages/Login/Login';
-import AdminLayout from '@/layouts/AdminLayout';
+import ModernAdminLayout from '@/layouts/ModernAdminLayout';
 import FirmLayout from '@/layouts/FirmLayout';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
@@ -32,7 +33,7 @@ function App() {
     <ErrorBoundary fallback={<div className="p-8 text-center"><h1>Error Loading App</h1></div>}>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <AuthProvider>
+          <SessionProvider>
             <div className="min-h-screen bg-gray-50">
               <Routes>
                 {/* Public Routes */}
@@ -43,7 +44,7 @@ function App() {
                   path="/admin/*" 
                   element={
                     <RequireAuth role="admin">
-                      <AdminLayout />
+                      <ModernAdminLayout />
                     </RequireAuth>
                   } 
                 />
@@ -64,7 +65,7 @@ function App() {
               
               <Toaster />
             </div>
-          </AuthProvider>
+          </SessionProvider>
         </Router>
       </QueryClientProvider>
     </ErrorBoundary>

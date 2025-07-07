@@ -1,66 +1,100 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import apiService from '@/services/api.service';
-import { User, Firm } from '@/types/schema';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { User, Firm } from '@shared/types/schema';
+import { authApi } from '@/lib/auth-api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   firm: Firm | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
   loading: boolean;
+  error: string | null;
+  login: (email: string, password: string, mode?: 'bridgelayer' | 'firm', code?: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [firm, setFirm] = useState<Firm | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const refreshSession = async () => {
+    try {
+      const { data } = await authApi.get('/auth/session');
+      if (data.user) {
+        setUser(data.user);
+        setFirm(data.firm || null);
+        setIsAuthenticated(true);
+        setError(null);
+      } else {
+        handleLogout();
+      }
+    } catch (err) {
+      handleLogout();
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setFirm(null);
+    setIsAuthenticated(false);
+    setError(null);
+    authApi.clearToken();
+  };
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const checkAuth = async () => {
+    const initializeAuth = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          apiService.setToken(token);
-          const response = await apiService.get('/auth/session');
-          
-          if (response.data.user) {
-            setUser(response.data.user);
-            setFirm(response.data.firm || null);
-            setIsAuthenticated(true);
-          }
-        }
-      } catch (error) {
-        console.error('Authentication check failed:', error);
-        localStorage.removeItem('token');
-        apiService.clearToken();
+        await refreshSession();
+      } catch (err) {
+        handleLogout();
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
+    initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string,
+    mode: 'bridgelayer' | 'firm' = 'bridgelayer',
+    code?: string
+  ) => {
     setLoading(true);
+    setError(null);
+    
     try {
-      const response = await apiService.post('/auth/login', { email, password });
-      const { token, user, firm } = response.data;
-      
-      localStorage.setItem('token', token);
-      apiService.setToken(token);
-      
-      setUser(user);
-      setFirm(firm || null);
+      const { data } = await authApi.post('/auth/login', {
+        email,
+        password,
+        mode,
+        code
+      });
+
+      setUser(data.user);
+      setFirm(data.firm || null);
       setIsAuthenticated(true);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+      
+      // Update API client token
+      if (data.accessToken) {
+        authApi.setToken(data.accessToken);
+      }
+
+      // Handle automatic routing
+      const redirectPath = data.redirectPath || (data.user.role === 'admin' ? '/admin' : '/dashboard');
+      navigate(redirectPath);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -69,15 +103,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async () => {
     setLoading(true);
     try {
-      await apiService.post('/auth/logout');
-    } catch (error) {
-      console.error('Logout API call failed:', error);
+      await authApi.post('/auth/logout');
+    } catch (err) {
+      console.error('Logout error:', err);
     } finally {
-      localStorage.removeItem('token');
-      apiService.clearToken();
-      setUser(null);
-      setFirm(null);
-      setIsAuthenticated(false);
+      handleLogout();
+      navigate('/login');
       setLoading(false);
     }
   };
@@ -88,119 +119,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated,
         user,
         firm,
+        loading,
+        error,
         login,
         logout,
-        loading
+        refreshSession
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-// Onboarding context for admin flow
-interface OnboardingContextType {
-  currentStep: number;
-  onboardingCode: string | null;
-  stepData: Record<string, any>;
-  setCurrentStep: (step: number) => void;
-  setOnboardingCode: (code: string | null) => void;
-  updateStepData: (data: Record<string, any>) => void;
-  saveStep: (step: number, data: Record<string, any>) => Promise<void>;
-  loading: boolean;
 }
 
-const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
-
-export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [onboardingCode, setOnboardingCode] = useState<string | null>(null);
-  const [stepData, setStepData] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    // Load onboarding data if code is available
-    const loadOnboardingData = async () => {
-      if (onboardingCode) {
-        setLoading(true);
-        try {
-          const response = await apiService.getOnboardingProfile(onboardingCode);
-          const profile = response.data;
-          
-          setStepData(profile.stepData || {});
-          setCurrentStep(profile.totalStepsCompleted + 1);
-        } catch (error) {
-          console.error('Failed to load onboarding data:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadOnboardingData();
-  }, [onboardingCode]);
-
-  const updateStepData = (data: Record<string, any>) => {
-    setStepData(prevData => ({
-      ...prevData,
-      ...data
-    }));
-  };
-
-  const saveStep = async (step: number, data: Record<string, any>) => {
-    if (!onboardingCode) {
-      throw new Error('No onboarding code available');
-    }
-    
-    setLoading(true);
-    try {
-      const updatedData = {
-        ...stepData,
-        ...data
-      };
-      
-      await apiService.updateOnboardingStep(onboardingCode, step, updatedData);
-      setStepData(updatedData);
-      
-      return Promise.resolve();
-    } catch (error) {
-      console.error('Failed to save onboarding step:', error);
-      return Promise.reject(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <OnboardingContext.Provider
-      value={{
-        currentStep,
-        onboardingCode,
-        stepData,
-        setCurrentStep,
-        setOnboardingCode,
-        updateStepData,
-        saveStep,
-        loading
-      }}
-    >
-      {children}
-    </OnboardingContext.Provider>
-  );
-};
-
-export const useOnboarding = () => {
-  const context = useContext(OnboardingContext);
+export function useAuthContext() {
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useOnboarding must be used within an OnboardingProvider');
+    throw new Error('useAuthContext must be used within an AuthProvider');
   }
   return context;
-};
+}

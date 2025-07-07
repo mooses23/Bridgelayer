@@ -41,7 +41,19 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
-  app.use("*", async (req, res, next) => {
+  
+  // Only catch non-API routes for the frontend
+  app.use((req, res, next) => {
+    // Skip API routes, health checks, and other backend routes
+    if (req.path.startsWith('/api') || 
+        req.path.startsWith('/health') ||
+        req.path.startsWith('/auth') ||
+        req.path.startsWith('/docs') ||
+        req.path.startsWith('/socket.io')) {
+      return next();
+    }
+    
+    // Handle frontend routes
     const url = req.originalUrl;
 
     try {
@@ -53,13 +65,18 @@ export async function setupVite(app: Express, server: Server) {
       );
 
       // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      fs.promises.readFile(clientTemplate, "utf-8").then(template => {
+        template = template.replace(
+          `src="/src/main.tsx"`,
+          `src="/src/main.tsx?v=${nanoid()}"`,
+        );
+        return vite.transformIndexHtml(url, template);
+      }).then(page => {
+        res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      }).catch(e => {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      });
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);

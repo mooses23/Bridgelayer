@@ -402,7 +402,6 @@ const IntegrationsPage: React.FC<IntegrationsPageProps> = ({ code }) => {
           </TabsContent>
         )}
 
-        {/* Admin Marketplace Mode */}
         {!code && (
           <TabsContent value="marketplace" className="space-y-6">
             {/* Integration Categories Filter */}
@@ -496,7 +495,8 @@ const IntegrationsPage: React.FC<IntegrationsPageProps> = ({ code }) => {
               ))}
             </div>
           )}
-        </TabsContent>
+          </TabsContent>
+        )}
 
         <TabsContent value="firms" className="space-y-6">
           {/* Firm Integration Overview */}

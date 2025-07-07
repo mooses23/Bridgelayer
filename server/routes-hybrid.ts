@@ -1,10 +1,8 @@
 import type { Express } from "express";
-import type { Server } from "http";
-import { createServer } from "http";
 import { randomUUID } from "crypto";
 import { storage } from "./storage";
 import { authStrategyMiddleware } from "./auth/strategy-router";
-import { requireAuth, requireTenantAccess, validateOnboardingCode, requireFirmUserWithTenant, requireFirmUser, requireRole } from "./middleware/auth.js";
+import { requireAuth, requireTenantAccess, validateOnboardingCode, requireFirmUserWithTenant, requireFirmUser, requireRole } from "./middleware/auth";
 import { refreshJWTTokens } from "./auth/jwt-auth-clean";
 import { loginHandler } from "./services/authService";
 // Import new unified authentication controller
@@ -53,7 +51,7 @@ async function validateJWTAuth(req: any) {
   }
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise<void> {
   // Apply authentication strategy middleware to all routes
   app.use(authStrategyMiddleware);
 
@@ -1361,7 +1359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  return router;
+  // Routes registered successfully
 }
 
 export default registerRoutes;

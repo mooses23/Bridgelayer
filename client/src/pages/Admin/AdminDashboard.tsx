@@ -8,7 +8,6 @@ import LLMWorkflowTab from '@/pages/Admin/tabs/LLMWorkflowTab';
 import IntegrationsTab from '@/pages/Admin/tabs/IntegrationsTab';
 import AgentsTab from '@/pages/Admin/tabs/AgentsTab';
 import EnhancedPreviewTab from '@/pages/Admin/tabs/EnhancedPreviewTab';
-import VRTab from '@/pages/Admin/tabs/VRTab';
 import SettingsTab from '@/pages/Admin/tabs/SettingsTab';
 
 export default function AdminDashboard({ code: propCode }: { code?: string }) {
@@ -38,30 +37,12 @@ export default function AdminDashboard({ code: propCode }: { code?: string }) {
     { key: 'Integrations', label: 'Integrations', icon: Puzzle },
     { key: 'Agents', label: 'Agents', icon: Bot },
     { key: 'LLM Workflow', label: 'LLM Workflow', icon: Brain },
-    { key: 'VR', label: 'VR', icon: Eye },
     { key: 'Preview', label: 'Preview', icon: Eye },
     { key: 'Settings', label: 'Settings', icon: Settings },
   ];
 
   return (
     <div className="flex h-full">
-      {/* Side Navigation */}
-      <aside className="w-64 bg-gray-50 border-r">
-        <ul>
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            const classes = isActive ? 'bg-white text-blue-600' : 'text-gray-700';
-            return (
-              <li key={tab.key} className={`flex items-center p-4 cursor-pointer ${classes}`} onClick={() => setActiveTab(tab.key)}>
-                <Icon className="w-5 h-5 mr-2" />
-                <span>{tab.label}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </aside>
-
       {/* Main Content Area */}
       <section className="flex-1 overflow-auto">
         {activeTab === 'Dashboard' && <DashboardTab />}
@@ -69,7 +50,6 @@ export default function AdminDashboard({ code: propCode }: { code?: string }) {
         {activeTab === 'Integrations' && <IntegrationsTab code={code} />}
         {activeTab === 'Agents' && <AgentsTab />}
         {activeTab === 'LLM Workflow' && <LLMWorkflowTab code={code} />}
-        {activeTab === 'VR' && <VRTab />}
         {activeTab === 'Preview' && (
           <EnhancedPreviewTab code={code} />
         )}

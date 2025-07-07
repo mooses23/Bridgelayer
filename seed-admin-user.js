@@ -48,11 +48,8 @@ async function createAdminUser() {
         .insert(users)
         .values({
           email: 'admin@firmsync.com',
-          password: hashedPassword,
-          firstName: 'Admin',
-          lastName: 'User',
+          passwordHash: hashedPassword,
           role: 'super_admin',
-          status: 'active',
         })
         .returning();
 

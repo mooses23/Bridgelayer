@@ -1,5 +1,5 @@
 import React from 'react';
-import ErrorBoundary from '../components/shared/ErrorBoundary.js';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useLocation } from 'wouter';
 
 // Import new sidebar-based admin dashboard
