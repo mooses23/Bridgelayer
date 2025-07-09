@@ -1,4 +1,4 @@
-import { db } from '../config/database';
+import { db } from '../db.js';
 import { logger } from '../utils/logger';
 
 export class QueryOptimizationService {

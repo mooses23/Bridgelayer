@@ -1,172 +1,205 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
-interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  firmId?: number;
-  firm?: any;
-}
-
-interface LoginResult {
-  success: boolean;
-  redirectPath?: string;
-}
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { User, AuthResult, OnboardingCode } from '@shared/types/auth-types';
+import { mockLogin } from '../lib/auth-api';
 
 interface SessionContextType {
   user: User | null;
-  token: string | null;
   isLoading: boolean;
-  isAuthenticated: boolean;
-  authMethod: 'session' | 'jwt' | null;
-  // added mode and code for firm login
-  login: (email: string, password: string, mode?: 'bridgelayer' | 'firm', code?: string) => Promise<LoginResult>;
+  error: string | null;
+  login: (email: string, password: string, mode?: 'bridgelayer' | 'firm', code?: string, vertical?: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
-  checkSession: () => Promise<boolean>;
-  setToken: (token: string | null) => void;
+  validateOnboardingCode: (code: string) => Promise<OnboardingCode>;
   refreshSession: () => Promise<void>;
+  checkSession: () => Promise<boolean>;
 }
+
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [authMethod, setAuthMethod] = useState<'session' | 'jwt' | null>(null);
+  const navigate = useNavigate();
+  const [state, setState] = useState({
+    user: null as User | null,
+    isLoading: true,
+    error: null as string | null
+  });
 
-  const checkSession = async () => {
-    setIsLoading(true);
+  const checkSession = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('🔍 Checking session with credentials: include');
       const response = await fetch('/api/auth/session', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        credentials: 'include'
       });
-      console.log('📡 Session check response:', response.status, response.statusText);
       
-      if (response.ok) {
-        const sessionData = await response.json();
-        console.log('✅ Session data received:', sessionData);
-        setUser(sessionData.user);
-        setAuthMethod(sessionData.authMethod || 'session');
-        return true;
-      } else {
-        console.log('❌ No active session');
-        // Clear user state if session check fails
-        setUser(null);
-        setAuthMethod(null);
-        return false;
+      if (!response.ok) {
+        throw new Error('Session check failed');
       }
+
+      const data = await response.json();
+      setState(prev => ({
+        ...prev,
+        user: data.user,
+        error: null
+      }));
+
+      return true;
     } catch (error) {
-      console.error('Session check failed:', error);
-      // Clear user state on network/server errors
-      setUser(null);
-      setAuthMethod(null);
+      setState(prev => ({
+        ...prev,
+        user: null,
+        error: 'Session check failed'
+      }));
       return false;
     } finally {
-      setIsLoading(false);
+      setState(prev => ({ ...prev, isLoading: false }));
     }
-  };
+  }, []);
 
-  const login = async (email: string, password: string, mode: 'bridgelayer' | 'firm' = 'bridgelayer', code?: string): Promise<LoginResult> => {
+  const refreshSession = useCallback(async (): Promise<void> => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    await checkSession();
+  }, [checkSession]);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  // Periodic session refresh
+  useEffect(() => {
+    const intervalId = setInterval(refreshSession, SESSION_CHECK_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [refreshSession]);
+
+  const login = async (
+    email: string,
+    password: string,
+    mode: 'bridgelayer' | 'firm' = 'bridgelayer',
+    code?: string,
+    vertical?: string
+  ): Promise<AuthResult> => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
     try {
-      console.log('🔐 Attempting login with credentials: include');
-      // include mode and code for firm login
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, mode, code }),
-        credentials: 'include'
+        credentials: 'include',
+        body: JSON.stringify({ email, password, mode, code, vertical })
       });
 
-      if (response.ok) {
-        const loginData = await response.json();
-        console.log("✅ Login successful, user:", loginData.user);
-        // Set user data immediately
-        setUser(loginData.user);
-        setIsLoading(false);
-        // Determine redirect path based on mode
-        const redirectPath = mode === 'firm' ? '/app/dashboard' : '/admin';
-        console.log("📤 Redirecting to:", redirectPath);
-        return { success: true, redirectPath };
-      } else {
-        const errorData = await response.json();
-        console.error('Login failed:', errorData.message);
-        return { success: false };
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Login failed');
       }
-    } catch (error) {
-      console.error('Login failed:', error);
-      return { success: false };
-    }
-  };
 
-  const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', { 
-        method: 'POST',
-        credentials: 'include'
-      });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      setToken(null);
-      setUser(null);
-      setAuthMethod(null);
-    }
-  };
+      const data = await response.json();
+      setState(prev => ({
+        ...prev,
+        user: data.user,
+        error: null
+      }));
 
-  const refreshSession = async () => {
-    try {
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        await checkSession();
+      // Handle automatic routing
+      if (data.redirectPath) {
+        navigate(data.redirectPath);
+      } else if (data.user?.role === 'admin') {
+        navigate('/admin');
       }
-    } catch (error) {
-      console.error('Session refresh failed:', error);
-    }
-  };
 
-  useEffect(() => {
-    // Initial session check with retry mechanism
-    const initializeSession = async () => {
-      let retries = 3;
-      while (retries > 0) {
+      return data;
+    } catch (error) {
+      // If backend is not available in development, try mock login
+      if (import.meta.env.DEV && error instanceof Error && 
+          (error.message.includes('fetch') || error.message.includes('Failed to fetch'))) {
         try {
-          await checkSession();
-          break;
-        } catch (error) {
-          retries--;
-          if (retries > 0) {
-            console.log(`Session check failed, retrying... (${retries} left)`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log('🔧 Backend not available, using mock login for development');
+          const mockResponse = await mockLogin(email, password, vertical || mode);
+          
+          setState(prev => ({
+            ...prev,
+            user: mockResponse.data.user,
+            error: null
+          }));
+
+          // Handle routing for mock login
+          if (mockResponse.data.user?.role === 'admin') {
+            navigate('/admin');
           }
+
+          return mockResponse.data;
+        } catch (mockError) {
+          const message = mockError instanceof Error ? mockError.message : 'Mock login failed';
+          setState(prev => ({
+            ...prev,
+            error: message,
+            user: null
+          }));
+          throw mockError;
         }
       }
-    };
-    
-    initializeSession();
-  }, []);
+
+      // Regular error handling
+      const message = error instanceof Error ? error.message : 'Login failed';
+      setState(prev => ({
+        ...prev,
+        error: message,
+        user: null
+      }));
+      throw error;
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout request failed:', error);
+    } finally {
+      setState({
+        user: null,
+        isLoading: false,
+        error: null
+      });
+      
+      // Clear any persisted auth data
+      localStorage.removeItem('lastRoute');
+      sessionStorage.clear();
+      
+      navigate('/login');
+    }
+  };
+
+  const validateOnboardingCode = async (code: string): Promise<OnboardingCode> => {
+    const response = await fetch('/api/auth/validate-onboarding-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ code })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Invalid onboarding code');
+    }
+
+    return response.json();
+  };
 
   const value = {
-    user,
-    token,
-    isLoading,
-    isAuthenticated: !!user,
-    authMethod,
+    user: state.user,
+    isLoading: state.isLoading,
+    error: state.error,
     login,
     logout,
-    checkSession,
-    setToken,
+    validateOnboardingCode,
     refreshSession,
+    checkSession
   };
 
   return (

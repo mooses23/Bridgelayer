@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import apiService from '@/services/api.service';
+import { useOnboarding } from '@/contexts/auth.context';
 
 const firmSetupSchema = z.object({
   name: z.string().min(2, 'Firm name is required'),
@@ -40,24 +42,26 @@ const FirmSetup: React.FC = () => {
   });
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setOnboardingCode } = useOnboarding();
 
   const onSubmit = async (data: FirmSetupData) => {
     try {
-      const response = await fetch('/api/admin/onboarding/setup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      // Use apiService with new schema
+      const response = await apiService.createFirm({
+        name: data.name,
+        contactEmail: data.email,
+        openaiApiKey: data.openaiApiKey,
+        settings: {
+          practiceAreas: data.practiceAreas,
+          description: data.description,
+          website: data.website,
+        }
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create firm');
-      }
-
-      // Store onboarding code in session/context
+      const result = response.data;
+      
+      // Store onboarding code in context and localStorage
+      setOnboardingCode(result.code);
       localStorage.setItem('onboardingCode', result.code);
 
       toast({

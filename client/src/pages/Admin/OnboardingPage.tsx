@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,9 @@ import {
   Save,
   Plus
 } from 'lucide-react';
+import apiService from '@/services/api.service';
+import { useOnboarding } from '@/contexts/auth.context';
+import { OnboardingProfile } from '@/types/schema';
 
 interface OnboardingStep {
   id: string;
@@ -41,41 +44,95 @@ interface FirmOnboarding {
 export default function OnboardingPage({ code }: { code?: string }) {
   const [activeTab, setActiveTab] = useState('template');
   const [selectedFirm, setSelectedFirm] = useState<FirmOnboarding | null>(null);
-  // TODO: use 'code' prop to load firm-specific wizard state
-
-  // Mock data
-  const [onboardingQueue, setOnboardingQueue] = useState<FirmOnboarding[]>([
-    {
-      id: '1',
-      firmName: 'Johnson & Associates',
-      status: 'customizing',
-      createdAt: '2024-06-15',
-      assignedTo: 'Admin User',
-      steps: [
-        { id: '1', title: 'Firm Information', description: 'Basic firm details and logo', status: 'completed', completedAt: '2024-06-15' },
-        { id: '2', title: 'LLM Configuration', description: 'Custom prompts and AI settings', status: 'in-progress' },
-        { id: '3', title: 'Integrations Setup', description: '3rd party connections', status: 'pending' },
-        { id: '4', title: 'Template Customization', description: 'Brand and layout customization', status: 'pending' },
-        { id: '5', title: 'User Account Creation', description: 'Create firm user accounts', status: 'pending' },
-        { id: '6', title: 'Send Credentials', description: 'Deliver login information', status: 'pending' }
-      ]
-    },
-    {
-      id: '2',
-      firmName: 'Miller Law Group',
-      status: 'review',
-      createdAt: '2024-06-18',
-      assignedTo: 'Admin User',
-      steps: [
-        { id: '1', title: 'Firm Information', description: 'Basic firm details and logo', status: 'completed', completedAt: '2024-06-18' },
-        { id: '2', title: 'LLM Configuration', description: 'Custom prompts and AI settings', status: 'completed', completedAt: '2024-06-19' },
-        { id: '3', title: 'Integrations Setup', description: '3rd party connections', status: 'completed', completedAt: '2024-06-19' },
-        { id: '4', title: 'Template Customization', description: 'Brand and layout customization', status: 'completed', completedAt: '2024-06-20' },
-        { id: '5', title: 'User Account Creation', description: 'Create firm user accounts', status: 'in-progress' },
-        { id: '6', title: 'Send Credentials', description: 'Deliver login information', status: 'pending' }
-      ]
-    }
-  ]);
+  const [loading, setLoading] = useState(false);
+  const { onboardingCode, setOnboardingCode } = useOnboarding();
+  
+  // Use provided code or code from context
+  const currentCode = code || onboardingCode;
+  
+  // State for onboarding data
+  const [onboardingQueue, setOnboardingQueue] = useState<FirmOnboarding[]>([]);
+  
+  // Load onboarding data
+  useEffect(() => {
+    const loadOnboardingData = async () => {
+      setLoading(true);
+      try {
+        // If we have a specific code, load that onboarding profile
+        if (currentCode) {
+          const response = await apiService.getOnboardingProfile(currentCode);
+          const profile = response.data;
+          
+          // Convert to FirmOnboarding format
+          const firmData = {
+            id: profile.id.toString(),
+            firmName: profile.firmId ? `Firm #${profile.firmId}` : 'New Firm',
+            status: profile.status as any,
+            createdAt: new Date(profile.createdAt).toISOString().split('T')[0],
+            assignedTo: 'Admin User',
+            steps: [
+              { 
+                id: '1', 
+                title: 'Firm Information', 
+                description: 'Basic firm details and logo', 
+                status: profile.totalStepsCompleted >= 1 ? 'completed' : 'pending' as any,
+                completedAt: profile.totalStepsCompleted >= 1 ? profile.updatedAt : undefined
+              },
+              {
+                id: '2',
+                title: 'Integrations Setup',
+                description: '3rd party connections',
+                status: profile.totalStepsCompleted >= 2 ? 'completed' : profile.totalStepsCompleted === 1 ? 'in-progress' : 'pending' as any,
+                completedAt: profile.totalStepsCompleted >= 2 ? profile.updatedAt : undefined
+              },
+              {
+                id: '3',
+                title: 'LLM Configuration',
+                description: 'Custom prompts and AI settings',
+                status: profile.totalStepsCompleted >= 3 ? 'completed' : profile.totalStepsCompleted === 2 ? 'in-progress' : 'pending' as any,
+                completedAt: profile.totalStepsCompleted >= 3 ? profile.updatedAt : undefined
+              },
+              {
+                id: '4',
+                title: 'Document Agent Assignment',
+                description: 'Configure document processing',
+                status: profile.totalStepsCompleted >= 4 ? 'completed' : profile.totalStepsCompleted === 3 ? 'in-progress' : 'pending' as any,
+                completedAt: profile.totalStepsCompleted >= 4 ? profile.updatedAt : undefined
+              }
+            ]
+          };
+          
+          setSelectedFirm(firmData);
+          setOnboardingQueue([firmData]);
+        } else {
+          // Otherwise, load all onboarding profiles
+          // This would be implemented with a call to get all profiles
+          // Mock data for now
+          setOnboardingQueue([
+            {
+              id: '1',
+              firmName: 'Johnson & Associates',
+              status: 'customizing',
+              createdAt: '2024-06-15',
+              assignedTo: 'Admin User',
+              steps: [
+                { id: '1', title: 'Firm Information', description: 'Basic firm details and logo', status: 'completed', completedAt: '2024-06-15' },
+                { id: '2', title: 'Integrations Setup', description: '3rd party connections', status: 'in-progress' },
+                { id: '3', title: 'LLM Configuration', description: 'Custom prompts and AI settings', status: 'pending' },
+                { id: '4', title: 'Document Agent Assignment', description: 'Configure document processing', status: 'pending' }
+              ]
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Failed to load onboarding data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadOnboardingData();
+  }, [currentCode]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
