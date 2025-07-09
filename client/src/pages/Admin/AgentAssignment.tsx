@@ -24,6 +24,9 @@ import {
 import { AgentCard } from '@/components/agents/AgentCard';
 import { DocumentTypeCard } from '@/components/agents/DocumentTypeCard';
 import { WorkflowEditor } from '@/components/agents/WorkflowEditor';
+import apiService from '@/services/api.service';
+import { useOnboarding } from '@/contexts/auth.context';
+import { AgentConfig, DocumentAgentMapping } from '@/types/schema';
 
 // Types
 interface Agent {
@@ -57,6 +60,9 @@ interface AgentAssignment {
 }
 
 export default function AgentAssignmentPage() {
+  const { onboardingCode } = useOnboarding();
+  const [loading, setLoading] = useState(false);
+
   // State
   const [agents, setAgents] = useState<Agent[]>([
     {
@@ -150,6 +156,62 @@ export default function AgentAssignmentPage() {
     }
   }, [assignments, assignAgent]);
 
+  // Update the handleSave function to use our API service
+  const handleSave = useCallback(async () => {
+    if (!onboardingCode) {
+      alert('No onboarding code found. Please start from the beginning of the onboarding process.');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Prepare data for API
+      const mappings = assignments.map(assignment => ({
+        documentTypeId: assignment.documentTypeId,
+        agentId: assignment.agentId,
+        workflow: assignment.workflow
+      }));
+      
+      // Save via API
+      await apiService.configureDocumentAgents(onboardingCode, {
+        documentAgentMappings: mappings
+      });
+      
+      alert('Document agent mappings saved successfully!');
+      // Here you would typically navigate to the next step or dashboard
+    } catch (error) {
+      console.error('Error saving document agent mappings:', error);
+      alert('Failed to save document agent mappings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [assignments, onboardingCode]);
+
+  // Load existing mappings when component mounts
+  useEffect(() => {
+    const loadExistingMappings = async () => {
+      if (!onboardingCode) return;
+      
+      setLoading(true);
+      try {
+        const response = await apiService.getOnboardingProfile(onboardingCode);
+        const profile = response.data;
+        
+        // If we have existing document agent mappings in the profile's stepData
+        if (profile.stepData?.documentAgentMappings) {
+          const existingMappings = profile.stepData.documentAgentMappings;
+          setAssignments(existingMappings);
+        }
+      } catch (error) {
+        console.error('Error loading existing mappings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadExistingMappings();
+  }, [onboardingCode]);
+  
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="p-6">

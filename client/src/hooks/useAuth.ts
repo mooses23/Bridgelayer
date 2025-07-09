@@ -1,221 +1,82 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from '../contexts/SessionContext';
+import { User } from '@shared/types/auth-types';
 
-interface LoginCredentials {
-  email: string;
-  password: string;
+const ADMIN_ROLES = ['platform_admin', 'admin', 'super_admin'];
+const FIRM_ROLES = ['firm_admin', 'paralegal'];
+
+export interface UseAuthResult {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  isFirmUser: boolean;
+  hasRole: (role: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
+  login: (email: string, password: string, mode?: 'bridgelayer' | 'firm', code?: string, vertical?: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshToken: () => Promise<void>;
 }
 
-interface LoginResponse {
-  success: boolean;
-  user?: {
-    id: number;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-    firmId?: number;
-  };
-  redirectPath?: string;
-  message?: string;
-}
+export function useAuth(): UseAuthResult {
+  const { 
+    user, 
+    isLoading,
+    login: sessionLogin,
+    logout: sessionLogout
+  } = useSession();
 
-interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  firmId?: number;
-  firm?: any;
-}
-
-// Authentication API functions
-const authAPI = {
-  login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
-    }
-
-    const data = await response.json();
-    return {
-      success: true,
-      user: data.user,
-      redirectPath: data.redirectPath
-    };
-  },
-
-  logout: async (): Promise<void> => {
-    const response = await fetch('/api/auth/logout', {
-      method: 'POST',
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error('Logout failed');
-    }
-  },
-
-  getCurrentUser: async (): Promise<User | null> => {
-    const response = await fetch('/api/auth/session', {
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.user;
-  },
-
-  refreshToken: async (): Promise<void> => {
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error('Token refresh failed');
-    }
-  }
-};
-
-// Custom authentication hooks
-export const useAuth = () => {
-  const { user, isLoading, checkSession } = useSession();
   const queryClient = useQueryClient();
 
-  // Login mutation
+  // Role checking utilities
+  const hasRole = (role: string) => user?.role === role;
+  const hasAnyRole = (roles: string[]) => user?.role ? roles.includes(user.role) : false;
+  
+  const isAdmin = hasAnyRole(ADMIN_ROLES);
+  const isFirmUser = hasAnyRole(FIRM_ROLES);
+
+  // Login mutation with session management
   const loginMutation = useMutation({
-    mutationFn: authAPI.login,
+    mutationFn: sessionLogin,
     onSuccess: () => {
-      // Refresh session data after successful login
-      checkSession();
-      // Invalidate all queries to force refresh
       queryClient.invalidateQueries();
     }
   });
 
-  // Logout mutation
+  // Logout mutation with cleanup
   const logoutMutation = useMutation({
-    mutationFn: authAPI.logout,
+    mutationFn: sessionLogout,
     onSuccess: () => {
-      // Clear all cached data
       queryClient.clear();
-      // Refresh session to clear user data
-      checkSession();
     }
   });
 
-  // Token refresh mutation
-  const refreshMutation = useMutation({
-    mutationFn: authAPI.refreshToken,
-    onSuccess: () => {
-      checkSession();
-    }
-  });
-
+  // Expose unified auth interface
   return {
     user,
     isLoading,
     isAuthenticated: !!user,
-    login: loginMutation.mutateAsync,
-    logout: logoutMutation.mutateAsync,
-    refreshToken: refreshMutation.mutateAsync,
-    isLoginPending: loginMutation.isPending,
-    isLogoutPending: logoutMutation.isPending,
-    loginError: loginMutation.error?.message,
-    logoutError: logoutMutation.error?.message
-  };
-};
-
-// Role checking hooks
-export const useRole = () => {
-  const { user } = useAuth();
-
-  const hasRole = (role: string) => user?.role === role;
-  const hasAnyRole = (roles: string[]) => user?.role ? roles.includes(user.role) : false;
-
-  const isAdmin = hasAnyRole(['platform_admin', 'admin', 'super_admin']);
-  const isFirmAdmin = hasRole('firm_admin');
-  const isParalegal = hasRole('paralegal');
-  const isFirmUser = hasAnyRole(['firm_admin', 'paralegal']);
-
-  return {
-    role: user?.role,
+    isAdmin,
+    isFirmUser,
     hasRole,
     hasAnyRole,
-    isAdmin,
-    isFirmAdmin,
-    isParalegal,
-    isFirmUser
+    login: loginMutation.mutateAsync,
+    logout: logoutMutation.mutateAsync,
+    refreshToken: async () => {
+      await queryClient.invalidateQueries(['session']);
+    }
   };
-};
+}
 
-// Tenant access hook
-export const useTenantAccess = () => {
-  const { user } = useAuth();
-  const { isAdmin } = useRole();
-
-  const canAccessTenant = (firmId: number) => {
-    if (isAdmin) return true;
-    return user?.firmId === firmId;
-  };
-
-  const getCurrentTenant = () => user?.firmId;
+// Optional tenant access hook
+export function useTenantAccess() {
+  const { user, isAdmin } = useAuth();
 
   return {
-    canAccessTenant,
-    getCurrentTenant,
-    currentFirmId: user?.firmId
+    canAccessTenant: (firmId: number) => {
+      if (isAdmin) return true;
+      return user?.firmId === firmId;
+    },
+    getCurrentTenant: () => user?.firmId
   };
-};
-
-// Authenticated fetch hook for API calls
-export const useAuthenticatedFetch = () => {
-  const { refreshToken } = useAuth();
-
-  const authenticatedFetch = async (url: string, options: RequestInit = {}) => {
-    const response = await fetch(url, {
-      ...options,
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    });
-
-    // If token expired, try to refresh and retry
-    if (response.status === 401) {
-      try {
-        await refreshToken();
-        // Retry the original request
-        return fetch(url, {
-          ...options,
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-          }
-        });
-      } catch (error) {
-        // Refresh failed, redirect to login
-        window.location.href = '/login';
-        throw error;
-      }
-    }
-
-    return response;
-  };
-
-  return { authenticatedFetch };
-};
+}

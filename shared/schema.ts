@@ -33,54 +33,7 @@ export const refreshTokens = pgTable('refresh_tokens', {
 });
 
 // Firms
-export const firms = pgTable('firms', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  subdomain: varchar('subdomain', { length: 63 }),
-  openaiKey: varchar('openai_key', { length: 255 }),
-  practiceAreas: json('practice_areas').$type<string[]>(),
-  billingPlan: varchar('billing_plan', { length: 255 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at'),
-  deletedAt: timestamp('deleted_at')
-}, (table) => ({
-  subdomainIdx: uniqueIndex('firms_subdomain_idx').on(table.subdomain)
-}));
-
-// Firm Users
-export const firmUsers = pgTable('firm_users', {
-  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
-  firmId: bigint('firm_id', { mode: 'number' }).references(() => firms.id, { onDelete: 'cascade' }),
-  userId: bigint('user_id', { mode: 'number' }).references(() => users.id, { onDelete: 'cascade' }),
-  isOwner: boolean('is_owner').notNull().default(false),
-  role: varchar('role', { length: 255 }).notNull().default('member'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at')
-}, (table) => ({
-  firmUserIdx: uniqueIndex('firm_users_firm_user_idx').on(table.firmId, table.userId)
-}));
-
-// Admin Settings
-export const adminSettings = pgTable('admin_settings', {
-  id: bigint('id', { mode: 'number' }).primaryKey().autoincrement(),
-  platformOpenaiKey: varchar('platform_openai_key', { length: 255 }),
-  platformOpenaiModel: varchar('platform_openai_model', { length: 255 }),
-  minPasswordLength: integer('min_password_length').notNull().default(8),
-  maxLoginAttempts: integer('max_login_attempts').notNull().default(5),
-  refreshTokenExpiry: integer('refresh_token_expiry').notNull().default(7), // days
-  updatedAt: timestamp('updated_at')
-});
-
-// Platform-wide settings table
-export const platformSettings = pgTable("platform_settings", {
-  id: serial("id").primaryKey(),
-  key: text("key").notNull().unique(),
-  value: text("value"),
-  encrypted: boolean("encrypted").default(false),
-  updatedAt: timestamp("updated_at").defaultNow()
-});
-
-// ============================================================================
+export const firms = pgTable("firms", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
@@ -99,31 +52,36 @@ export const platformSettings = pgTable("platform_settings", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
-// Users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id),
-  email: text("email").notNull().unique(),
-  username: text("username"),
-  password: text("password").notNull(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  role: text("role").notNull().default("viewer"),
-  status: text("status").notNull().default("active"),
-  lastLoginAt: timestamp("last_login_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
+// Firm Users
+export const firmUsers = pgTable('firm_users', {
+  id: serial('id').primaryKey(),
+  firmId: integer('firm_id').references(() => firms.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  isOwner: boolean('is_owner').notNull().default(false),
+  role: varchar('role', { length: 255 }).notNull().default('member'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+}, (table) => ({
+  firmUserIdx: uniqueIndex('firm_users_firm_user_idx').on(table.firmId, table.userId)
+}));
+
+// Admin Settings
+export const adminSettings = pgTable('admin_settings', {
+  id: serial('id').primaryKey(),
+  platformOpenaiKey: varchar('platform_openai_key', { length: 255 }),
+  platformOpenaiModel: varchar('platform_openai_model', { length: 255 }),
+  minPasswordLength: integer('min_password_length').notNull().default(8),
+  maxLoginAttempts: integer('max_login_attempts').notNull().default(5),
+  refreshTokenExpiry: integer('refresh_token_expiry').notNull().default(7), // days
+  updatedAt: timestamp('updated_at')
 });
 
-// Firm users table
-export const firmUsers = pgTable("firm_users", {
+// Platform-wide settings table
+export const platformSettings = pgTable("platform_settings", {
   id: serial("id").primaryKey(),
-  firmId: integer("firm_id").references(() => firms.id).notNull(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("firm_user"),
-  status: text("status").notNull().default("active"),
-  createdAt: timestamp("created_at").defaultNow(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  encrypted: boolean("encrypted").default(false),
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
@@ -545,15 +503,6 @@ export const systemAdmins = pgTable("system_admins", {
   email: text("email").notNull().unique(),
   permissions: jsonb("permissions"),
   createdAt: timestamp("created_at").defaultNow()
-});
-
-// Platform settings table
-export const platformSettings = pgTable("platform_settings", {
-  id: serial("id").primaryKey(),
-  key: text("key").notNull().unique(),
-  value: text("value"),
-  encrypted: boolean("encrypted").default(false),
-  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Document type templates table

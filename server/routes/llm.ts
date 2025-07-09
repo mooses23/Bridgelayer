@@ -2,12 +2,12 @@ import express from 'express';
 import { llmService } from '../services/llmService';
 import { tabLlmService } from '../services/tabLlmService';
 import { promptTemplateService } from '../services/promptTemplateService';
-import { requireModernJWTAuth, requireRole, requireTenantAccess } from '../middleware/auth';
+import { requireAuth, requireRole, requireTenantAccess } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Apply authentication middleware to all routes
-router.use(requireModernJWTAuth);
+router.use(requireAuth);
 
 // Initialize default templates (admin only)
 router.post('/templates/initialize', async (req, res) => {

@@ -12,6 +12,10 @@ interface AuthenticatedRequest extends Request {
     role: string;
     firmId?: number | null;
   };
+  params: any;
+  ip: string;
+  originalUrl: string;
+  get(name: string): string | undefined;
 }
 
 /**
@@ -103,31 +107,99 @@ export const requireFirmUser = async (req: AuthenticatedRequest, res: Response, 
 };
 
 /**
- * Firm Code Validation Middleware
- * Validates that the firmCode in the URL matches the user's firm
+ * Enhanced Tenant Validation Middleware for Phase 1
+ * Validates tenant scope and prevents cross-tenant data leakage
  */
-export const validateFirmCode = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+
+/**
+ * Validates that a user can access a specific tenant (firm) by firmCode
+ * @param firmCode - The tenant's firm code from URL
+ * @param user - The authenticated user object
+ * @returns Promise<{valid: boolean, firm?: any, error?: string}>
+ */
+export const validateTenantScope = async (firmCode: string, user: any): Promise<{valid: boolean, firm?: any, error?: string}> => {
+  try {
+    if (!firmCode) {
+      return { valid: false, error: 'Firm code required' };
+    }
+
+    if (!user) {
+      return { valid: false, error: 'User authentication required' };
+    }
+
+    // Admin users can access any tenant (for admin functions)
+    if (['platform_admin', 'admin', 'super_admin'].includes(user.role)) {
+      const firm = await storage.getFirmBySlug(firmCode);
+      if (!firm) {
+        return { valid: false, error: 'Firm not found' };
+      }
+      return { valid: true, firm };
+    }
+
+    // Regular users must belong to the requested firm
+    if (!user.firmId) {
+      return { valid: false, error: 'User not associated with any firm' };
+    }
+
+    const userFirm = await storage.getFirm(user.firmId);
+    if (!userFirm) {
+      return { valid: false, error: 'User firm not found' };
+    }
+
+    // Check if user's firm matches requested firmCode
+    if (userFirm.slug !== firmCode) {
+      return { 
+        valid: false, 
+        error: 'Access denied: User can only access their own firm data' 
+      };
+    }
+
+    return { valid: true, firm: userFirm };
+  } catch (error) {
+    console.error('Tenant scope validation error:', error);
+    return { valid: false, error: 'Tenant validation failed' };
+  }
+};
+
+/**
+ * Enhanced firm code validation with better tenant isolation
+ * Replaces the basic validateFirmCode middleware
+ */
+export const validateFirmCodeEnhanced = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
     const { firmCode } = req.params;
-    if (!firmCode) {
-      return res.status(400).json({ message: 'Firm code is required' });
+    const validation = await validateTenantScope(firmCode, req.user);
+
+    if (!validation.valid) {
+      // Log security violation for audit
+      console.warn(`🚨 SECURITY: Tenant access violation blocked`, {
+        userId: req.user.id,
+        userEmail: req.user.email,
+        userFirmId: req.user.firmId,
+        requestedFirmCode: firmCode,
+        error: validation.error,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        timestamp: new Date().toISOString(),
+        url: req.originalUrl
+      });
+
+      return res.status(403).json({ 
+        message: validation.error || 'Tenant access denied',
+        code: 'TENANT_ACCESS_DENIED'
+      });
     }
 
-    // Get user's firm information to validate firmCode
-    const storage = require('../../storage').storage;
-    const firm = await storage.getFirmById(req.user.firmId);
-    
-    if (!firm || firm.subdomain !== firmCode) {
-      return res.status(403).json({ message: 'Access denied for this firm' });
-    }
+    // Log successful access for audit trail
+    console.log(`✅ Tenant access granted: User ${req.user.id} → Firm ${validation.firm!.id} (${firmCode})`);
 
     next();
   } catch (error) {
-    console.error('Firm validation error:', error);
+    console.error('Enhanced firm validation error:', error);
     res.status(500).json({ error: 'Firm validation failed' });
   }
 };
@@ -154,8 +226,9 @@ export const createFirmUserMiddleware = () => {
 };
 
 /**
- * Create middleware that requires firm user access with firm validation
+ * Create enhanced middleware that requires firm user access with enhanced tenant validation
+ * Use this instead of createFirmUserWithValidationMiddleware for new routes
  */
-export const createFirmUserWithValidationMiddleware = () => {
-  return [requireAuth, requireFirmUser, validateFirmCode];
+export const createFirmUserWithEnhancedValidationMiddleware = () => {
+  return [requireAuth, requireFirmUser, validateFirmCodeEnhanced];
 };

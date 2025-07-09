@@ -559,13 +559,13 @@ class AuthController {
       }
 
       // Find valid refresh token
-      const tokens = await db.select()
+      const existingTokens = await db.select()
         .from(refreshTokens)
         .where(
           eq(refreshTokens.expiresAt, new Date())
         );
 
-      const validToken = tokens.find(token => 
+      const validToken = existingTokens.find(token => 
         bcrypt.compareSync(refreshToken, token.token)
       );
 
@@ -843,7 +843,7 @@ module.exports = {
   // Session management
   logout: authController.logout.bind(authController),
   validateSession: authController.validateSession.bind(authController),
-  refreshTokens: authController.refreshTokens.bind(authController),
+  refreshToken: authController.refreshToken.bind(authController),
   AuthController
 };
 

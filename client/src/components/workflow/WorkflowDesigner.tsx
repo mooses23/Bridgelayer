@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AgentPromptEditor from './AgentPromptEditor';
+import AgentPromptEditor from '../AgentPromptEditor';
 import ReactFlow, {
   Node,
   Edge,

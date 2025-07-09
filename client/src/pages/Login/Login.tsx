@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaBriefcase, FaBalanceScale, FaEye, FaEyeSlash, FaGoogle, FaMicrosoft, FaGithub } from 'react-icons/fa';
+import { FaBriefcase, FaBalanceScale, FaEye, FaEyeSlash, FaGoogle, FaMicrosoft, FaGithub, FaUserMd, FaGraduationCap, FaUsers } from 'react-icons/fa';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,14 @@ import { toast } from 'sonner';
 
 const MODES = [
 	{ label: 'Bridgelayer', value: 'bridgelayer', icon: <FaBriefcase className="inline mr-1" /> },
-	{ label: 'FirmSync', value: 'firm', icon: <FaBalanceScale className="inline mr-1" /> },
+	{ label: 'Tenant Login', value: 'tenant', icon: <FaBalanceScale className="inline mr-1" /> },
+];
+
+const VERTICALS = [
+	{ label: 'FirmSync (Legal)', value: 'legal', icon: <FaBalanceScale className="inline mr-1" /> },
+	{ label: 'MedSync (Medical)', value: 'medical', icon: <FaUserMd className="inline mr-1" /> },
+	{ label: 'EduSync (Education)', value: 'education', icon: <FaGraduationCap className="inline mr-1" /> },
+	{ label: 'HRSync (Human Resources)', value: 'hr', icon: <FaUsers className="inline mr-1" /> },
 ];
 
 const OAUTH_PROVIDERS = [
@@ -19,6 +26,7 @@ const OAUTH_PROVIDERS = [
 
 const Login: React.FC = () => {
 	const [mode, setMode] = useState('bridgelayer');
+	const [vertical, setVertical] = useState('legal');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
@@ -60,7 +68,7 @@ const Login: React.FC = () => {
 		setErrors({});
 
 		try {
-			await login(email, password, mode as 'bridgelayer' | 'firm');
+			await login(email, password, mode as 'bridgelayer' | 'firm', undefined, vertical);
 			toast.success('Welcome back!');
 		} catch (err: any) {
 			const message =
@@ -106,7 +114,7 @@ const Login: React.FC = () => {
 				</div>
 
 				{/* Mode Toggle */}
-				<div className="flex rounded-lg bg-gray-100 p-1 mb-6">
+				<div className="flex rounded-lg bg-gray-100 p-1 mb-4">
 					{MODES.map(({ label, value, icon }) => (
 						<button
 							key={value}
@@ -123,6 +131,33 @@ const Login: React.FC = () => {
 						</button>
 					))}
 				</div>
+
+				{/* Vertical Selection for Tenant Mode */}
+				{mode === 'tenant' && (
+					<div className="mb-6">
+						<label className="block text-sm font-medium text-gray-700 mb-2">
+							Select Your Industry
+						</label>
+						<div className="grid grid-cols-2 gap-2">
+							{VERTICALS.map(({ label, value, icon }) => (
+								<button
+									key={value}
+									type="button"
+									onClick={() => setVertical(value)}
+									className={cn(
+										'flex items-center justify-center px-3 py-2 rounded-md text-xs font-medium transition-all border',
+										vertical === value
+											? 'bg-blue-50 border-blue-200 text-blue-700'
+											: 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+									)}
+								>
+									{icon}
+									{label}
+								</button>
+							))}
+						</div>
+					</div>
+				)}
 
 				{errors.general && (
 					<div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-600 text-sm">

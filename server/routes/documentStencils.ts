@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { documentStencilService } from '../services/documentStencilService.js';
 import { documentUpload, FileParsingService, handleUploadError } from '../services/fileUploadService.js';
-import { requireModernJWTAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
 // All routes require authentication
-router.use(requireModernJWTAuth);
+router.use(requireAuth);
 
 // GET /api/document-stencils - List document stencils
 router.get('/', async (req: Request, res: Response) => {
