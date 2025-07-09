@@ -2,7 +2,7 @@
 # � BridgeLayer Platform
 
 ### 👥 **Three-Tier Role Architecture**
-- **🔧 Platform Admin**: Cross-platform system administration, **firm onboarding** (via left side nav), ghost mode verification
+- **🔧 Platform Admin**: Cross-platform system administration, **firm onboarding** (via left side nav), preview verification
 - **🏗️ Owner (Bridgelayer)**: Multi-tenant operational management (**NO onboarding responsibilities**)
 - **🏢 Tenant (Firms)**: Individual firms with isolated vertical-specific accessicense: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opens## 🚀 Platform Quick Start
 
