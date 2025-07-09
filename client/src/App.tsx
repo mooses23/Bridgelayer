@@ -1,36 +1,72 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Router, Route, Switch } from 'wouter';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthErrorBoundary } from '@/components/Auth/AuthErrorBoundary';
-import RoleRouter from '@/components/RoleRouter';
-import RegisterPage from '@/duplicates/Public/RegisterPage';
 import { SessionProvider } from '@/contexts/SessionContext';
-import { TenantProvider } from './contexts/TenantContext';
+import { useAuth } from '@/hooks/useAuth';
+import Login from '@/pages/Login/Login';
+import ModernAdminLayout from '@/layouts/ModernAdminLayout';
+import FirmLayout from '@/layouts/FirmLayout';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 const queryClient = new QueryClient();
 
-function App() {
-  console.log('[App] LIVE');
+function RequireAuth({ children, role }: { children: React.ReactNode; role?: 'admin' | 'firm_user' }) {
+  const { isAuthenticated, user, isLoading } = useAuth();
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (role && user?.role !== role) {
+    return <Navigate to="/" />;
+  }
+
+  return <>{children}</>;
+}
+
+function App() {
   return (
-    <ErrorBoundary fallback={<div style={{padding: '20px', textAlign: 'center'}}><h1>Error Loading App</h1><p>Check browser console for details</p></div>}>
+    <ErrorBoundary fallback={<div className="p-8 text-center"><h1>Error Loading App</h1></div>}>
       <QueryClientProvider client={queryClient}>
-        <AuthErrorBoundary>
+        <Router>
           <SessionProvider>
-            <TenantProvider>
-              <Router>
-                <div className="min-h-screen bg-gray-50">
-                  <Switch>
-                    <Route path="/register" component={RegisterPage} />
-                    <Route path="*" component={RoleRouter} />
-                  </Switch>
-                  <Toaster />
-                </div>
-              </Router>
-            </TenantProvider>
+            <div className="min-h-screen bg-gray-50">
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
+                
+                {/* Admin Routes */}
+                <Route 
+                  path="/admin/*" 
+                  element={
+                    <RequireAuth role="admin">
+                      <ModernAdminLayout />
+                    </RequireAuth>
+                  } 
+                />
+                
+                {/* Tenant Routes (FirmSync Portal) */}
+                <Route 
+                  path="/tenant/*" 
+                  element={
+                    <RequireAuth role="firm_user">
+                      <FirmLayout />
+                    </RequireAuth>
+                  } 
+                />
+                
+                {/* Default Redirect */}
+                <Route path="/" element={<Navigate to="/login" />} />
+              </Routes>
+              
+              <Toaster />
+            </div>
           </SessionProvider>
-        </AuthErrorBoundary>
+        </Router>
       </QueryClientProvider>
     </ErrorBoundary>
   );

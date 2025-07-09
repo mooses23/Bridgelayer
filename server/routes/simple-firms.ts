@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { firms, firmUsers } from '../../shared/schema';
 import { requireAuth, requireAdmin } from '../auth/middleware/auth-middleware';
 import bcrypt from 'bcrypt';
 

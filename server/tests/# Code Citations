@@ -1,0 +1,115 @@
+# Code Citations
+
+## License: unknown
+https://github.com/SouravBeraAkaSpeed/CN101/blob/5fbf68d09daebc5d4339234bf48131c69b0dad59/src/app/%28auth%29/login/page.tsx
+
+```
+} from "@/components/ui/
+```
+
+
+## License: unknown
+https://github.com/SouravBeraAkaSpeed/CN101/blob/5fbf68d09daebc5d4339234bf48131c69b0dad59/src/app/%28auth%29/login/page.tsx
+
+```
+} from "@/components/ui/badge";
+import { Button } from "@/components/ui/
+```
+
+
+## License: unknown
+https://github.com/SouravBeraAkaSpeed/CN101/blob/5fbf68d09daebc5d4339234bf48131c69b0dad59/src/app/%28auth%29/login/page.tsx
+
+```
+} from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/
+```
+
+
+## License: unknown
+https://github.com/SouravBeraAkaSpeed/CN101/blob/5fbf68d09daebc5d4339234bf48131c69b0dad59/src/app/%28auth%29/login/page.tsx
+
+```
+} from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList,
+```
+
+
+## License: unknown
+https://github.com/SouravBeraAkaSpeed/CN101/blob/5fbf68d09daebc5d4339234bf48131c69b0dad59/src/app/%28auth%29/login/page.tsx
+
+```
+} from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/
+```
+
+
+## License: unknown
+https://github.com/SouravBeraAkaSpeed/CN101/blob/5fbf68d09daebc5d4339234bf48131c69b0dad59/src/app/%28auth%29/login/page.tsx
+
+```
+} from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import
+```
+
+
+## Implementation Recommendation for AI Document Analysis
+
+### Configuration Schema
+```typescript
+// Proposed configuration for firm-specific AI document analysis
+interface FirmAIConfig {
+  apiKey?: string;              // Optional: Firm's own OpenAI key
+  useSharedKey: boolean;        // If true, use platform's API key
+  agents: {
+    [agentId: string]: {
+      name: string;             // Display name of agent
+      enabled: boolean;         // Whether this agent is active
+      model: string;            // e.g. "gpt-4", "gpt-3.5-turbo"
+      systemPrompt: string;     // Firm-specific instructions
+      documentTypes: string[];  // What documents this agent can process
+      maxTokens: number;        // Response length limit
+    }
+  }
+}
+```
+
+### API Integration Approach
+```typescript
+// This approach lets you use firm-specific API keys while maintaining a central implementation
+async function analyzeDocument(firmId: string, agentId: string, document: Buffer) {
+  const firmConfig = await getFirmAIConfig(firmId);
+  const agentConfig = firmConfig.agents[agentId];
+  
+  if (!agentConfig || !agentConfig.enabled) {
+    throw new Error("Agent not configured or disabled");
+  }
+  
+  // Use firm's API key if provided, otherwise fall back to shared key
+  const apiKey = firmConfig.useSharedKey 
+    ? process.env.OPENAI_API_KEY 
+    : firmConfig.apiKey;
+    
+  // Call OpenAI with firm-specific configuration
+  const openai = new OpenAI({ apiKey });
+  const response = await openai.chat.completions.create({
+    model: agentConfig.model,
+    messages: [
+      { role: "system", content: agentConfig.systemPrompt },
+      { role: "user", content: await extractTextFromDocument(document) }
+    ],
+    max_tokens: agentConfig.maxTokens
+  });
+  
+  return response.choices[0].message.content;
+}
+```
+

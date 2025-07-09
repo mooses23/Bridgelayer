@@ -7,10 +7,10 @@ import FirmsTab from '@/pages/Admin/tabs/FirmsTab';
 import LLMWorkflowTab from '@/pages/Admin/tabs/LLMWorkflowTab';
 import IntegrationsTab from '@/pages/Admin/tabs/IntegrationsTab';
 import AgentsTab from '@/pages/Admin/tabs/AgentsTab';
-import PreviewTab from '@/pages/Admin/tabs/PreviewTab';
+import EnhancedPreviewTab from '@/pages/Admin/tabs/EnhancedPreviewTab';
 import SettingsTab from '@/pages/Admin/tabs/SettingsTab';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ code: propCode }: { code?: string }) {
   const { isLoading: sessionLoading, isAuthenticated } = useSession();
   const [, setLocation] = useLocation();
   
@@ -26,7 +26,11 @@ export default function AdminDashboard() {
   }
 
   const [activeTab, setActiveTab] = React.useState<string>('Dashboard');
-  const [code, setCode] = React.useState<string>('');
+  
+  // Use prop code or extract from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlCode = urlParams.get('code');
+  const code = propCode || urlCode || '';
   const tabs = [
     { key: 'Dashboard', label: 'Dashboard', icon: BarChart3 },
     { key: 'Firms', label: 'Firms', icon: Building2 },
@@ -39,23 +43,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-full">
-      {/* Side Navigation */}
-      <aside className="w-64 bg-gray-50 border-r">
-        <ul>
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            const classes = isActive ? 'bg-white text-blue-600' : 'text-gray-700';
-            return (
-              <li key={tab.key} className={`flex items-center p-4 cursor-pointer ${classes}`} onClick={() => setActiveTab(tab.key)}>
-                <Icon className="w-5 h-5 mr-2" />
-                <span>{tab.label}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </aside>
-
       {/* Main Content Area */}
       <section className="flex-1 overflow-auto">
         {activeTab === 'Dashboard' && <DashboardTab />}
@@ -64,7 +51,7 @@ export default function AdminDashboard() {
         {activeTab === 'Agents' && <AgentsTab />}
         {activeTab === 'LLM Workflow' && <LLMWorkflowTab code={code} />}
         {activeTab === 'Preview' && (
-          <PreviewTab code={code} />
+          <EnhancedPreviewTab code={code} />
         )}
         {activeTab === 'Settings' && <SettingsTab />}
       </section>
