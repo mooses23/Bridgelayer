@@ -1,3 +1,5 @@
+//src/app/tenant/layout.tsx
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -31,4 +33,13 @@ export default function RootLayout({
       </body>
     </html>
   );
+}
+import './globals.css'
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
 }

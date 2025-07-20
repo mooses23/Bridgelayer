@@ -128,25 +128,36 @@ CREATE TABLE tenants (
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── (auth)/
-│   │   ├── login/         # Authentication pages
-│   │   └── auth/
-│   ├── owner/             # Super admin dashboard
-│   │   ├── dashboard/
-│   │   ├── verticals/
-│   │   ├── tenants/
-│   │   ├── users/
-│   │   ├── analytics/
-│   │   └── settings/
-│   └── firmsync/          # FirmSync vertical
-│       ├── admin/         # Vertical admin pages
-│       └── [tenantId]/    # Tenant-specific pages
-├── utils/
-│   └── supabase/          # Supabase client configuration
-├── types/
-│   └── database.ts        # TypeScript definitions
-└── components/            # Reusable React components
+├── app/                      # Entire Bridgelayer Next.js Application
+│   ├── owner/                # Super Admin Dashboard (Platform-wide control)
+│   ├── firmsync/             # FirmSync Regenerative Vertical
+│   │   ├── admin/            # FirmSync Admin Workshop (Portal builder)
+│   │   │   ├── preview/      # Preview page (visualize tenant portals)
+│   │   │   ├── firms/        # Step 1: Firm Setup
+│   │   │   ├── integrations/ # Step 2: Integrations
+│   │   │   ├── llm/          # Step 3: Base Agents
+│   │   │   ├── docplus/      # Step 4: Document Agents
+│   │   │   └── settings/     # Firm-specific admin settings
+│   │   └── [tenantId]/       # Dynamic FirmSync Tenant Portals (live portals)
+│   │       ├── dashboard/
+│   │       ├── clients/
+│   │       ├── cases/
+│   │       ├── calendar/
+│   │       ├── billing/
+│   │       ├── docusign/
+│   │       ├── paralegal/
+│   │       ├── reports/
+│   │       └── settings/
+│   └── medsync/              # MedSync (Future Regen Vertical)
+├── components/               # Reusable UI Components (Buttons, Tabs, Accordions, etc.)
+│   ├── layout/               # Global layouts, navigation, footer
+│   ├── forms/                # Reusable form elements
+│   └── widgets/              # Reusable dynamic widgets
+├── hooks/                    # Custom React hooks (useAuth, usePortalTemplate, etc.)
+├── utils/                    # Utility functions (API calls, formatting helpers, Supabase)
+│   └── supabase/             # Supabase client configuration
+└── types/                    # TypeScript shared types (Database schema, common interfaces)
+    └── database.ts           # TypeScript definitions
 ```
 
 ## FirmSync Vertical Example
