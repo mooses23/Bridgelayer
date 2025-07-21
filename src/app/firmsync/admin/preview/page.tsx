@@ -1,109 +1,260 @@
+// Protected by middleware (admin-only access)
 // src/app/firmsync/admin/preview/page.tsx
+// Real-time visual preview of tenant portal and final onboarding step
+
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function AdminPreviewPage() {
+  const [selectedTenant, setSelectedTenant] = useState('demo-firm');
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [showConfigPanel, setShowConfigPanel] = useState(true);
+
+  // Sample tenant data - would come from Supabase JSONB
+  const tenantConfig = {
+    firmName: 'Demo Law Firm',
+    tenantId: 'demo-firm',
+    theme: 'professional',
+    branding: {
+      primaryColor: '#2563eb',
+      logo: null
+    },
+    integrations: {
+      clients: ['salesforce'],
+      cases: ['clio'],
+      billing: ['quickbooks'],
+      calendar: ['outlook']
+    },
+    aiAgents: {
+      clients: 'client-specialist',
+      cases: 'case-manager',
+      billing: 'billing-specialist'
+    },
+    isComplete: true
+  };
+
+  const launchPortal = async () => {
+    // TODO: Submit entire onboarding config payload to Supabase
+    // const { data, error } = await supabase
+    //   .from('tenant_portals')
+    //   .upsert({
+    //     tenant_id: selectedTenant,
+    //     config: tenantConfig,
+    //     status: 'live'
+    //   });
+    
+    alert(`Portal launched for ${tenantConfig.firmName}! (Placeholder)`);
+  };
+
+  const previewUrl = `/firmsync/${selectedTenant}/dashboard`;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              FirmSync Admin Preview
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Preview and manage your FirmSync tenant configurations
-            </p>
+    <div className="p-6">
+      <div className="max-w-full mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Portal Preview</h2>
+            <p className="text-gray-600 mt-1">Real-time preview of tenant portal configuration</p>
           </div>
-
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white ml-3">
-                  Quick Actions
-                </h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Perform common administrative tasks
-              </p>
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">
-                Get Started
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowConfigPanel(!showConfigPanel)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+            >
+              {showConfigPanel ? 'Hide Config' : 'Show Config'}
+            </button>
+            {tenantConfig.isComplete && (
+              <button
+                onClick={launchPortal}
+                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center"
+              >
+                <span className="mr-2">🚀</span>
+                Launch Portal
               </button>
-            </div>
-
-            {/* Card 2 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white ml-3">
-                  Analytics
-                </h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                View tenant performance metrics
-              </p>
-              <button className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">
-                View Reports
-              </button>
-            </div>
-
-            {/* Card 3 */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white ml-3">
-                  Settings
-                </h3>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Configure tenant settings and preferences
-              </p>
-              <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200">
-                Configure
-              </button>
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Status Section */}
-          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              System Status
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                <span className="text-green-700 dark:text-green-300 font-medium">
-                  Database: Online
-                </span>
+        <div className="flex gap-6">
+          {/* Configuration Panel */}
+          {showConfigPanel && (
+            <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+              <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                <h3 className="font-semibold text-gray-900">Configuration</h3>
               </div>
-              <div className="flex items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                <span className="text-green-700 dark:text-green-300 font-medium">
-                  API: Operational
-                </span>
-              </div>
-              <div className="flex items-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
-                <span className="text-yellow-700 dark:text-yellow-300 font-medium">
-                  Cache: Warming
-                </span>
+              
+              <div className="p-4 space-y-4">
+                {/* Tenant Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Tenant
+                  </label>
+                  <select
+                    value={selectedTenant}
+                    onChange={(e) => setSelectedTenant(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="demo-firm">Demo Law Firm</option>
+                    <option value="smith-associates">Smith & Associates</option>
+                    <option value="jones-legal">Jones Legal Group</option>
+                  </select>
+                </div>
+
+                {/* Current Configuration Summary */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm font-medium text-gray-700">Firm Details</div>
+                    <div className="text-sm text-gray-600">
+                      {tenantConfig.firmName} ({tenantConfig.tenantId})
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-700">Theme</div>
+                    <div className="text-sm text-gray-600 capitalize">{tenantConfig.theme}</div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-700">Integrations</div>
+                    <div className="text-sm text-gray-600">
+                      {Object.values(tenantConfig.integrations).flat().length} configured
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm font-medium text-gray-700">AI Agents</div>
+                    <div className="text-sm text-gray-600">
+                      {Object.keys(tenantConfig.aiAgents).length} tabs configured
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="text-sm font-medium text-gray-700 mb-2">Quick Actions</div>
+                  <div className="space-y-2">
+                    <Link
+                      href="/firmsync/admin/firms"
+                      className="block text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      ← Edit Firm Details
+                    </Link>
+                    <Link
+                      href="/firmsync/admin/integrations"
+                      className="block text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      ← Configure Integrations
+                    </Link>
+                    <Link
+                      href="/firmsync/admin/llm"
+                      className="block text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      ← Setup AI Agents
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Configuration Status */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center">
+                    <span className={`w-3 h-3 rounded-full mr-2 ${
+                      tenantConfig.isComplete ? 'bg-green-500' : 'bg-yellow-500'
+                    }`}></span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {tenantConfig.isComplete ? 'Ready to Launch' : 'Configuration Incomplete'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
+
+          {/* Preview Area */}
+          <div className="flex-1">
+            {/* Preview Controls */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm font-medium text-gray-700">Preview Size:</span>
+                  <div className="flex items-center space-x-2">
+                    {[
+                      { mode: 'desktop', icon: '🖥️', label: 'Desktop' },
+                      { mode: 'tablet', icon: '📱', label: 'Tablet' },
+                      { mode: 'mobile', icon: '📲', label: 'Mobile' }
+                    ].map((option) => (
+                      <button
+                        key={option.mode}
+                        onClick={() => setPreviewMode(option.mode as any)}
+                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                          previewMode === option.mode
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {option.icon} {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">
+                    Preview URL: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{previewUrl}</code>
+                  </span>
+                  <Link
+                    href={previewUrl}
+                    target="_blank"
+                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Open in New Tab
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Preview Frame */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className={`mx-auto bg-gray-100 rounded-lg overflow-hidden ${
+                previewMode === 'desktop' ? 'w-full h-[800px]' :
+                previewMode === 'tablet' ? 'w-3/4 h-[600px]' :
+                'w-1/3 h-[700px]'
+              }`}>
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full border-0"
+                  title={`Preview of ${tenantConfig.firmName} Portal`}
+                />
+              </div>
+            </div>
+
+            {/* Launch Instructions */}
+            {tenantConfig.isComplete && (
+              <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-6">
+                <div className="flex items-start">
+                  <span className="text-green-500 text-xl mr-3">✅</span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-800 mb-2">
+                      Portal Ready for Launch!
+                    </h3>
+                    <p className="text-green-700 mb-4">
+                      All configuration steps are complete. The portal is ready to go live for {tenantConfig.firmName}.
+                    </p>
+                    <div className="text-sm text-green-700">
+                      <p><strong>What happens when you launch:</strong></p>
+                      <ul className="list-disc list-inside mt-2 space-y-1">
+                        <li>Portal becomes accessible to firm users</li>
+                        <li>All integrations and AI agents are activated</li>
+                        <li>Welcome email is sent to firm administrators</li>
+                        <li>Analytics and monitoring begin</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
