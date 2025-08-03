@@ -1,0 +1,59 @@
+-- Central Supabase migration for multi-tenant routing
+-- This table stores encrypted connection strings and metadata for each firm's Neon database
+
+-- Enable Row Level Security
+ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+
+-- Tenants table for routing to firm-specific Neon databases
+CREATE TABLE IF NOT EXISTS tenants (
+    id TEXT PRIMARY KEY, -- firm_timestamp_random
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    plan_type TEXT DEFAULT 'basic' CHECK (plan_type IN ('basic', 'professional', 'enterprise')),
+    status TEXT DEFAULT 'creating' CHECK (status IN ('creating', 'provisioning', 'active', 'suspended', 'error')),
+    
+    -- Encrypted Neon database connection info
+    database_url TEXT, -- Encrypted connection string
+    database_name TEXT,
+    
+    -- Metadata
+    created_by TEXT,
+    settings JSONB DEFAULT '{}',
+    metadata JSONB DEFAULT '{}',
+    
+    -- Flags
+    is_active BOOLEAN DEFAULT true,
+    
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
+CREATE INDEX IF NOT EXISTS idx_tenants_status ON tenants(status);
+CREATE INDEX IF NOT EXISTS idx_tenants_is_active ON tenants(is_active);
+CREATE INDEX IF NOT EXISTS idx_tenants_created_at ON tenants(created_at);
+
+-- Updated at trigger
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_tenants_updated_at 
+    BEFORE UPDATE ON tenants 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS Policies (admin-only for now)
+-- TODO: Add proper admin role-based policies
+-- CREATE POLICY "Admin can read all tenants" ON tenants FOR SELECT USING (auth.role() = 'admin');
+-- CREATE POLICY "Admin can manage all tenants" ON tenants FOR ALL USING (auth.role() = 'admin');
+
+-- For now, allow authenticated users (will restrict to admin later)
+CREATE POLICY "Authenticated users can read tenants" ON tenants FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can manage tenants" ON tenants FOR ALL USING (auth.role() = 'authenticated');

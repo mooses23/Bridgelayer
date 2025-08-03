@@ -111,5 +111,6 @@
   
   // Workspace Layout
   "workbench.startupEditor": "none",
-  "workbench.editor.splitInGroupLayout": "horizontal"
+  "workbench.editor.splitInGroupLayout": "horizontal",
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

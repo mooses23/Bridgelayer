@@ -4,20 +4,30 @@
   "private": true,
   "description": "Bridgelayer Meta-SaaS - Multi-tenant, multi-vertical platform with standalone and regenerative verticals",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-types": "supabase gen types typescript --local > src/types/supabase.ts"
   },
   "dependencies": {
+    "@dnd-kit/utilities": "^3.2.2",
+    "@heroicons/react": "^2.2.0",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.52.0",
+    "@types/crypto-js": "^4.2.2",
+    "@types/pg": "^8.15.4",
     "clsx": "^2.1.1",
+    "crypto-js": "^4.2.0",
     "next": "15.4.1",
+    "node-cache": "^5.1.2",
+    "pg": "^8.16.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1",
-    "vercel": "^32.0.1"
+    "vercel": "^32.0.1",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

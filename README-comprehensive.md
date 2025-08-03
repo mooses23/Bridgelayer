@@ -90,8 +90,8 @@ Bridgelayer is a multi‑tenant, multi‑vertical SaaS platform built with Next.
 **Tabs & Features:**
 * **Firms**: Tenant/firm creation & management
 * **Integrations**: Configure per-tenant integrations (Embed vs API‑Mirror vs AI‑Native)
-* **LLM**: AI agent workflow configuration per tab
-* **Doc+**: Document intelligence & pipeline settings
+* **LLM**: AI agent workflow (ex. Page Agents, Database Agents , Open Ai Frontend portal agents, etc.) configuration per tab
+* **Doc+**: Specific Document to firm id dropdown Paralegal +  mapping & pipeline settings
 * **Preview**: Ghost mode to preview portal template
 * **Settings**: Portal & onboarding code generation
 
