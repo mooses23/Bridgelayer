@@ -3,6 +3,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import IHOManager from '@/lib/iho-manager'
+import { Client } from '@/types/ittt'
+
+type ClientOperation = 'add' | 'view' | 'edit' | 'contact'
+
+type ClientOperationRequest = {
+  operation: ClientOperation
+  clientData?: Partial<Client>
+}
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +28,7 @@ export async function GET(
 
     // Test 1: Add a demo client (triggers ITTT rules)
     console.log('➕ Testing client addition...')
-    const newClient = await ihoManager.executeClientOperation(tenantId, 'add', {
+    const newClient = (await ihoManager.executeClientOperation(tenantId, 'add', {
       firstName: 'Demo',
       lastName: 'Client',
       email: `demo.client.${Date.now()}@example.com`,
@@ -29,7 +37,7 @@ export async function GET(
       clientType: 'business',
       status: 'active',
       notes: 'Test client created via IHO framework'
-    })
+    })) as Client
 
     // Test 2: View all clients
     console.log('👀 Testing client viewing...')
@@ -38,8 +46,8 @@ export async function GET(
     // Test 3: Contact the client (triggers ITTT rules)
     console.log('📧 Testing client contact...')
     const contactResult = await ihoManager.executeClientOperation(tenantId, 'contact', {
-      id: (newClient as any).id,
-      email: (newClient as any).email
+      id: newClient.id,
+      email: newClient.email
     })
 
     return NextResponse.json({
@@ -78,7 +86,7 @@ export async function POST(
 ) {
   try {
     const { tenantId } = params
-    const { operation, clientData } = await request.json()
+    const { operation, clientData }: ClientOperationRequest = await request.json()
     
     const ihoManager = new IHOManager(tenantId)
     

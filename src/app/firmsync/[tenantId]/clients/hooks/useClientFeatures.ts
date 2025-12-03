@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
 interface ClientFeatures {
@@ -31,9 +31,9 @@ export function useClientFeatures(tenantId: string): UseClientFeaturesReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  const fetchClientFeatures = async () => {
+  const fetchClientFeatures = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -69,13 +69,13 @@ export function useClientFeatures(tenantId: string): UseClientFeaturesReturn {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, tenantId]);
 
   useEffect(() => {
     if (tenantId) {
       fetchClientFeatures();
     }
-  }, [tenantId]);
+  }, [tenantId, fetchClientFeatures]);
 
   return {
     features,
