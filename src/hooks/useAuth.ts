@@ -20,10 +20,21 @@ export function useAuth() {
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
-      setProfile(data);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist - this could happen for newly created auth users
+          console.warn('Profile not found for user:', userId);
+          setProfile(null);
+          // Could trigger auto-provisioning here if needed
+        } else {
+          throw error;
+        }
+      } else {
+        setProfile(data);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      setProfile(null);
     }
   }, [supabase]);
 
