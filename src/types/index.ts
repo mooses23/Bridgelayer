@@ -10,3 +10,6 @@ export interface PortalPageConfiguration {
     }[];
   };
 }
+
+// Re-export settings types
+export * from './settings';
