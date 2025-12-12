@@ -117,8 +117,11 @@
 
 ## 📝 Files Generated
 
-1. `PAGE_STATUS_ASSESSMENT.md` - Comprehensive 14KB+ detailed analysis
+1. `PAGE_STATUS_ASSESSMENT.md` - Comprehensive 15KB detailed analysis
 2. `PAGE_STATUS_SUMMARY.md` - This quick reference guide
+3. `PAGE_STATUS_VISUAL.md` - Visual status maps and diagrams (16KB)
+4. `page-status.json` - Machine-readable JSON data (11KB)
+5. `PAGE_STATUS_INDEX.md` - Documentation guide and index (6.7KB)
 
 ---
 
