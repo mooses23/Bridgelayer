@@ -40,7 +40,7 @@ export function IntakeForm({ clientId, onSubmit, aiAnalysisEnabled = false }: In
     estimated_timeline?: string;
   } | null>(null);
 
-  const handleInputChange = (field: keyof IntakeFormData, value: any) => {
+  const handleInputChange = <K extends keyof IntakeFormData>(field: K, value: IntakeFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Trigger AI analysis on key fields if enabled
@@ -74,7 +74,7 @@ export function IntakeForm({ clientId, onSubmit, aiAnalysisEnabled = false }: In
     onSubmit(formData);
   };
 
-  const getUrgencyColor = (urgency: string) => {
+  const getUrgencyColor = (urgency: IntakeFormData['urgency']) => {
     switch (urgency) {
       case 'critical': return 'bg-red-100 text-red-800 border-red-200';
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -85,11 +85,11 @@ export function IntakeForm({ clientId, onSubmit, aiAnalysisEnabled = false }: In
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-6" data-client-id={clientId}>
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Client Intake Form</h3>
         <p className="text-sm text-gray-600 mt-1">
-          Gather essential information about the client's legal needs
+          Gather essential information about the client&apos;s legal needs
         </p>
       </div>
 
@@ -142,6 +142,9 @@ export function IntakeForm({ clientId, onSubmit, aiAnalysisEnabled = false }: In
               <option value="high">High</option>
               <option value="critical">Critical</option>
             </select>
+            <div className={`mt-2 inline-flex items-center px-3 py-1 text-xs font-medium border rounded-full ${getUrgencyColor(formData.urgency)}`}>
+              Current urgency: {formData.urgency}
+            </div>
           </div>
         </div>
 

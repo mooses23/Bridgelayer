@@ -1,11 +1,89 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
+
+type CookieOptions = {
+  domain?: string
+  expires?: Date
+  httpOnly?: boolean
+  maxAge?: number
+  path?: string
+  sameSite?: 'strict' | 'lax' | 'none'
+  secure?: boolean
+}
+
+async function checkRoleBasedAccess(
+  supabase: SupabaseClient,
+  user: User,
+  request: NextRequest
+): Promise<NextResponse | null> {
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role, tenant_id')
+    .eq('id', user.id)
+    .single()
+
+  // If user has no profile, they need to be provisioned
+  if (profileError || !profile) {
+    console.warn(
+      `[Middleware] User ${user.email} (${user.id}) has no profile record. Profile error: ${profileError?.message || 'Profile is null'}`
+    )
+
+    // Prevent access to protected routes if no profile exists
+    const pathname = request.nextUrl.pathname
+    if (
+      pathname.startsWith('/owner') ||
+      pathname.startsWith('/firmsync') ||
+      pathname.startsWith('/admin')
+    ) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/profile-not-found'
+      return NextResponse.redirect(url)
+    }
+    return null
+  }
+
+  const pathname = request.nextUrl.pathname
+  const role = profile.role
+
+  // Super admin access check
+  if (pathname.startsWith('/owner') && role !== 'super_admin') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
+
+  // Admin access check
+  if (
+    pathname.startsWith('/firmsync/admin') &&
+    !['super_admin', 'admin'].includes(role)
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
+
+  // Tenant-specific access check
+  const tenantIdRegex = /\/firmsync\/(\d+)/
+  const tenantIdMatch = tenantIdRegex.exec(pathname)
+  if (tenantIdMatch) {
+    const urlTenantId = Number.parseInt(tenantIdMatch[1])
+    if (!['super_admin', 'admin'].includes(role) && profile.tenant_id !== urlTenantId) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  return null
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
 
+  // @ts-ignore - Supabase SSR uses deprecated API but it's the recommended method
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -14,7 +92,7 @@ export async function updateSession(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: CookieOptions = {}) {
           request.cookies.set({
             name,
             value,
@@ -31,7 +109,7 @@ export async function updateSession(request: NextRequest) {
             ...options,
           })
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: CookieOptions = {}) {
           request.cookies.set({
             name,
             value: '',
@@ -73,43 +151,13 @@ export async function updateSession(request: NextRequest) {
 
   // Role-based route protection
   if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, tenant_id')
-      .eq('id', user.id)
-      .single()
-
-    if (profile) {
-      const pathname = request.nextUrl.pathname
-      const role = profile.role
-
-      // Super admin access check
-      if (pathname.startsWith('/owner') && role !== 'super_admin') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return NextResponse.redirect(url)
-      }
-
-      // Admin access check
-      if (pathname.startsWith('/firmsync/admin') && !['super_admin', 'admin'].includes(role)) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return NextResponse.redirect(url)
-      }
-
-      // Tenant-specific access check
-      const tenantIdMatch = pathname.match(/\/firmsync\/(\d+)/)
-      if (tenantIdMatch) {
-        const urlTenantId = parseInt(tenantIdMatch[1])
-        if (
-          !['super_admin', 'admin'].includes(role) && 
-          profile.tenant_id !== urlTenantId
-        ) {
-          const url = request.nextUrl.clone()
-          url.pathname = '/'
-          return NextResponse.redirect(url)
-        }
-      }
+    const protectionResponse = await checkRoleBasedAccess(
+      supabase,
+      user,
+      request
+    )
+    if (protectionResponse) {
+      return protectionResponse
     }
   }
 

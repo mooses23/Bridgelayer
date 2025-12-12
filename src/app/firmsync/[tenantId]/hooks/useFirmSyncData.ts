@@ -3,22 +3,18 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import type { Profile as SupabaseProfile, Tenant as SupabaseTenant } from '@/types/database';
 
-interface FirmProfile {
-  id: string;
-  name: string;
-  settings: Record<string, any>;
-  tenant_id: number;
-}
+type FirmProfile = {
+  id: SupabaseTenant['id'];
+  name: SupabaseTenant['name'];
+  settings: SupabaseTenant['settings'];
+  tenant_id: SupabaseTenant['id'];
+};
 
-interface TenantUser {
-  id: string;
-  display_name: string;
-  email: string;
-  role: 'tenant_admin' | 'tenant_user';
-}
+type TenantUser = Pick<SupabaseProfile, 'id' | 'display_name' | 'email' | 'role'>;
 
 interface WildcardTab {
   id: string;
@@ -36,6 +32,24 @@ interface FirmSyncData {
   error: string | null;
 }
 
+interface TenantClientRecord {
+  id: string;
+  tenant_id: string | number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+interface TenantCaseRecord {
+  id: string;
+  tenant_id: string | number;
+  title: string;
+  status: string;
+  [key: string]: unknown;
+}
+
 export function useFirmSyncData(tenantId: string): FirmSyncData {
   const [data, setData] = useState<FirmSyncData>({
     firm: null,
@@ -45,12 +59,17 @@ export function useFirmSyncData(tenantId: string): FirmSyncData {
     error: null
   });
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function fetchData() {
       try {
         setData(prev => ({ ...prev, loading: true, error: null }));
+
+        const tenantIdNumber = Number(tenantId);
+        if (Number.isNaN(tenantIdNumber)) {
+          throw new Error('Invalid tenant identifier');
+        }
 
         // Get current user session
         const { data: { session } } = await supabase.auth.getSession();
@@ -60,19 +79,19 @@ export function useFirmSyncData(tenantId: string): FirmSyncData {
 
         // Fetch user profile
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+          .from<SupabaseProfile>('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .eq('tenant_id', tenantId)
+          .eq('tenant_id', tenantIdNumber)
           .single();
 
         if (profileError) throw profileError;
 
         // Fetch tenant/firm information
         const { data: tenant, error: tenantError } = await supabase
-          .from('tenants')
+          .from<SupabaseTenant>('tenants')
           .select('*')
-          .eq('id', tenantId)
+          .eq('id', tenantIdNumber)
           .single();
 
         if (tenantError) throw tenantError;
@@ -140,65 +159,70 @@ export function useFirmSyncData(tenantId: string): FirmSyncData {
 
 // Hook for managing client data
 export function useClients(tenantId: string) {
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<TenantClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const normalizedTenantId = Number.isNaN(Number(tenantId)) ? tenantId : Number(tenantId);
 
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       setLoading(true);
       // In real implementation, this would query the firmsync.clients table
-      const { data, error } = await supabase
-        .from('firmsync.clients')
+      const { data, error: supabaseError } = await supabase
+        .from<TenantClientRecord>('firmsync.clients')
         .select('*')
-        .eq('tenant_id', tenantId);
+        .eq('tenant_id', normalizedTenantId);
 
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
       setClients(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch clients');
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, normalizedTenantId]);
 
   useEffect(() => {
-    fetchClients();
-  }, [tenantId, supabase]);
+    if (tenantId) {
+      fetchClients();
+    }
+  }, [tenantId, fetchClients]);
 
   return { clients, loading, error, refetch: fetchClients };
 }
 
 // Hook for managing case data
 export function useCases(tenantId: string) {
-  const [cases, setCases] = useState([]);
+  const [cases, setCases] = useState<TenantCaseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const normalizedTenantId = Number.isNaN(Number(tenantId)) ? tenantId : Number(tenantId);
+
+  const fetchCases = useCallback(async () => {
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from<TenantCaseRecord>('firmsync.cases')
+        .select('*')
+        .eq('tenant_id', normalizedTenantId);
+
+      if (supabaseError) throw supabaseError;
+      setCases(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch cases');
+    } finally {
+      setLoading(false);
+    }
+  }, [normalizedTenantId, supabase]);
 
   useEffect(() => {
-    async function fetchCases() {
-      try {
-        // In real implementation, this would query the firmsync.cases table
-        const { data, error } = await supabase
-          .from('firmsync.cases')
-          .select('*')
-          .eq('tenant_id', tenantId);
-
-        if (error) throw error;
-        setCases(data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch cases');
-      } finally {
-        setLoading(false);
-      }
+    if (tenantId) {
+      fetchCases();
     }
+  }, [tenantId, fetchCases]);
 
-    fetchCases();
-  }, [tenantId, supabase]);
-
-  return { cases, loading, error, refetch: () => fetchCases() };
+  return { cases, loading, error, refetch: fetchCases };
 }

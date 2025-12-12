@@ -154,7 +154,7 @@ class DatabaseConnectionManager {
   }
 
   async closeAllConnections() {
-    for (const [tenantId, pool] of this.connections) {
+    for (const pool of this.connections.values()) {
       await pool.end();
     }
     this.connections.clear();

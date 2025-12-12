@@ -1,14 +1,42 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/utils/supabase/client';
 import type { Profile } from '@/types/database';
 
 export function useAuth() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  const fetchProfile = useCallback(async (userId: string): Promise<void> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist - this could happen for newly created auth users
+          console.warn('Profile not found for user:', userId);
+          setProfile(null);
+          // Could trigger auto-provisioning here if needed
+        } else {
+          throw error;
+        }
+      } else {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setProfile(null);
+    }
+  }, [supabase]);
 
   useEffect(() => {
     // Get initial session
@@ -17,6 +45,9 @@ export function useAuth() {
       if (session?.user) {
         setUser(session.user);
         await fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
       }
       setLoading(false);
     };
@@ -25,7 +56,7 @@ export function useAuth() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         if (session?.user) {
           setUser(session.user);
           await fetchProfile(session.user.id);
@@ -38,28 +69,13 @@ export function useAuth() {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile, supabase]);
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
-  };
+  }, [supabase]);
 
   const hasRole = (requiredRoles: string | string[]) => {
     if (!profile) return false;
@@ -84,6 +100,6 @@ export function useAuth() {
     isAdmin: hasRole(['super_admin', 'admin']),
     isSuperAdmin: hasRole('super_admin'),
     isTenantAdmin: hasRole('tenant_admin'),
-    refreshProfile: () => user && fetchProfile(user.id)
+    refreshProfile: () => (user ? fetchProfile(user.id) : Promise.resolve())
   };
 }
