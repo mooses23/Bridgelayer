@@ -32,6 +32,9 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Constants
+  const MESSAGE_DISMISS_TIMEOUT = 3000
+
   // Load settings on mount
   useEffect(() => {
     loadSettings()
@@ -94,7 +97,7 @@ export default function SettingsPage() {
       if (data.success) {
         setMessage({ type: 'success', text: 'Settings updated successfully!' })
         await loadSettings()
-        setTimeout(() => setMessage(null), 3000)
+        setTimeout(() => setMessage(null), MESSAGE_DISMISS_TIMEOUT)
       }
     } catch (error) {
       console.error('Failed to save settings:', error)

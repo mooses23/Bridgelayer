@@ -107,31 +107,30 @@ export async function PUT(
       );
     }
 
+    // Deep merge function for nested objects
+    const deepMerge = (target: any, source: any): any => {
+      if (!source) return target;
+      if (!target) return source;
+      
+      const output = { ...target };
+      for (const key in source) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+          output[key] = deepMerge(target[key], source[key]);
+        } else if (source[key] !== undefined) {
+          output[key] = source[key];
+        }
+      }
+      return output;
+    };
+
     // Merge existing settings with updates
     const currentSettings = (tenant.settings as Partial<TenantSettings>) || {};
     const updatedSettings = {
-      ...currentSettings,
-      ...body.settings,
-      firmProfile: {
-        ...currentSettings.firmProfile,
-        ...body.settings?.firmProfile,
-      },
-      userManagement: {
-        ...currentSettings.userManagement,
-        ...body.settings?.userManagement,
-      },
-      integrations: {
-        ...currentSettings.integrations,
-        ...body.settings?.integrations,
-      },
-      notifications: {
-        ...currentSettings.notifications,
-        ...body.settings?.notifications,
-      },
-      security: {
-        ...currentSettings.security,
-        ...body.settings?.security,
-      },
+      firmProfile: deepMerge(currentSettings.firmProfile, body.settings?.firmProfile),
+      userManagement: deepMerge(currentSettings.userManagement, body.settings?.userManagement),
+      integrations: deepMerge(currentSettings.integrations, body.settings?.integrations),
+      notifications: deepMerge(currentSettings.notifications, body.settings?.notifications),
+      security: deepMerge(currentSettings.security, body.settings?.security),
     };
 
     // Update tenant settings

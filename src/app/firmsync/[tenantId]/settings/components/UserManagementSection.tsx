@@ -51,8 +51,10 @@ export default function UserManagementSection({
       setInviteEmail('')
       setInviteRole('tenant_user')
       onRefresh()
+      // Note: Consider adding a message callback prop for better UX consistency
     } catch (error) {
       console.error('Failed to invite user:', error)
+      // TODO: Replace with toast/message system from parent component
       alert('Failed to send invitation')
     } finally {
       setIsInviting(false)
@@ -79,6 +81,7 @@ export default function UserManagementSection({
       onRefresh()
     } catch (error) {
       console.error('Failed to remove user:', error)
+      // TODO: Replace with toast/message system from parent component
       alert('Failed to remove user')
     }
   }
