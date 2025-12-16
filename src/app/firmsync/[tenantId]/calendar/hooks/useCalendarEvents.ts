@@ -90,9 +90,14 @@ export function useCalendarEvents(tenantId: string): UseCalendarEventsReturn {
         throw new Error(`Failed to add event: ${supabaseError.message}`);
       }
 
-      setEvents(prev => [...prev, data].sort((a, b) => 
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-      ));
+      // Insert in sorted position for efficiency
+      setEvents(prev => {
+        const newEvents = [...prev, data];
+        newEvents.sort((a, b) => 
+          new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        );
+        return newEvents;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add event');
       console.error('useCalendarEvents addEvent error:', err);

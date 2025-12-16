@@ -28,12 +28,26 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate dates
+    const startDate = new Date(formData.start_time);
+    const endDate = new Date(formData.end_time);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      alert('Please enter valid start and end times');
+      return;
+    }
+    
+    if (endDate <= startDate) {
+      alert('End time must be after start time');
+      return;
+    }
+    
     const eventData: Partial<CalendarEvent> = {
       title: formData.title,
       description: formData.description,
       event_type: formData.event_type,
-      start_time: new Date(formData.start_time).toISOString(),
-      end_time: new Date(formData.end_time).toISOString(),
+      start_time: startDate.toISOString(),
+      end_time: endDate.toISOString(),
       all_day: formData.all_day,
       location: formData.location,
       priority: formData.priority,

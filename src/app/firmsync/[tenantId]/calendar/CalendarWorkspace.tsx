@@ -10,6 +10,10 @@ import { MonthView } from './components/MonthView';
 import { EventCard } from './components/EventCard';
 import { EventForm } from './components/EventForm';
 
+// Default event times when creating from date click
+const DEFAULT_EVENT_START_HOUR = 9;
+const DEFAULT_EVENT_END_HOUR = 10;
+
 interface CalendarWorkspaceProps {
   tenantId: string;
 }
@@ -75,9 +79,9 @@ export default function CalendarWorkspace({ tenantId }: CalendarWorkspaceProps) 
         // If a date was clicked, use that date for the event
         if (selectedDate && !eventData.start_time) {
           const startTime = new Date(selectedDate);
-          startTime.setHours(9, 0, 0, 0);
+          startTime.setHours(DEFAULT_EVENT_START_HOUR, 0, 0, 0);
           const endTime = new Date(selectedDate);
-          endTime.setHours(10, 0, 0, 0);
+          endTime.setHours(DEFAULT_EVENT_END_HOUR, 0, 0, 0);
           
           eventData.start_time = startTime.toISOString();
           eventData.end_time = endTime.toISOString();

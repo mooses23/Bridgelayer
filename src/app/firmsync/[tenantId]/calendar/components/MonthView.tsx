@@ -138,7 +138,11 @@ export function MonthView({ currentDate, events, onDateClick, onEventClick }: Mo
                         : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                     }`}
                   >
-                    {event.all_day ? '' : formatTime(event.start_time)} {event.title}
+                    {event.all_day ? (
+                      event.title
+                    ) : (
+                      <>{formatTime(event.start_time)} {event.title}</>
+                    )}
                   </button>
                 ))}
                 {dayEvents.length > 3 && (
