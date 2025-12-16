@@ -12,7 +12,13 @@ import { AnalysisTab } from './components/AnalysisTab';
 
 type TabType = 'research' | 'drafting' | 'analysis' | 'review';
 
-export function ParalegalWorkspace() {
+interface ParalegalWorkspaceProps {
+  tenantId: string;
+  previewMode?: boolean;
+}
+
+export function ParalegalWorkspace({ tenantId, previewMode = false }: ParalegalWorkspaceProps) {
+  const isPreview = previewMode;
   const [activeTab, setActiveTab] = useState<TabType>('drafting');
   const {
     filters,
@@ -21,7 +27,7 @@ export function ParalegalWorkspace() {
     legalTypes,
     locations,
     docTypes,
-  } = useParalegalFeatures();
+  } = useParalegalFeatures(tenantId);
 
   const tabs = [
     { id: 'research' as TabType, label: 'Research', icon: '📚' },
