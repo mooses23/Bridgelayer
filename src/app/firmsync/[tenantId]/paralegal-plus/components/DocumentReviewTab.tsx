@@ -118,7 +118,10 @@ export function DocumentReviewTab({
                 className: STATUS_STYLES[review.status]
               }}
               actionLabel={review.status === 'issues-found' ? 'View Issues' : 'View Report'}
-              onAction={() => {}}
+              onAction={() => {
+                // TODO: Implement view report/issues functionality
+                console.log('View details for:', review.id);
+              }}
             />
           ))}
         </div>

@@ -22,7 +22,7 @@ export const LEGAL_TYPES = [
   { value: 'employment', label: 'Employment' },
   { value: 'criminal', label: 'Criminal' },
   { value: 'tax', label: 'Tax' },
-];
+] as const;
 
 export const LOCATIONS = [
   { value: 'federal', label: 'Federal' },
@@ -35,7 +35,7 @@ export const LOCATIONS = [
   { value: 'ohio', label: 'Ohio' },
   { value: 'georgia', label: 'Georgia' },
   { value: 'north-carolina', label: 'North Carolina' },
-];
+] as const;
 
 export const DOC_TYPES = [
   { value: 'agreement', label: 'Agreement' },
@@ -50,7 +50,7 @@ export const DOC_TYPES = [
   { value: 'discovery', label: 'Discovery Request' },
   { value: 'settlement', label: 'Settlement' },
   { value: 'notice', label: 'Notice' },
-];
+] as const;
 
 export function useParalegalFeatures() {
   const [filters, setFilters] = useState<DocumentFilters>({

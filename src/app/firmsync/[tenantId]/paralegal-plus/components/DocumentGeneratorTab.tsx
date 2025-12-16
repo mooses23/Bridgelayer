@@ -96,7 +96,10 @@ export function DocumentGeneratorTab({
                 { label: template.jurisdiction, value: template.jurisdiction }
               ]}
               actionLabel="Use Template"
-              onAction={() => {}}
+              onAction={() => {
+                // TODO: Implement template selection and document generation
+                console.log('Selected template:', template.id);
+              }}
             />
           ))}
         </div>
