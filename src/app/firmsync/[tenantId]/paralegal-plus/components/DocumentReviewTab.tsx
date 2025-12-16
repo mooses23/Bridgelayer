@@ -63,7 +63,7 @@ export function DocumentReviewTab({ tenantId, previewMode = false }: DocumentRev
     if (!files || previewMode) return;
 
     const newDocuments: ReviewedDocument[] = Array.from(files).map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       name: file.name,
       uploadedAt: new Date().toISOString(),
       status: 'reviewing',
