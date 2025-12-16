@@ -1,11 +1,12 @@
 import ClientWorkspace from '@/app/firmsync/[tenantId]/clients/ClientWorkspace';
 
 interface ClientsPageProps {
-  params: {
+  params: Promise<{
     tenantId: string;
-  };
+  }>;
 }
 
-export default function TenantClientsPreview({ params }: ClientsPageProps) {
-  return <ClientWorkspace tenantId={params.tenantId} previewMode />;
+export default async function TenantClientsPreview({ params }: ClientsPageProps) {
+  const { tenantId } = await params;
+  return <ClientWorkspace tenantId={tenantId} previewMode />;
 }

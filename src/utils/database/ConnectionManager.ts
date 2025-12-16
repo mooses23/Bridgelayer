@@ -145,10 +145,11 @@ class DatabaseConnectionManager {
         
       } catch (error) {
         // Log failed migration
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         await this.centralPool.query(`
           INSERT INTO public.tenant_migrations (tenant_id, migration_name, status, error_message)
           VALUES ($1, $2, 'failed', $3)
-        `, [tenant.id, 'custom_migration', error.message]);
+        `, [tenant.id, 'custom_migration', errorMessage]);
       }
     }
   }

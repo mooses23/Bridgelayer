@@ -10,10 +10,10 @@ const dbRouter = new DatabaseRouter()
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params
+    const { tenantId } = await context.params
     
     console.log(`📋 Fetching clients for firm: ${tenantId}`)
 
@@ -56,10 +56,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params
+    const { tenantId } = await context.params
     const { name, email, phone, notes } = await request.json()
 
     if (!name || !email) {

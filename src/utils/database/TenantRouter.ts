@@ -1,5 +1,5 @@
 // Tenant routing and database selection utility
-import type { Pool } from 'pg';
+import type { Pool, QueryResultRow } from 'pg';
 import { dbManager } from './ConnectionManager';
 import { createClient } from '@/utils/supabase/client';
 
@@ -65,7 +65,7 @@ export class TenantRouter {
   /**
    * Query tenant-specific data
    */
-  static async queryTenantData<T>(
+  static async queryTenantData<T extends QueryResultRow>(
     tenantId: number,
     query: string,
     params: unknown[] = []
