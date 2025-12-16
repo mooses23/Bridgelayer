@@ -81,7 +81,6 @@ export function useCalendarEvents(tenantId: string): UseCalendarEventsReturn {
         .insert({
           ...eventData,
           tenant_id: tenantId,
-          id: crypto.randomUUID(),
           status: eventData.status || 'scheduled',
         })
         .select()

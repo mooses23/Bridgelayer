@@ -15,8 +15,8 @@ interface CalendarWorkspaceProps {
 }
 
 export default function CalendarWorkspace({ tenantId }: CalendarWorkspaceProps) {
-  const { features, loading: featuresLoading, error: featuresError } = useCalendarFeatures(tenantId);
-  const { events, loading: eventsLoading, error: eventsError, addEvent, updateEvent, deleteEvent } = useCalendarEvents(tenantId);
+  const { features, loading: featuresLoading, error: featuresError, refetch: refetchFeatures } = useCalendarFeatures(tenantId);
+  const { events, loading: eventsLoading, error: eventsError, addEvent, updateEvent, deleteEvent, refetch: refetchEvents } = useCalendarEvents(tenantId);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day' | 'list'>('month');
@@ -24,6 +24,7 @@ export default function CalendarWorkspace({ tenantId }: CalendarWorkspaceProps) 
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
   const filteredEvents = useMemo(() => {
     if (filterType === 'all') return events;
@@ -92,14 +93,19 @@ export default function CalendarWorkspace({ tenantId }: CalendarWorkspaceProps) 
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (confirm('Are you sure you want to delete this event?')) {
-      try {
-        await deleteEvent(eventId);
-        setSelectedEvent(null);
-        setShowEventForm(false);
-      } catch (error) {
-        console.error('Failed to delete event:', error);
-      }
+    setEventToDelete(eventId);
+  };
+
+  const confirmDelete = async () => {
+    if (!eventToDelete) return;
+    
+    try {
+      await deleteEvent(eventToDelete);
+      setSelectedEvent(null);
+      setShowEventForm(false);
+      setEventToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete event:', error);
     }
   };
 
@@ -126,7 +132,10 @@ export default function CalendarWorkspace({ tenantId }: CalendarWorkspaceProps) 
             {featuresError || eventsError}
           </p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (featuresError) refetchFeatures();
+              if (eventsError) refetchEvents();
+            }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Retry
@@ -327,6 +336,32 @@ export default function CalendarWorkspace({ tenantId }: CalendarWorkspaceProps) 
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {eventToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Event</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this event? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setEventToDelete(null)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

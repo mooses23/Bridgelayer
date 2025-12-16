@@ -4,6 +4,7 @@
 'use client';
 
 import type { CalendarEvent, EventType } from '../hooks/useCalendarEvents';
+import { formatTime, formatDate } from '../utils/dateFormatters';
 
 interface EventCardProps {
   event: CalendarEvent;
@@ -28,24 +29,6 @@ const priorityColors = {
 
 export function EventCard({ event, onClick, onDelete }: EventCardProps) {
   const colors = eventTypeColors[event.event_type] || eventTypeColors.appointment;
-  
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
   return (
     <div
