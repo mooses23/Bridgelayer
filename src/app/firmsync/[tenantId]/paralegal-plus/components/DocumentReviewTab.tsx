@@ -4,6 +4,8 @@
 'use client';
 
 import { FilterDropdown } from './FilterDropdown';
+import { DocumentCard } from './DocumentCard';
+import { SAMPLE_REVIEWS, STATUS_STYLES, STATUS_LABELS } from './templates';
 import type { DocumentFilters } from '../hooks/useParalegalFeatures';
 
 interface DocumentReviewTabProps {
@@ -101,75 +103,24 @@ export function DocumentReviewTab({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Document Reviews</h3>
         
         <div className="space-y-3">
-          <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h4 className="font-semibold text-gray-900">Settlement_Agreement_2024.pdf</h4>
-                  <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded text-xs font-medium">
-                    Reviewed
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  Contract review completed with 3 recommendations
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Contracts</span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">California</span>
-                  <span className="text-xs text-gray-500">2 hours ago</span>
-                </div>
-              </div>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                View Report
-              </button>
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h4 className="font-semibold text-gray-900">Employment_Contract_Draft.docx</h4>
-                  <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs font-medium">
-                    In Progress
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  AI analysis in progress...
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Employment</span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">New York</span>
-                  <span className="text-xs text-gray-500">5 minutes ago</span>
-                </div>
-              </div>
-              <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h4 className="font-semibold text-gray-900">NDA_Template_v3.pdf</h4>
-                  <span className="px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs font-medium">
-                    Issues Found
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">
-                  5 critical compliance issues identified
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Contracts</span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Federal</span>
-                  <span className="text-xs text-gray-500">Yesterday</span>
-                </div>
-              </div>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                View Issues
-              </button>
-            </div>
-          </div>
+          {SAMPLE_REVIEWS.map((review) => (
+            <DocumentCard
+              key={review.id}
+              title={review.filename}
+              description={review.description}
+              tags={[
+                { label: review.category, value: review.category },
+                { label: review.jurisdiction, value: review.jurisdiction },
+                { label: review.timestamp, value: review.timestamp }
+              ]}
+              statusBadge={{
+                label: STATUS_LABELS[review.status],
+                className: STATUS_STYLES[review.status]
+              }}
+              actionLabel={review.status === 'issues-found' ? 'View Issues' : 'View Report'}
+              onAction={() => {}}
+            />
+          ))}
         </div>
       </div>
 

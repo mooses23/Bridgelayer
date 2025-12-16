@@ -4,6 +4,8 @@
 'use client';
 
 import { FilterDropdown } from './FilterDropdown';
+import { DocumentCard } from './DocumentCard';
+import { DOCUMENT_TEMPLATES } from './templates';
 import type { DocumentFilters } from '../hooks/useParalegalFeatures';
 
 interface DocumentGeneratorTabProps {
@@ -84,59 +86,19 @@ export function DocumentGeneratorTab({
 
         {/* Document Templates */}
         <div className="space-y-3">
-          <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer">
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-semibold text-gray-900">Settlement Agreement Template</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Standard settlement agreement with customizable terms
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Contracts</span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">California</span>
-                </div>
-              </div>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                Use Template
-              </button>
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer">
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-semibold text-gray-900">Motion to Dismiss</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Pre-formatted motion with legal citations and arguments
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Litigation</span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Federal</span>
-                </div>
-              </div>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                Use Template
-              </button>
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer">
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-semibold text-gray-900">Demand Letter</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  Professional demand letter for payment or action
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">Letter</span>
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">All Jurisdictions</span>
-                </div>
-              </div>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                Use Template
-              </button>
-            </div>
-          </div>
+          {DOCUMENT_TEMPLATES.map((template) => (
+            <DocumentCard
+              key={template.id}
+              title={template.title}
+              description={template.description}
+              tags={[
+                { label: template.category, value: template.category },
+                { label: template.jurisdiction, value: template.jurisdiction }
+              ]}
+              actionLabel="Use Template"
+              onAction={() => {}}
+            />
+          ))}
         </div>
       </div>
 
