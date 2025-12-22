@@ -8,14 +8,6 @@ import NodeCache from 'node-cache'
 import type { Database } from '@/types/database'
 
 // Types
-interface FirmDatabaseConfig {
-  tenantId: string
-  databaseUrl: string
-  databaseName: string
-  status: 'active' | 'provisioning' | 'suspended' | 'error'
-  createdAt: string
-}
-
 interface NeonProject {
   id: string
   name: string
