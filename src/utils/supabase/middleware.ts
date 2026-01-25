@@ -83,7 +83,6 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  // @ts-ignore - Supabase SSR uses deprecated API but it's the recommended method
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

@@ -9,7 +9,7 @@ export async function GET(
     const { tenantId } = params;
     
     // Initialize IHO Manager for this tenant
-    const ihoManager = new IHOManager(tenantId);
+    const ihoManager = new IHOManager();
     await ihoManager.initializeMode(tenantId);
     
     // Get all clients for this tenant
@@ -37,7 +37,7 @@ export async function POST(
     const body = await request.json();
     
     // Initialize IHO Manager for this tenant
-    const ihoManager = new IHOManager(tenantId);
+    const ihoManager = new IHOManager();
     await ihoManager.initializeMode(tenantId);
     
     // Create new client
@@ -65,7 +65,7 @@ export async function PUT(
     const body = await request.json();
     
     // Initialize IHO Manager for this tenant
-    const ihoManager = new IHOManager(tenantId);
+    const ihoManager = new IHOManager();
     await ihoManager.initializeMode(tenantId);
     
     // Update existing client
@@ -93,7 +93,7 @@ export async function PATCH(
     const body = await request.json();
     
     // Initialize IHO Manager for this tenant
-    const ihoManager = new IHOManager(tenantId);
+    const ihoManager = new IHOManager();
     await ihoManager.initializeMode(tenantId);
     
     // Handle different patch operations

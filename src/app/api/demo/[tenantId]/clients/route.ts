@@ -18,7 +18,7 @@ export async function GET(
 ) {
   try {
     const { tenantId } = params
-    const ihoManager = new IHOManager(tenantId)
+    const ihoManager = new IHOManager()
     
     console.log(`🧪 Testing IHO Client Management for tenant: ${tenantId}`)
 
@@ -88,7 +88,7 @@ export async function POST(
     const { tenantId } = params
     const { operation, clientData }: ClientOperationRequest = await request.json()
     
-    const ihoManager = new IHOManager(tenantId)
+    const ihoManager = new IHOManager()
     
     const result = await ihoManager.executeClientOperation(
       tenantId,
