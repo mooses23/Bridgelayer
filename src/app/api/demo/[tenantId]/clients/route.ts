@@ -14,11 +14,11 @@ type ClientOperationRequest = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params
-    const ihoManager = new IHOManager(tenantId)
+    const { tenantId } = await context.params
+    const ihoManager = new IHOManager()
     
     console.log(`🧪 Testing IHO Client Management for tenant: ${tenantId}`)
 
@@ -82,13 +82,13 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params
+    const { tenantId } = await context.params
     const { operation, clientData }: ClientOperationRequest = await request.json()
     
-    const ihoManager = new IHOManager(tenantId)
+    const ihoManager = new IHOManager()
     
     const result = await ihoManager.executeClientOperation(
       tenantId,

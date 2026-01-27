@@ -6,7 +6,7 @@
 interface FilterDropdownProps {
   label: string;
   value: string;
-  options: { value: string; label: string }[];
+  options: readonly { readonly value: string; readonly label: string }[];
   onChange: (value: string) => void;
   placeholder?: string;
 }

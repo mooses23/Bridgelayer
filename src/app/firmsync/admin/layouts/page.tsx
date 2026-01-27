@@ -289,8 +289,8 @@ export default function LayoutBuilderPage() {
         newConfig.grid.rows[rowIndex].columns.push(newColumn);
         // Adjust widths - this is a simple example
         const numCols = newConfig.grid.rows[rowIndex].columns.length;
-        const newWidthValue = Math.max(1, Math.floor(12 / numCols));
-        const newWidth = `col-span-${newWidthValue}`;
+        const newWidthValue = Math.max(1, Math.min(12, Math.floor(12 / numCols)));
+        const newWidth = `col-span-${newWidthValue}` as PortalColumn['width'];
         newConfig.grid.rows[rowIndex].columns.forEach((c: PortalColumn) => c.width = newWidth);
         return newConfig;
     });
@@ -395,7 +395,7 @@ export default function LayoutBuilderPage() {
                 <div className="mt-6">
                     <h2 className="text-xl font-semibold mb-2">Live Preview</h2>
                     <div className="border-4 border-dashed border-gray-300 rounded-lg p-4">
-                        {layoutConfig ? <PortalRenderer config={layoutConfig} /> : <p className="text-center text-gray-500">Select a tenant and page to see a preview.</p>}
+                        {layoutConfig ? <PortalRenderer configuration={layoutConfig} /> : <p className="text-center text-gray-500">Select a tenant and page to see a preview.</p>}
                     </div>
                 </div>
               </div>

@@ -36,21 +36,21 @@ export default function SettingsPage() {
     auditLogging: true
   });
 
-  const updatePlatformSetting = (key: string, value: any) => {
+  const updatePlatformSetting = (key: string, value: string | boolean | number) => {
     setPlatformSettings(prev => ({
       ...prev,
       [key]: value
     }));
   };
 
-  const updateOnboardingSetting = (key: string, value: any) => {
+  const updateOnboardingSetting = (key: string, value: string | boolean) => {
     setOnboardingSettings(prev => ({
       ...prev,
       [key]: value
     }));
   };
 
-  const updateSecuritySetting = (key: string, value: any) => {
+  const updateSecuritySetting = (key: string, value: string | boolean | number) => {
     setSecuritySettings(prev => ({
       ...prev,
       [key]: value
