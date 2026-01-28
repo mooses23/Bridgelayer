@@ -31,8 +31,12 @@ class DatabaseRouter {
     if (supabaseUrl && supabaseKey) {
       this.centralSupabase = createClient<Database>(supabaseUrl, supabaseKey);
     } else {
-      // Create a dummy client for build time
+      // During build time, create a dummy client that will never be called
+      // At runtime, if this is accessed without proper env vars, methods will throw
       this.centralSupabase = null as any;
+      if (typeof window === 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.warn('DatabaseRouter: Supabase env vars not set. API routes requiring database will fail at runtime.');
+      }
     }
     
     this.encryptionKey = process.env.DATABASE_ENCRYPTION_KEY || 'default-dev-key-change-in-prod'
@@ -43,6 +47,10 @@ class DatabaseRouter {
    * This is where the magic happens - routes to correct firm DB
    */
   async getFirmDatabase(tenantId: string): Promise<Pool> {
+    // Runtime check for Supabase availability
+    if (!this.centralSupabase) {
+      throw new Error('Database routing unavailable: Supabase environment variables are not configured');
+    }
     const cacheKey = `db-${tenantId}`
     
     // Check cache first

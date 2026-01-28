@@ -2,12 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   eslint: {
-    // Ignore ESLint errors during build
+    // Temporarily ignore ESLint errors during build
+    // TODO: Re-enable after fixing all linting issues
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Dangerously allow build to succeed even with type errors
-    // Remove this in production after fixing all type errors
+    // Type checking is enforced during build
     ignoreBuildErrors: false,
   },
 };
