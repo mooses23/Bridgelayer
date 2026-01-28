@@ -1,4 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server'
 
 /**

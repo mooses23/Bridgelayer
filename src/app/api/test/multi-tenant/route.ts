@@ -1,4 +1,7 @@
 // Test API endpoint for the multi-tenant system
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 // GET /api/test/multi-tenant - Run system verification tests
 
 import { NextResponse } from 'next/server'

@@ -1,4 +1,7 @@
 // Admin API for firm provisioning and management
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 // POST /api/admin/firms - Create new firm with dedicated Neon database
 // GET /api/admin/firms - List all firms with status
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 
@@ -8,9 +9,9 @@ export default function TenantLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }) {
-  const { tenantId } = params;
+  const { tenantId } = use(params);
   
   // Sample wildcard tabs - these would typically come from database/API
   const wildcardTabs = [

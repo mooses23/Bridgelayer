@@ -24,11 +24,16 @@ class DatabaseRouter {
     // Connection cache with 5-minute TTL
     this.connectionCache = new NodeCache({ stdTTL: 300, checkperiod: 60 })
     
-    // Central Supabase for routing table
-    this.centralSupabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Central Supabase for routing table - only initialize if env vars are available
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    
+    if (supabaseUrl && supabaseKey) {
+      this.centralSupabase = createClient<Database>(supabaseUrl, supabaseKey);
+    } else {
+      // Create a dummy client for build time
+      this.centralSupabase = null as any;
+    }
     
     this.encryptionKey = process.env.DATABASE_ENCRYPTION_KEY || 'default-dev-key-change-in-prod'
   }

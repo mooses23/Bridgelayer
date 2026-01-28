@@ -1,4 +1,7 @@
 // Firm-specific data API routes
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 // GET /api/firms/[tenantId]/clients - Get all clients for this firm
 // POST /api/firms/[tenantId]/clients - Create client for this firm
 // This demonstrates firm data isolation for LLM access
