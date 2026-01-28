@@ -15,3 +15,6 @@ export interface PortalPageConfiguration {
     rows: PortalRow[];
   };
 }
+
+// Re-export settings types
+export * from './settings';
