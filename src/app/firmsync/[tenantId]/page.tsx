@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function TenantPage({ params }: { params: { tenantId: string } }) {
-  redirect(`/firmsync/${params.tenantId}/dashboard`);
+export default async function TenantPage({ params }: { params: Promise<{ tenantId: string }> }) {
+  const { tenantId } = await params;
+  redirect(`/firmsync/${tenantId}/dashboard`);
 }

@@ -77,7 +77,7 @@ export default function WildcardTabs({ tenantId, tabs = [] }: WildcardTabsProps)
 
   if (enabledTabs.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" data-tenant-id={tenantId}>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">No Custom Tabs Enabled</h2>
           <p className="text-gray-600">Contact your administrator to enable custom integrations</p>
@@ -87,11 +87,15 @@ export default function WildcardTabs({ tenantId, tabs = [] }: WildcardTabsProps)
   }
 
   if (enabledTabs.length === 1) {
-    return renderWildcardComponent(enabledTabs[0]);
+    return (
+      <div data-tenant-id={tenantId}>
+        {renderWildcardComponent(enabledTabs[0])}
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" data-tenant-id={tenantId}>
       {/* Tab Navigation */}
       <div className="bg-white shadow-sm border-b">
         <div className="px-6 py-4">

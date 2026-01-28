@@ -2,6 +2,8 @@
 // src/app/firmsync/admin/dashboard/page.tsx
 // Admin dashboard with overview metrics and quick actions
 
+import Link from 'next/link'
+
 export default function AdminDashboard() {
   return (
     <div className="p-6">
@@ -15,18 +17,18 @@ export default function AdminDashboard() {
             Build custom law firm portals with integrated SaaS tools and AI-powered features
           </p>
           <div className="flex space-x-4">
-            <a 
+            <Link 
               href="/firmsync/admin/firms"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Add New Firm
-            </a>
-            <a 
+            </Link>
+            <Link 
               href="/firmsync/admin/preview"
               className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium"
             >
               Preview Portal
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -57,7 +59,7 @@ export default function AdminDashboard() {
 
         {/* Quick Actions Grid */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <a 
+          <Link 
             href="/firmsync/admin/firms"
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
           >
@@ -66,9 +68,9 @@ export default function AdminDashboard() {
               <h3 className="text-lg font-semibold text-gray-900">Manage Firms</h3>
             </div>
             <p className="text-gray-600">Add new law firms and configure tenant settings</p>
-          </a>
+          </Link>
 
-          <a 
+          <Link 
             href="/firmsync/admin/integrations"
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
           >
@@ -77,9 +79,9 @@ export default function AdminDashboard() {
               <h3 className="text-lg font-semibold text-gray-900">Configure Integrations</h3>
             </div>
             <p className="text-gray-600">Set up external SaaS tool integrations per tenant</p>
-          </a>
+          </Link>
 
-          <a 
+          <Link 
             href="/firmsync/admin/llm"
             className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
           >
@@ -88,7 +90,7 @@ export default function AdminDashboard() {
               <h3 className="text-lg font-semibold text-gray-900">AI Agents</h3>
             </div>
             <p className="text-gray-600">Configure AI agents for each tenant portal tab</p>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

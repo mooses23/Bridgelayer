@@ -1,20 +1,13 @@
 // Core Database Router for Multi-Tenant Firm Isolation
 // Each firm gets identical schema in separate Neon databases
 
-import { Pool } from 'pg'
-import { createClient } from '@supabase/supabase-js'
+import { Pool, type QueryResultRow } from 'pg'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import CryptoJS from 'crypto-js'
 import NodeCache from 'node-cache'
+import type { Database } from '@/types/database'
 
 // Types
-interface FirmDatabaseConfig {
-  tenantId: string
-  databaseUrl: string
-  databaseName: string
-  status: 'active' | 'provisioning' | 'suspended' | 'error'
-  createdAt: string
-}
-
 interface NeonProject {
   id: string
   name: string
@@ -24,7 +17,7 @@ interface NeonProject {
 
 class DatabaseRouter {
   private connectionCache: NodeCache
-  private centralSupabase: any
+  private centralSupabase: SupabaseClient<Database>
   private encryptionKey: string
 
   constructor() {
@@ -32,7 +25,7 @@ class DatabaseRouter {
     this.connectionCache = new NodeCache({ stdTTL: 300, checkperiod: 60 })
     
     // Central Supabase for routing table
-    this.centralSupabase = createClient(
+    this.centralSupabase = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
@@ -457,16 +450,16 @@ class DatabaseRouter {
    * Execute query on firm-specific database
    * This is what your LLMs will use to access firm data
    */
-  async queryFirmDatabase<T = any>(
+  async queryFirmDatabase<T extends QueryResultRow = QueryResultRow>(
     tenantId: string, 
     query: string, 
-    params: any[] = []
+    params: unknown[] = []
   ): Promise<T[]> {
     const pool = await this.getFirmDatabase(tenantId)
     const client = await pool.connect()
     
     try {
-      const result = await client.query(query, params)
+      const result = await client.query<T>(query, params)
       return result.rows
     } finally {
       client.release()

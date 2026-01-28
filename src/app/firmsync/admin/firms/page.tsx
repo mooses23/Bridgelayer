@@ -212,7 +212,7 @@ export default function FirmsPage() {
 
         {firms.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            <p>No firms created yet. Click "Add New Firm" to get started.</p>
+            <p>No firms created yet. Click &quot;Add New Firm&quot; to get started.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

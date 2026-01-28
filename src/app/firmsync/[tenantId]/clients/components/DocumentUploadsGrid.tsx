@@ -28,7 +28,7 @@ interface DocumentUploadsGridProps {
   documents: Document[];
   onUpload: (files: FileList) => void;
   onDelete: (documentId: string) => void;
-  onUpdateCategory: (documentId: string, category: string) => void;
+  onUpdateCategory: (documentId: string, category: Document['category']) => void;
   aiCategorizationEnabled?: boolean;
   webhookTriggersEnabled?: boolean;
 }
@@ -46,6 +46,9 @@ export function DocumentUploadsGrid({
   const [uploading, setUploading] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const handleCategoryChange = (documentId: string, category: Document['category']) => {
+    onUpdateCategory(documentId, category);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -131,7 +134,11 @@ export function DocumentUploadsGrid({
   });
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div
+      className="bg-white rounded-lg border border-gray-200 p-6"
+      data-client-id={clientId}
+      aria-label={`Document workspace for client ${clientId}`}
+    >
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
@@ -299,9 +306,22 @@ export function DocumentUploadsGrid({
               <p className="text-xs text-gray-500 mb-2">{formatFileSize(doc.file_size)}</p>
 
               <div className="space-y-2">
-                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(doc.category)}`}>
-                  {doc.category.replace('_', ' ')}
-                </span>
+                <label className="block text-xs font-medium text-gray-600">
+                  Category
+                  <select
+                    value={doc.category}
+                    onChange={(event) =>
+                      handleCategoryChange(doc.id, event.target.value as Document['category'])
+                    }
+                    className={`mt-1 w-full px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(doc.category)} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  >
+                    {['contract','evidence','correspondence','legal_brief','medical','financial','other'].map((categoryOption) => (
+                      <option key={categoryOption} value={categoryOption}>
+                        {categoryOption.replace('_', ' ')}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
                 {doc.ai_category && aiCategorizationEnabled && (
                   <div className="text-xs text-blue-600">
@@ -348,9 +368,23 @@ export function DocumentUploadsGrid({
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium text-gray-900 truncate">{doc.name}</h4>
                   <div className="flex items-center space-x-2 ml-4">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(doc.category)}`}>
-                      {doc.category.replace('_', ' ')}
-                    </span>
+                    <label className="sr-only" htmlFor={`doc-category-${doc.id}`}>
+                      Document category
+                    </label>
+                    <select
+                      id={`doc-category-${doc.id}`}
+                      value={doc.category}
+                      onChange={(event) =>
+                        handleCategoryChange(doc.id, event.target.value as Document['category'])
+                      }
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(doc.category)} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    >
+                      {['contract','evidence','correspondence','legal_brief','medical','financial','other'].map((categoryOption) => (
+                        <option key={categoryOption} value={categoryOption}>
+                          {categoryOption.replace('_', ' ')}
+                        </option>
+                      ))}
+                    </select>
                     {doc.is_confidential && (
                       <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />

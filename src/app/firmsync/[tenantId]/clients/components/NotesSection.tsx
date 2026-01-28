@@ -135,7 +135,7 @@ export function NotesSection({
   });
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-6" data-client-id={clientId}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Client Notes</h3>
@@ -310,9 +310,19 @@ export function NotesSection({
                   <button
                     onClick={() => onUpdateNote(note.id, { is_pinned: !note.is_pinned })}
                     className="text-gray-400 hover:text-gray-600"
+                    aria-label="Toggle pin"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => onDeleteNote(note.id)}
+                    className="text-gray-400 hover:text-red-600"
+                    aria-label="Delete note"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>

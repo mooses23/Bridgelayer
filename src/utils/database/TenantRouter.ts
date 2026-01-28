@@ -1,6 +1,24 @@
 // Tenant routing and database selection utility
+import type { Pool, QueryResultRow } from 'pg';
 import { dbManager } from './ConnectionManager';
 import { createClient } from '@/utils/supabase/client';
+
+interface TenantClientInput {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+}
+
+interface TenantClientRecord {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  created_at?: string;
+  [key: string]: unknown;
+}
 
 export class TenantRouter {
   private static supabase = createClient();
@@ -11,13 +29,17 @@ export class TenantRouter {
   static async getTenantFromContext(
     tenantId?: string | number,
     userId?: string
-  ): Promise<{ tenantId: number; connection: any } | null> {
+  ): Promise<{ tenantId: number; connection: Pool } | null> {
     
     let resolvedTenantId: number;
 
     if (tenantId) {
       // From URL parameter
-      resolvedTenantId = typeof tenantId === 'string' ? parseInt(tenantId) : tenantId;
+      const parsedTenantId = typeof tenantId === 'string' ? Number(tenantId) : tenantId;
+      if (Number.isNaN(parsedTenantId)) {
+        return null;
+      }
+      resolvedTenantId = parsedTenantId;
     } else if (userId) {
       // From user session
       const { data: profile } = await this.supabase
@@ -43,13 +65,13 @@ export class TenantRouter {
   /**
    * Query tenant-specific data
    */
-  static async queryTenantData<T>(
+  static async queryTenantData<T extends QueryResultRow>(
     tenantId: number,
     query: string,
-    params: any[] = []
+    params: unknown[] = []
   ): Promise<T[]> {
     const connection = await dbManager.getTenantConnection(tenantId);
-    const result = await connection.query(query, params);
+    const result = await connection.query<T>(query, params);
     return result.rows;
   }
 
@@ -81,7 +103,7 @@ export class TenantRouter {
   /**
    * Create new client in tenant database
    */
-  static async createTenantClient(tenantId: number, clientData: any) {
+  static async createTenantClient(tenantId: number, clientData: TenantClientInput): Promise<TenantClientRecord> {
     const connection = await dbManager.getTenantConnection(tenantId);
     
     const query = `
@@ -90,11 +112,11 @@ export class TenantRouter {
       RETURNING *
     `;
     
-    const result = await connection.query(query, [
+    const result = await connection.query<TenantClientRecord>(query, [
       clientData.firstName,
       clientData.lastName, 
-      clientData.email,
-      clientData.phone
+      clientData.email ?? null,
+      clientData.phone ?? null
     ]);
     
     return result.rows[0];
