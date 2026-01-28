@@ -349,7 +349,7 @@ export default function LLMPage() {
                           Welcome Message
                         </label>
                         <textarea
-                          value={config.customSettings.welcomeMessage}
+                          value={(config.customSettings.welcomeMessage as string) || ''}
                           onChange={(e) => updateCustomSetting(tab.id, 'welcomeMessage', e.target.value)}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           rows={3}
@@ -363,7 +363,7 @@ export default function LLMPage() {
                           Suggested Actions (comma-separated)
                         </label>
                         <textarea
-                          value={config.customSettings.suggestedActions?.join(', ') || ''}
+                          value={(config.customSettings.suggestedActions as string[] | undefined)?.join(', ') || ''}
                           onChange={(e) => updateCustomSetting(tab.id, 'suggestedActions', e.target.value.split(', ').filter(Boolean))}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           rows={3}

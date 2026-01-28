@@ -174,7 +174,7 @@ export default function DocPlusPage() {
     );
   };
 
-  const updateChatBoxConfig = (chatId: string, field: string, value: unknown) => {
+  const updateChatBoxConfig = (chatId: string, field: string, value: string | boolean | { model: string; temperature: number; maxTokens: number }) => {
     setParalegalChatBoxes(prev =>
       prev.map(chat =>
         chat.id === chatId 

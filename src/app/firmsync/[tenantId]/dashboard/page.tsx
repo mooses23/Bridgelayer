@@ -6,16 +6,17 @@ import type { PortalPageConfiguration } from "@/types";
 import DashboardShell from "./DashboardShell";
 
 interface DashboardPageProps {
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }
 
 export default async function DashboardPage({ params }: DashboardPageProps) {
+  const { tenantId } = await params;
   const supabase = createServerComponentClient({ cookies });
 
   const { data, error } = await supabase
     .from("portal_layouts")
     .select("configuration")
-    .eq("tenant_id", params.tenantId)
+    .eq("tenant_id", tenantId)
     .eq("page_slug", "dashboard")
     .single();
 

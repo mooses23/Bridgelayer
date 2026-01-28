@@ -3,10 +3,10 @@ import { IHOManager } from '@/lib/iho-manager';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     
     // Initialize IHO Manager for this tenant
     const ihoManager = new IHOManager();
@@ -30,10 +30,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const body = await request.json();
     
     // Initialize IHO Manager for this tenant
@@ -58,10 +58,10 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const body = await request.json();
     
     // Initialize IHO Manager for this tenant
@@ -86,10 +86,10 @@ export async function PUT(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const body = await request.json();
     
     // Initialize IHO Manager for this tenant
