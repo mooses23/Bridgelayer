@@ -79,7 +79,7 @@ export function useFirmSyncData(tenantId: string): FirmSyncData {
 
         // Fetch user profile
         const { data: profile, error: profileError } = await supabase
-          .from<SupabaseProfile>('profiles')
+          .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .eq('tenant_id', tenantIdNumber)
@@ -89,7 +89,7 @@ export function useFirmSyncData(tenantId: string): FirmSyncData {
 
         // Fetch tenant/firm information
         const { data: tenant, error: tenantError } = await supabase
-          .from<SupabaseTenant>('tenants')
+          .from('tenants')
           .select('*')
           .eq('id', tenantIdNumber)
           .single();
@@ -171,7 +171,7 @@ export function useClients(tenantId: string) {
       setLoading(true);
       // In real implementation, this would query the firmsync.clients table
       const { data, error: supabaseError } = await supabase
-        .from<TenantClientRecord>('firmsync.clients')
+        .from('firmsync.clients')
         .select('*')
         .eq('tenant_id', normalizedTenantId);
 
@@ -205,7 +205,7 @@ export function useCases(tenantId: string) {
   const fetchCases = useCallback(async () => {
     try {
       const { data, error: supabaseError } = await supabase
-        .from<TenantCaseRecord>('firmsync.cases')
+        .from('firmsync.cases')
         .select('*')
         .eq('tenant_id', normalizedTenantId);
 

@@ -1,9 +1,10 @@
 import CasesWorkspace from './CasesWorkspace';
 
 interface CasesPageProps {
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }
 
-export default function CasesPage({ params }: CasesPageProps) {
-  return <CasesWorkspace tenantId={params.tenantId} />;
+export default async function CasesPage({ params }: CasesPageProps) {
+  const { tenantId } = await params;
+  return <CasesWorkspace tenantId={tenantId} />;
 }

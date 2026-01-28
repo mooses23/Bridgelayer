@@ -1,9 +1,8 @@
-import ParalegalWorkspace from './ParalegalWorkspace';
+// src/app/firmsync/[tenantId]/paralegal-plus/page.tsx
+// AI-powered paralegal assistance - Document review, legal research, and automated workflows
 
-interface ParalegalPlusPageProps {
-  params: { tenantId: string };
-}
+import { ParalegalWorkspace } from './ParalegalWorkspace';
 
-export default function ParalegalPlusPage({ params }: ParalegalPlusPageProps) {
-  return <ParalegalWorkspace tenantId={params.tenantId} />;
+export default function ParalegalPlusPage() {
+  return <ParalegalWorkspace />;
 }

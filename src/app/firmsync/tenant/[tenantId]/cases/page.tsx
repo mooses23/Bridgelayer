@@ -1,9 +1,10 @@
 import CasesWorkspace from '@/app/firmsync/[tenantId]/cases/CasesWorkspace';
 
 interface TenantCasesPreviewProps {
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }
 
-export default function TenantCasesPreview({ params }: TenantCasesPreviewProps) {
-  return <CasesWorkspace tenantId={params.tenantId} previewMode />;
+export default async function TenantCasesPreview({ params }: TenantCasesPreviewProps) {
+  const { tenantId } = await params;
+  return <CasesWorkspace tenantId={tenantId} previewMode />;
 }
