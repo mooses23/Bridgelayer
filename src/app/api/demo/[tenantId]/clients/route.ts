@@ -17,6 +17,7 @@ export async function GET(
   context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
+    const { tenantId } = params
     const { tenantId } = await context.params
     const ihoManager = new IHOManager()
     

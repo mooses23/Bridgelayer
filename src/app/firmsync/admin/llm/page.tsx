@@ -24,7 +24,7 @@ interface TabAgentConfig {
   [tabId: string]: {
     primaryAgent: string;
     fallbackAgent: string;
-    customSettings: Record<string, string | boolean | number | string[]>;
+    customSettings: Record<string, unknown>;
   };
 }
 
@@ -186,7 +186,7 @@ export default function LLMPage() {
     }));
   };
 
-  const updateCustomSetting = (tabId: string, setting: string, value: string | boolean | number | string[]) => {
+  const updateCustomSetting = (tabId: string, setting: string, value: unknown) => {
     setTabAgentConfig(prev => ({
       ...prev,
       [tabId]: {
