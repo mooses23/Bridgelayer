@@ -85,7 +85,18 @@ export function DocumentReviewTab({
         )}
 
         {/* Drag & Drop Area */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+        <div 
+          className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            // TODO: Implement file selection on Enter/Space key
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              console.log('📄 File selection triggered via keyboard');
+            }
+          }}
+        >
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
