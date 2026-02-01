@@ -52,8 +52,7 @@ export const DOC_TYPES = [
   { value: 'notice', label: 'Notice' },
 ] as const;
 
-export function useParalegalFeatures(tenantId: string) {
-  // TODO: Use tenantId to fetch tenant-specific paralegal features from database
+export function useParalegalFeatures() {
   const [filters, setFilters] = useState<DocumentFilters>({
     legalType: 'all',
     location: 'all',
