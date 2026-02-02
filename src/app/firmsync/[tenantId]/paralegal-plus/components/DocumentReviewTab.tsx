@@ -167,56 +167,6 @@ export function DocumentReviewTab({ tenantId, previewMode = false }: DocumentRev
             onChange={(e) => handleFileUpload(e.target.files)}
             disabled={previewMode}
             className="hidden"
-// AI-powered document review and compliance checking with filters
-
-'use client';
-
-import { FilterDropdown } from './FilterDropdown';
-import { DocumentCard } from './DocumentCard';
-import { SAMPLE_REVIEWS, STATUS_STYLES, STATUS_LABELS } from './templates';
-import type { DocumentFilters } from '../hooks/useParalegalFeatures';
-
-interface DocumentReviewTabProps {
-  filters: DocumentFilters;
-  onFilterChange: (key: keyof DocumentFilters, value: string) => void;
-  legalTypes: readonly { readonly value: string; readonly label: string }[];
-  locations: readonly { readonly value: string; readonly label: string }[];
-  docTypes: readonly { readonly value: string; readonly label: string }[];
-}
-
-export function DocumentReviewTab({
-  filters,
-  onFilterChange,
-  legalTypes,
-  locations,
-  docTypes,
-}: DocumentReviewTabProps) {
-  return (
-    <div className="space-y-6">
-      {/* Filters Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FilterDropdown
-            label="Legal Type"
-            value={filters.legalType}
-            options={legalTypes}
-            onChange={(value) => onFilterChange('legalType', value)}
-            placeholder="All Legal Types"
-          />
-          <FilterDropdown
-            label="Location/Jurisdiction"
-            value={filters.location}
-            options={locations}
-            onChange={(value) => onFilterChange('location', value)}
-            placeholder="All Locations"
-          />
-          <FilterDropdown
-            label="Document Type"
-            value={filters.docType}
-            options={docTypes}
-            onChange={(value) => onFilterChange('docType', value)}
-            placeholder="All Document Types"
           />
         </div>
       </div>
@@ -334,18 +284,20 @@ export function DocumentReviewTab({
                   {currentDocument.summary && (
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-2">AI Summary</h4>
-                      <p className="text-gray-700 bg-gray-50 rounded-lg p-4">{currentDocument.summary}</p>
+                      <p className="text-gray-700 text-sm">{currentDocument.summary}</p>
                     </div>
                   )}
 
                   {/* Key Findings */}
-                  {currentDocument.keyFindings && (
+                  {currentDocument.keyFindings && currentDocument.keyFindings.length > 0 && (
                     <div>
                       <h4 className="font-semibold text-gray-900 mb-2">Key Findings</h4>
                       <ul className="space-y-2">
                         {currentDocument.keyFindings.map((finding, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="text-blue-600 mr-2">•</span>
+                          <li key={index} className="flex items-start text-sm">
+                            <svg className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
                             <span className="text-gray-700">{finding}</span>
                           </li>
                         ))}
@@ -356,14 +308,26 @@ export function DocumentReviewTab({
                   {/* Issues */}
                   {currentDocument.issues && currentDocument.issues.length > 0 && (
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-2">Potential Issues</h4>
-                      <div className="space-y-3">
+                      <h4 className="font-semibold text-gray-900 mb-2">Identified Issues</h4>
+                      <div className="space-y-2">
                         {currentDocument.issues.map((issue, index) => (
-                          <div key={index} className="border border-amber-200 bg-amber-50 rounded-lg p-3">
-                            <div className="flex items-start justify-between mb-1">
-                              <span className="font-medium text-gray-900">{issue.type}</span>
+                          <div
+                            key={index}
+                            className={`p-3 rounded-lg border ${
+                              issue.severity === 'High'
+                                ? 'bg-red-50 border-red-200'
+                                : issue.severity === 'Medium'
+                                ? 'bg-amber-50 border-amber-200'
+                                : 'bg-blue-50 border-blue-200'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <span className="font-medium text-sm text-gray-900">{issue.type}</span>
+                                <p className="text-sm text-gray-700 mt-1">{issue.description}</p>
+                              </div>
                               <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
                                   issue.severity === 'High'
                                     ? 'bg-red-100 text-red-800'
                                     : issue.severity === 'Medium'
@@ -374,7 +338,6 @@ export function DocumentReviewTab({
                                 {issue.severity}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700">{issue.description}</p>
                           </div>
                         ))}
                       </div>
@@ -386,104 +349,13 @@ export function DocumentReviewTab({
           ) : (
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="text-center py-12 text-gray-500">
-                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <p>Select a document to view details</p>
               </div>
             </div>
           )}
-      {/* Document Upload & Review Interface */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Upload Document for Review</h3>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
-            + Upload Document
-          </button>
-        </div>
-
-        {/* Active Filters Display */}
-        {(filters.legalType !== 'all' || filters.location !== 'all' || filters.docType !== 'all') && (
-          <div className="mb-4 flex flex-wrap gap-2">
-            <span className="text-sm text-gray-600">Active filters:</span>
-            {filters.legalType !== 'all' && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                {legalTypes.find(t => t.value === filters.legalType)?.label}
-              </span>
-            )}
-            {filters.location !== 'all' && (
-              <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
-                {locations.find(l => l.value === filters.location)?.label}
-              </span>
-            )}
-            {filters.docType !== 'all' && (
-              <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                {docTypes.find(d => d.value === filters.docType)?.label}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Drag & Drop Area */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <p className="mt-2 text-sm text-gray-600">
-            Drag and drop your document here, or click to browse
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            Supports PDF, DOCX, TXT (Max 10MB)
-          </p>
-        </div>
-      </div>
-
-      {/* Recent Reviews */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Document Reviews</h3>
-        
-        <div className="space-y-3">
-          {SAMPLE_REVIEWS.map((review) => (
-            <DocumentCard
-              key={review.id}
-              title={review.filename}
-              description={review.description}
-              tags={[
-                { label: review.category, value: review.category },
-                { label: review.jurisdiction, value: review.jurisdiction },
-                { label: review.timestamp, value: review.timestamp }
-              ]}
-              statusBadge={{
-                label: STATUS_LABELS[review.status],
-                className: STATUS_STYLES[review.status]
-              }}
-              actionLabel={review.status === 'issues-found' ? 'View Issues' : 'View Report'}
-              onAction={() => {
-                // TODO: Implement view report/issues functionality
-                console.log('View details for:', review.id);
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* AI Review Assistant */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Review Assistant</h3>
-        <div className="bg-gray-50 rounded-lg p-4 mb-4 min-h-[200px]">
-          <p className="text-sm text-gray-600">
-            I can review your documents for compliance, risks, and legal issues. Upload a document or ask me questions about specific clauses.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Ask about document compliance, risks, or specific clauses..."
-            className="flex-1 border border-gray-200 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
-            Ask AI
-          </button>
         </div>
       </div>
     </div>

@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import IHOManager from '@/lib/iho-manager'
 import { Client } from '@/types/ittt'
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 type ClientOperation = 'add' | 'view' | 'edit' | 'contact'
 
 type ClientOperationRequest = {
@@ -17,7 +20,6 @@ export async function GET(
   context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params
     const { tenantId } = await context.params
     const ihoManager = new IHOManager()
     

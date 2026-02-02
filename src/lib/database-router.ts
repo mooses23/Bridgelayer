@@ -25,10 +25,16 @@ class DatabaseRouter {
     this.connectionCache = new NodeCache({ stdTTL: 300, checkperiod: 60 })
     
     // Central Supabase for routing table
-    this.centralSupabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    
+    // Only create Supabase client if env vars are available
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('⚠️ Supabase credentials not found - DatabaseRouter will not work')
+      this.centralSupabase = null as any // Will fail at runtime if actually used
+    } else {
+      this.centralSupabase = createClient<Database>(supabaseUrl, supabaseKey)
+    }
     
     this.encryptionKey = process.env.DATABASE_ENCRYPTION_KEY || 'default-dev-key-change-in-prod'
   }

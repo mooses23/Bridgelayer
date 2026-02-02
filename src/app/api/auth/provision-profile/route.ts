@@ -1,6 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/auth/provision-profile
  *

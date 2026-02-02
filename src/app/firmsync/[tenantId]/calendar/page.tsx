@@ -1,9 +1,10 @@
 import CalendarWorkspace from './CalendarWorkspace';
 
 interface CalendarPageProps {
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }
 
-export default function CalendarPage({ params }: CalendarPageProps) {
-  return <CalendarWorkspace tenantId={params.tenantId} />;
+export default async function CalendarPage({ params }: CalendarPageProps) {
+  const { tenantId } = await params;
+  return <CalendarWorkspace tenantId={tenantId} />;
 }

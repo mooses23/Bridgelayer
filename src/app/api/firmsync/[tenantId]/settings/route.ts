@@ -3,13 +3,16 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { TenantSettings } from '@/types/settings';
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 // GET: Retrieve tenant settings
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const supabase = createServerComponentClient({ cookies });
 
     // Get tenant by ID (assuming tenantId is the subdomain or numeric ID)
@@ -86,10 +89,10 @@ export async function GET(
 // PUT: Update tenant settings
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const body = await request.json();
     const supabase = createServerComponentClient({ cookies });
 
