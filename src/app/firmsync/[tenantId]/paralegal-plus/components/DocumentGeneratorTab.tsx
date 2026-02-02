@@ -11,9 +11,9 @@ import type { DocumentFilters } from '../hooks/useParalegalFeatures';
 interface DocumentGeneratorTabProps {
   filters: DocumentFilters;
   onFilterChange: (key: keyof DocumentFilters, value: string) => void;
-  legalTypes: { value: string; label: string }[];
-  locations: { value: string; label: string }[];
-  docTypes: { value: string; label: string }[];
+  legalTypes: readonly { readonly value: string; readonly label: string }[];
+  locations: readonly { readonly value: string; readonly label: string }[];
+  docTypes: readonly { readonly value: string; readonly label: string }[];
 }
 
 export function DocumentGeneratorTab({
