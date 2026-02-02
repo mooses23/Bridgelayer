@@ -174,7 +174,7 @@ export default function DocPlusPage() {
     );
   };
 
-  const updateChatBoxConfig = (chatId: string, field: string, value: any) => {
+  const updateChatBoxConfig = (chatId: string, field: string, value: unknown) => {
     setParalegalChatBoxes(prev =>
       prev.map(chat =>
         chat.id === chatId 

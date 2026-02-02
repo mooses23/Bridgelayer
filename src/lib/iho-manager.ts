@@ -1,15 +1,14 @@
 // IHO Framework - Simple interface pattern (In Host Out)
 // Manages native vs integration modes for each component
 
-import { FeatureMode, IHOInterface, Client, DashboardMetrics, RecentActivity, SystemAlert, Case, CaseParams, Invoice, Payment, TimeEntry, BillingParams, CalendarEvent, CalendarParams, Report, ReportParameters, ReportTemplate, ReportsParams } from '@/types/ittt'
+import { FeatureMode, IHOInterface, Client, DashboardMetrics, RecentActivity, SystemAlert, Case, CaseParams, Invoice, Payment, TimeEntry, BillingParams, CalendarEvent, CalendarParams, Report, ReportTemplate, ReportsParams } from '@/types/ittt'
 import DatabaseRouter from '@/lib/database-router'
-import { itttEngine } from '@/lib/ittt-engine'
 
 export class IHOManager {
   private dbRouter: DatabaseRouter
   private featureMode: FeatureMode
 
-  constructor(tenantId: string) {
+  constructor() {
     this.dbRouter = new DatabaseRouter()
     this.featureMode = {
       clients: 'native', // Start with native, can switch to integration

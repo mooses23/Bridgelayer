@@ -187,7 +187,7 @@ export default function AdminPreviewPage() {
                     ].map((option) => (
                       <button
                         key={option.mode}
-                        onClick={() => setPreviewMode(option.mode as any)}
+                        onClick={() => setPreviewMode(option.mode as 'desktop' | 'tablet' | 'mobile')}
                         className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                           previewMode === option.mode
                             ? 'bg-blue-100 text-blue-700'
