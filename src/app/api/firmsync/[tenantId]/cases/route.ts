@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ tenantId: string }> }

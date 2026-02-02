@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import IHOManager from '@/lib/iho-manager'
 import { Client } from '@/types/ittt'
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 type ClientOperation = 'add' | 'view' | 'edit' | 'contact'
 
 type ClientOperationRequest = {

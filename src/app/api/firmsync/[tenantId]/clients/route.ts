@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { IHOManager } from '@/lib/iho-manager';
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ tenantId: string }> }

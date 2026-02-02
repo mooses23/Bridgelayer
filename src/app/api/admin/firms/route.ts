@@ -6,6 +6,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import DatabaseRouter from '@/lib/database-router'
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 interface Firm {
   id: string
   name: string
@@ -16,10 +19,9 @@ interface Firm {
   is_active: boolean
 }
 
-const dbRouter = new DatabaseRouter()
-
 export async function POST(request: NextRequest) {
   try {
+    const dbRouter = new DatabaseRouter()
     // For now, skip auth - add proper auth later
     // TODO: Add proper admin authentication
     
@@ -61,6 +63,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
+    const dbRouter = new DatabaseRouter()
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

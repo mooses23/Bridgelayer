@@ -3,6 +3,9 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { TenantSettings } from '@/types/settings';
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 // GET: Retrieve tenant settings
 export async function GET(
   request: NextRequest,

@@ -1,6 +1,9 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
+// Force dynamic rendering to avoid build-time evaluation
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/auth/check-profile
  * Check if current user has a profile
