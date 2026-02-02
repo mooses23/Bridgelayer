@@ -50,7 +50,6 @@ export default function SettingsPage() {
     }));
   };
 
-  const updateSecuritySetting = (key: string, value: unknown) => {
   const updateSecuritySetting = (key: string, value: string | boolean | number) => {
     setSecuritySettings(prev => ({
       ...prev,

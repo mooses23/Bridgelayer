@@ -5,10 +5,10 @@ import { cookies } from 'next/headers';
 // GET: Retrieve users for a tenant
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const supabase = createServerComponentClient({ cookies });
 
     // Get tenant by ID or subdomain
@@ -65,10 +65,10 @@ export async function GET(
 // POST: Invite a new user to the tenant
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const body = await request.json();
     const supabase = createServerComponentClient({ cookies });
 
@@ -117,10 +117,10 @@ export async function POST(
 // DELETE: Remove a user from the tenant
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { tenantId: string } }
+  context: { params: Promise<{ tenantId: string }> }
 ) {
   try {
-    const { tenantId } = params;
+    const { tenantId } = await context.params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
